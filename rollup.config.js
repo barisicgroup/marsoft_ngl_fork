@@ -62,7 +62,7 @@ function text () {
 }
 
 const moduleConfig = {
-  input: 'build/js/src/ngl.js',
+  input: 'webapp/build/js/src/ngl.js',
   plugins: [
     resolve({
       jsnext: true,
@@ -82,14 +82,14 @@ const moduleConfig = {
   ],
   output: [
     {
-      file: "build/js/ngl.umd.js",
+      file: "webapp/build/js/ngl.umd.js",
       format: 'umd',
       name: 'NGL',
       sourcemap: true,
       globals: moduleGlobals // three.js
     },
     {
-      file: "build/js/ngl.esm.js",
+      file: "webapp/build/js/ngl.esm.js",
       format: 'es',
       name: 'NGL',
       sourcemap: true
@@ -100,7 +100,7 @@ const moduleConfig = {
 }
 
 const bundleConfig = {
-  input: 'build/js/src/ngl.js',
+  input: 'webapp/build/js/src/ngl.js',
   plugins: [
     resolve({
       jsnext: true,
@@ -120,7 +120,7 @@ const bundleConfig = {
     internal(['three'])
   ],
   output: {
-    file: "build/js/ngl.dev.js",
+    file: "webapp/build/js/ngl.dev.js",
     format: 'umd',
     name: 'NGL',
     sourcemap: true

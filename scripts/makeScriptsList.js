@@ -3,7 +3,7 @@ const fs = require( "fs" );
 const path = require('path');
 
 
-const exampleDir = path.join( __dirname, "../examples/scripts/" );
+const exampleDir = path.join( __dirname, "../webapp/ngl_scripts/" );
 
 function flatten( arr ){
     return arr.reduce( function( acc, val ){
@@ -30,6 +30,6 @@ function getExampleNames( dir, prefix ){
 }
 
 fs.writeFileSync(
-    path.join( __dirname, "../build/scriptsList.json" ),
+    path.join( __dirname, "../webapp/ngl_scripts/scriptsList.json" ),
     JSON.stringify( getExampleNames( exampleDir ) )
 );

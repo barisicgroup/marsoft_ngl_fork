@@ -4,29 +4,29 @@
   <title>MARILIA webapp</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-  <link rel="stylesheet" href="examples/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="examples/css/main.css" />
-  <link rel="subresource" href="examples/css/light.css" />
-  <link rel="subresource" href="examples/css/dark.css" />
+  <link rel="stylesheet" href="./css/font-awesome.min.css" />
+  <link rel="stylesheet" href="./css/main.css" />
+  <link rel="subresource" href="./css/light.css" />
+  <link rel="subresource" href="./css/dark.css" />
 </head>
 <body>
   <!-- NGL -->
   <script src="build/js/ngl.dev.js"></script>
 
   <!-- UI -->
-  <script src="examples/js/lib/signals.min.js"></script>
-  <script src="examples/js/lib/tether.min.js"></script>
-  <script src="examples/js/lib/colorpicker.min.js"></script>
-  <script src="examples/js/ui/ui.js"></script>
-  <script src="examples/js/ui/ui.extra.js"></script>
-  <script src="examples/js/ui/ui.ngl.js"></script>
-  <script src="examples/js/gui.js"></script>
+  <script src="js/lib/signals.min.js"></script>
+  <script src="js/lib/tether.min.js"></script>
+  <script src="js/lib/colorpicker.min.js"></script>
+  <script src="js/ui/ui.js"></script>
+  <script src="js/ui/ui.extra.js"></script>
+  <script src="js/ui/ui.ngl.js"></script>
+  <script src="js/gui.js"></script>
 
   <script>
-    NGL.cssDirectory = "examples/css/"
+    NGL.cssDirectory = "css/"
     NGL.documentationUrl = "build/docs/"
-    NGL.examplesListUrl = "build/scriptsList.json"
-    NGL.examplesScriptUrl = "examples/scripts/"
+    NGL.examplesListUrl = "ngl_scripts/scriptsList.json"
+    NGL.examplesScriptUrl = "ngl_scripts/"
 
     // Datasources
     //NGL.DatasourceRegistry.add("data", new NGL.StaticDatasource("./data/"))
@@ -47,7 +47,7 @@
       if (load) stage.loadFile(load, {defaultRepresentation: true})
 
       var script = NGL.getQuery("script")
-      if (script) stage.loadScript("examples/scripts/" + script + ".js")
+      if (script) stage.loadScript("scripts/" + script + ".js")
 
       var struc = NGL.getQuery("struc")
       var traj = NGL.getQuery("traj")
