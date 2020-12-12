@@ -1,3 +1,12 @@
+MARILIA Software
+----------------
+Molecular modeling SW based on NGL framework and web application.
+
+[:globe_with_meridians: Try the latest version via this link](https://barisicgroup.github.io/marsoft_ngl_fork/)
+
+
+Previous NGL ReadMe content
+------------
 
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/arose/ngl/blob/master/LICENSE)
 [![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/arose/ngl/blob/master/CHANGELOG.md)
