@@ -25,7 +25,7 @@
     "doc": "typedoc --mode file --includes doc/usage/ --media doc/usage/ --out webapp/build/docs/ ./src/",
     "watch": "rollup -c -w",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -m 'Deployed New Version' -d webapp",
+    "deploy": "gh-pages -m NewVersionDeployed -d webapp",
     "gallery": "./scripts/gallery.sh",
     "prerelease": "./scripts/release.sh prerelease",
     "min": "del webapp/dist > nul && mkdir webapp/dist && uglifyjs webapp/build/js/ngl.dev.js -cm > webapp/dist/ngl.js && cpy webapp/build/js/ngl.esm.js webapp/dist && cpy webapp/build/js/ngl.umd.js webapp/dist && cpy webapp/build/js/ngl.*.js.map webapp/dist",
