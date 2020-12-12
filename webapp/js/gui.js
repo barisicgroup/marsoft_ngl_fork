@@ -424,7 +424,7 @@ NGL.MenubarWidget = function (stage, preferences) {
 
   container.add(
     new UI.Panel().setClass('menu').setFloat('right').add(
-      new UI.Text('NGL Viewer ' + NGL.Version).setClass('title')
+      new UI.Text('Marsoft ' + NGL.Version).setClass('title')
     )
   )
 
@@ -819,7 +819,7 @@ NGL.OverviewWidget = function (stage, preferences) {
     .setOverflow('auto')
 
   headingPanel.add(
-    new UI.Text('NGL Viewer').setFontStyle('italic'),
+    new UI.Text('Marsoft').setFontStyle('italic'),
     new UI.Html('&nbsp;&mdash;&nbsp;Overview')
   )
   headingPanel.add(
