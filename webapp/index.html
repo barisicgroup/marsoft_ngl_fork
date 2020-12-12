@@ -4,32 +4,32 @@
   <title>MARILIA webapp</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-  <link rel="stylesheet" href="./examples/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="./examples/css/main.css" />
-  <link rel="subresource" href="./examples/css/light.css" />
-  <link rel="subresource" href="./examples/css/dark.css" />
+  <link rel="stylesheet" href="examples/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="examples/css/main.css" />
+  <link rel="subresource" href="examples/css/light.css" />
+  <link rel="subresource" href="examples/css/dark.css" />
 </head>
 <body>
   <!-- NGL -->
-  <script src="./build/js/ngl.dev.js"></script>
+  <script src="build/js/ngl.dev.js"></script>
 
   <!-- UI -->
-  <script src="./examples/js/lib/signals.min.js"></script>
-  <script src="./examples/js/lib/tether.min.js"></script>
-  <script src="./examples/js/lib/colorpicker.min.js"></script>
-  <script src="./examples/js/ui/ui.js"></script>
-  <script src="./examples/js/ui/ui.extra.js"></script>
-  <script src="./examples/js/ui/ui.ngl.js"></script>
-  <script src="./examples/js/gui.js"></script>
+  <script src="examples/js/lib/signals.min.js"></script>
+  <script src="examples/js/lib/tether.min.js"></script>
+  <script src="examples/js/lib/colorpicker.min.js"></script>
+  <script src="examples/js/ui/ui.js"></script>
+  <script src="examples/js/ui/ui.extra.js"></script>
+  <script src="examples/js/ui/ui.ngl.js"></script>
+  <script src="examples/js/gui.js"></script>
 
   <script>
-    NGL.cssDirectory = "./examples/css/"
-    NGL.documentationUrl = "./build/docs/"
-    NGL.examplesListUrl = "./build/scriptsList.json"
-    NGL.examplesScriptUrl = "./examples/scripts/"
+    NGL.cssDirectory = "examples/css/"
+    NGL.documentationUrl = "build/docs/"
+    NGL.examplesListUrl = "build/scriptsList.json"
+    NGL.examplesScriptUrl = "examples/scripts/"
 
     // Datasources
-    NGL.DatasourceRegistry.add("data", new NGL.StaticDatasource("./data/"))
+    //NGL.DatasourceRegistry.add("data", new NGL.StaticDatasource("./data/"))
     var mdsrv = NGL.getQuery("mdsrv")
     if (mdsrv) {
       var mdsrvDatasource = new NGL.MdsrvDatasource(mdsrv)
@@ -38,7 +38,7 @@
       NGL.setTrajectoryDatasource(mdsrvDatasource)
     }
 
-    var stage
+    var stage;
     document.addEventListener("DOMContentLoaded", function () {
       stage = new NGL.Stage()
       NGL.StageWidget(stage)

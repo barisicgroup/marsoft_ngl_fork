@@ -9,7 +9,7 @@
         "strictNullChecks": true,
         "allowSyntheticDefaultImports": true,
         "lib": [ "es6", "dom", "es2016" ],
-        "outDir": "build/js/src",
+        "outDir": "webapp/build/js/src",
         "allowJs": false,
         "moduleResolution": "node",
         "typeRoots": [

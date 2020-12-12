@@ -2,6 +2,7 @@
 *.sublime-workspace
 
 build/
+webapp/build
 node_modules/
 declarations/
 
