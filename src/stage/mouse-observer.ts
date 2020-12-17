@@ -151,12 +151,13 @@ class MouseObserver {
    * @param  {Boolean} params.handleScroll - whether or not to handle scroll events
    * @param  {Integer} params.doubleClickSpeed - max time in ms to trigger double click
    */
-  constructor (readonly domElement: HTMLCanvasElement, params: MouseParams = {}) {
+  constructor (readonly domElement: HTMLCanvasElement, viewer: Viewer, params: MouseParams = {}) {
     this.domElement.style.touchAction = 'none'
 
     this.hoverTimeout = defaults(params.hoverTimeout, 50)
     this.handleScroll = defaults(params.handleScroll, true)
     this.doubleClickSpeed = defaults(params.doubleClickSpeed, 500)
+    this.viewer = viewer;
 
     this._listen = this._listen.bind(this)
     this._onMousewheel = this._onMousewheel.bind(this)
@@ -194,6 +195,15 @@ class MouseObserver {
 
   setParameters (params: MouseParams = {}) {
     this.hoverTimeout = defaults(params.hoverTimeout, this.hoverTimeout)
+  }
+
+  /*
+  * Returns mouse position in normalized device coordinates
+  */
+  getNdcPosition() : Vector2 {
+    const ssPos : Vector2 = this.canvasPosition;
+    const canvasSize : Vector2 = new Vector2(this.viewer.container.clientWidth, this.viewer.container.clientHeight);
+    return ssPos.divide(canvasSize).multiplyScalar(2.0).subScalar(1.0);
   }
 
   /**

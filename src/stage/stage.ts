@@ -217,7 +217,7 @@ class Stage {
     })
     this.viewer.container.appendChild(this.tooltip)
 
-    this.mouseObserver = new MouseObserver(this.viewer.renderer.domElement)
+    this.mouseObserver = new MouseObserver(this.viewer.renderer.domElement, this.viewer)
     this.viewerControls = new ViewerControls(this)
     this.trackballControls = new TrackballControls(this)
     this.pickingControls = new PickingControls(this)

@@ -65,9 +65,9 @@
         // 1 is left button
         if (stage.mouseObserver.buttons !== 1) { return; }
         
-        let ssPos = stage.mouseObserver.canvasPosition;
-        let canvasSize = new NGL.Vector3(stage.viewer.container.clientWidth, stage.viewer.container.clientHeight);
-        let ndc = ssPos.divide(canvasSize).multiplyScalar(2.0).subScalar(1.0);
+        //let ssPos = stage.mouseObserver.canvasPosition;
+        //let canvasSize = new NGL.Vector3(stage.viewer.container.clientWidth, stage.viewer.container.clientHeight);
+        let ndc = stage.mouseObserver.getNdcPosition(); //ssPos.divide(canvasSize).multiplyScalar(2.0).subScalar(1.0);
         let worldPos = new NGL.Vector3(ndc.x, ndc.y, 0).unproject(stage.viewer.camera);
         //let invertedSceneMatrix = new NGL.Matrix4().getInverse(stage.viewerControls.getOrientation());
         //worldPos.applyMatrix4(invertedSceneMatrix);
