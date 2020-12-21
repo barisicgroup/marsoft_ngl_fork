@@ -3,7 +3,7 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-import { Vector2 } from 'three';
+import { Vector2, Vector3 } from 'three';
 import { Signal } from 'signals';
 import { LeftMouseButton, RightMouseButton } from '../constants.js';
 import { defaults } from '../utils';
@@ -92,7 +92,7 @@ class MouseObserver {
      * @param  {Boolean} params.handleScroll - whether or not to handle scroll events
      * @param  {Integer} params.doubleClickSpeed - max time in ms to trigger double click
      */
-    constructor(domElement, params = {}) {
+    constructor(domElement, stage, params = {}) {
         this.domElement = domElement;
         this.signals = {
             moved: new Signal(),
@@ -123,6 +123,7 @@ class MouseObserver {
         this.hoverTimeout = defaults(params.hoverTimeout, 50);
         this.handleScroll = defaults(params.handleScroll, true);
         this.doubleClickSpeed = defaults(params.doubleClickSpeed, 500);
+        this.stage = stage;
         this._listen = this._listen.bind(this);
         this._onMousewheel = this._onMousewheel.bind(this);
         this._onMousemove = this._onMousemove.bind(this);
@@ -159,6 +160,28 @@ class MouseObserver {
     }
     setParameters(params = {}) {
         this.hoverTimeout = defaults(params.hoverTimeout, this.hoverTimeout);
+    }
+    /*
+    * Returns mouse position in normalized device coordinates
+    */
+    getNdcPosition() {
+        const ssPos = this.canvasPosition;
+        const canvasSize = new Vector2(this.stage.viewer.container.clientWidth, this.stage.viewer.container.clientHeight);
+        return ssPos.divide(canvasSize).multiplyScalar(2.0).subScalar(1.0);
+    }
+    /*
+    * Returns world coordinates corresponding to the current mouse position
+    */
+    getWorldPosition() {
+        const ndcPos = this.getNdcPosition();
+        const ndcToWorld = new Vector3(ndcPos.x, ndcPos.y, 0).unproject(this.stage.viewer.camera);
+        // Since the whole stage itself is also transformed, it is necessary to 
+        // apply inverse transformations to the computed world position to get
+        // correct behavior
+        ndcToWorld
+            .applyQuaternion(this.stage.viewerControls.rotation.clone().conjugate())
+            .add(this.stage.viewerControls.position.clone().negate());
+        return ndcToWorld;
     }
     /**
      * listen to mouse actions

@@ -14,7 +14,7 @@
     "ts": "tsc && cpy --parents \"src/**/*.{vert,frag,glsl}\" webapp/build/js/ && cpy \"lib/*.js\" webapp/build/js/lib/ && cpy \"package.json\" webapp/build/js/ && cpy \"src/polyfills.js\" webapp/build/js/src/",
     "dts": "tsc -d --declarationDir \"declarations\" --emitDeclarationOnly --skipLibCheck",
     "prebuild": "npm run lint",
-    "build": "npm run ts && rollup -c",
+    "build": "npm run ts && rollup -c && sorcery -i webapp/build/js/ngl.dev.js",
     "postbuild": "node ./scripts/makeScriptsList.js",
     "test": "jest",
     "preversion": "npm test",
@@ -25,7 +25,7 @@
     "doc": "typedoc --mode file --includes doc/usage/ --media doc/usage/ --out webapp/build/docs/ ./src/",
     "watch": "rollup -c -w",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -m 'Deployed New Version' -d webapp",
+    "deploy": "gh-pages -m NewVersionDeployed -d webapp",
     "gallery": "./scripts/gallery.sh",
     "prerelease": "./scripts/release.sh prerelease",
     "min": "del webapp/dist > nul && mkdir webapp/dist && uglifyjs webapp/build/js/ngl.dev.js -cm > webapp/dist/ngl.js && cpy webapp/build/js/ngl.esm.js webapp/dist && cpy webapp/build/js/ngl.umd.js webapp/dist && cpy webapp/build/js/ngl.*.js.map webapp/dist",
@@ -72,6 +72,7 @@
     "@types/promise-polyfill": "^6.0.0",
     "@types/signals": "1.0.1",
     "@types/sprintf-js": "^1.1.2",
+    "arkit": "^1.6.4",
     "babel-plugin-array-includes": "^2.0.3",
     "babelrc-rollup": "^3.0.0",
     "chai": "^4.1.1",
@@ -95,7 +96,8 @@
     "ts-jest": "^25.5.1",
     "typedoc": "^0.16.11",
     "typescript": "^3.8.3",
-    "uglify-js": "^3.12.1"
+    "uglify-js": "^3.12.1",
+    "sorcery": "^0.10.0"
   },
   "dependencies": {
     "chroma-js": "^1.3.7",

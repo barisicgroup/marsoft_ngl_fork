@@ -163,8 +163,10 @@ export { Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Col
 export { UIStageParameters } from './ui/parameters';
 //
 import Version from './version';
+// MARILIA codes
+import CustomComponent from "./marilia_custom_classes/CustomComponent";
 if (!window.Promise) {
     window.Promise = _Promise;
 }
-export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Component, ShapeComponent, StructureComponent, SurfaceComponent, VolumeComponent, Assembly, TrajectoryPlayer, Superposition, Frames, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, MeshBuffer, OctahedronBuffer, PointBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, WidelineBuffer, Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, PickingProxy };
+export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Component, ShapeComponent, StructureComponent, SurfaceComponent, VolumeComponent, Assembly, TrajectoryPlayer, Superposition, Frames, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, MeshBuffer, OctahedronBuffer, PointBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, WidelineBuffer, Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, PickingProxy, CustomComponent };
 //# sourceMappingURL=ngl.js.map

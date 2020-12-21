@@ -5,6 +5,9 @@
  */
 import { almostIdentity } from '../math/math-utils';
 import SurfaceRepresentation from '../representation/surface-representation';
+// Added by Lucas Melo
+import TestModification from './TEST';
+export let testModification = new TestModification();
 /**
  * Mouse actions provided as static methods
  */
@@ -211,8 +214,10 @@ export const MouseActionPresets = {
         ['clickPick-right', MouseActions.measurePick],
         ['clickPick-ctrl-left', MouseActions.measurePick],
         ['clickPick-middle', MouseActions.movePick],
-        ['clickPick-left', MouseActions.movePick],
-        ['hoverPick', MouseActions.tooltipPick]
+        //[ 'clickPick-left', MouseActions.movePick ],
+        ['clickPick-left', testModification.clickPick_left],
+        ['hoverPick', MouseActions.tooltipPick],
+        ['hoverPick', testModification.hover]
     ],
     pymol: [
         ['drag-left', MouseActions.rotateDrag],

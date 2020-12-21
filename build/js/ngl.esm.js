@@ -1,4 +1,4 @@
-import { Vector2, Vector3, Matrix4, Quaternion, Color, ShaderChunk, Points, PerspectiveCamera, OrthographicCamera, StereoCamera, Box3, WebGLRenderer, WebGLRenderTarget, NearestFilter, LinearFilter, AdditiveBlending, RGBAFormat, FloatType, UnsignedByteType, ShaderMaterial, PlaneGeometry, Scene, Mesh, Group, Uniform, Fog, SpotLight, AmbientLight, BufferGeometry, BufferAttribute, LineSegments, Geometry, Matrix3, FrontSide, BackSide, DoubleSide, NoBlending, UniformsUtils, UniformsLib, IcosahedronBufferGeometry, DataTexture, NormalBlending, Euler, CanvasTexture, CylinderBufferGeometry, ConeBufferGeometry, BoxBufferGeometry, OctahedronBufferGeometry, TetrahedronBufferGeometry, TorusBufferGeometry, Face3 } from 'three';
+import { Vector2, Vector3, Matrix4, Quaternion, Color, ShaderChunk, Points, PerspectiveCamera, OrthographicCamera, StereoCamera, Box3, WebGLRenderer, WebGLRenderTarget, NearestFilter, LinearFilter, AdditiveBlending, RGBAFormat, FloatType, UnsignedByteType, ShaderMaterial, PlaneGeometry, Scene, Mesh, Group, Uniform, Fog, SpotLight, AmbientLight, BufferGeometry, BufferAttribute, LineSegments, Geometry, Matrix3, FrontSide, BackSide, DoubleSide, NoBlending, UniformsUtils, UniformsLib, IcosahedronBufferGeometry, DataTexture, NormalBlending, Euler, CylinderBufferGeometry, CanvasTexture, ConeBufferGeometry, BoxBufferGeometry, OctahedronBufferGeometry, TetrahedronBufferGeometry, TorusBufferGeometry, Face3 } from 'three';
 export { Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color } from 'three';
 import { scale } from 'chroma-js';
 import { Signal } from 'signals';
@@ -6170,7 +6170,7 @@ function getMouseButtons(event) {
  * // listen to hovering events
  * mouseObserver.signals.hovered.add( function(){ ... } );
  */
-var MouseObserver = function MouseObserver(domElement, params) {
+var MouseObserver = function MouseObserver(domElement, stage, params) {
     if ( params === void 0 ) params = {};
 
     this.domElement = domElement;
@@ -6203,6 +6203,7 @@ var MouseObserver = function MouseObserver(domElement, params) {
     this.hoverTimeout = defaults(params.hoverTimeout, 50);
     this.handleScroll = defaults(params.handleScroll, true);
     this.doubleClickSpeed = defaults(params.doubleClickSpeed, 500);
+    this.stage = stage;
     this._listen = this._listen.bind(this);
     this._onMousewheel = this._onMousewheel.bind(this);
     this._onMousemove = this._onMousemove.bind(this);
@@ -6243,6 +6244,28 @@ MouseObserver.prototype.setParameters = function setParameters (params) {
         if ( params === void 0 ) params = {};
 
     this.hoverTimeout = defaults(params.hoverTimeout, this.hoverTimeout);
+};
+/*
+* Returns mouse position in normalized device coordinates
+*/
+MouseObserver.prototype.getNdcPosition = function getNdcPosition () {
+    var ssPos = this.canvasPosition;
+    var canvasSize = new Vector2(this.stage.viewer.container.clientWidth, this.stage.viewer.container.clientHeight);
+    return ssPos.divide(canvasSize).multiplyScalar(2.0).subScalar(1.0);
+};
+/*
+* Returns world coordinates corresponding to the current mouse position
+*/
+MouseObserver.prototype.getWorldPosition = function getWorldPosition () {
+    var ndcPos = this.getNdcPosition();
+    var ndcToWorld = new Vector3(ndcPos.x, ndcPos.y, 0).unproject(this.stage.viewer.camera);
+    // Since the whole stage itself is also transformed, it is necessary to 
+    // apply inverse transformations to the computed world position to get
+    // correct behavior
+    ndcToWorld
+        .applyQuaternion(this.stage.viewerControls.rotation.clone().conjugate())
+        .add(this.stage.viewerControls.position.clone().negate());
+    return ndcToWorld;
 };
 /**
  * listen to mouse actions
@@ -16649,723 +16672,6 @@ var SurfaceRepresentation = /*@__PURE__*/(function (Representation$$1) {
 
    return SurfaceRepresentation;
 }(Representation));
-
-/**
- * @file Mouse Actions
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Mouse actions provided as static methods
- */
-var MouseActions = function MouseActions () {};
-
-MouseActions.zoomScroll = function zoomScroll (stage, delta) {
-    stage.trackballControls.zoom(delta);
-};
-/**
- * Move near clipping plane based on scroll-delta
- * @param {Stage} stage - the stage
- * @param {Number} delta - amount to move clipping plane
- * @return {undefined}
- */
-MouseActions.clipNearScroll = function clipNearScroll (stage, delta) {
-    var sp = stage.getParameters();
-    stage.setParameters({ clipNear: sp.clipNear + delta / 10 });
-};
-/**
- * Move clipping planes based on scroll-delta.
- * @param {Stage} stage - the stage
- * @param {Number} delta - direction to move planes
- * @return {undefined}
- */
-MouseActions.focusScroll = function focusScroll (stage, delta) {
-    var focus = stage.getFocus();
-    var sign = Math.sign(delta);
-    var step = sign * almostIdentity((100 - focus) / 10, 5, 0.2);
-    stage.setFocus(focus + step);
-};
-/**
- * Zoom scene based on scroll-delta and
- * move focus planes based on camera position (zoom)
- * @param {Stage} stage - the stage
- * @param {Number} delta - amount to move focus planes and zoom
- * @return {undefined}
- */
-MouseActions.zoomFocusScroll = function zoomFocusScroll (stage, delta) {
-    stage.trackballControls.zoom(delta);
-    var z = stage.viewer.camera.position.z;
-    stage.setFocus(100 - Math.abs(z / 8));
-};
-/**
- * Change isolevel of volume surfaces based on scroll-delta
- * @param {Stage} stage - the stage
- * @param {Number} delta - amount to change isolevel
- * @return {undefined}
- */
-MouseActions.isolevelScroll = function isolevelScroll (stage, delta) {
-    var d = Math.sign(delta) / 10;
-    stage.eachRepresentation(function (reprElem, comp) {
-        if (reprElem.repr instanceof SurfaceRepresentation) {
-            var p = reprElem.getParameters(); // TODO
-            if (p.isolevelScroll) {
-                reprElem.setParameters({ isolevel: p.isolevel + d });
-            }
-        }
-    });
-};
-/**
- * Pan scene based on mouse coordinate changes
- * @param {Stage} stage - the stage
- * @param {Number} dx - amount to pan in x direction
- * @param {Number} dy - amount to pan in y direction
- * @return {undefined}
- */
-MouseActions.panDrag = function panDrag (stage, dx, dy) {
-    stage.trackballControls.pan(dx, dy);
-};
-/**
- * Rotate scene based on mouse coordinate changes
- * @param {Stage} stage - the stage
- * @param {Number} dx - amount to rotate in x direction
- * @param {Number} dy - amount to rotate in y direction
- * @return {undefined}
- */
-MouseActions.rotateDrag = function rotateDrag (stage, dx, dy) {
-    stage.trackballControls.rotate(dx, dy);
-};
-/**
- * Rotate scene around z axis based on mouse coordinate changes
- * @param {Stage} stage - the stage
- * @param {Number} dx - amount to rotate in x direction
- * @param {Number} dy - amount to rotate in y direction
- * @return {undefined}
- */
-MouseActions.zRotateDrag = function zRotateDrag (stage, dx, dy) {
-    stage.trackballControls.zRotate(dx, dy);
-};
-/**
- * Zoom scene based on mouse coordinate changes
- * @param {Stage} stage - the stage
- * @param {Number} dx - amount to zoom
- * @param {Number} dy - amount to zoom
- * @return {undefined}
- */
-MouseActions.zoomDrag = function zoomDrag (stage, dx, dy) {
-    stage.trackballControls.zoom((dx + dy) / -2);
-};
-/**
- * Zoom scene based on mouse coordinate changes and
- * move focus planes based on camera position (zoom)
- * @param {Stage} stage - the stage
- * @param {Number} dx - amount to zoom and focus
- * @param {Number} dy - amount to zoom and focus
- * @return {undefined}
- */
-MouseActions.zoomFocusDrag = function zoomFocusDrag (stage, dx, dy) {
-    stage.trackballControls.zoom((dx + dy) / -2);
-    var z = stage.viewer.camera.position.z;
-    stage.setFocus(100 - Math.abs(z / 8));
-};
-/**
- * Pan picked component based on mouse coordinate changes
- * @param {Stage} stage - the stage
- * @param {Number} dx - amount to pan in x direction
- * @param {Number} dy - amount to pan in y direction
- * @return {undefined}
- */
-MouseActions.panComponentDrag = function panComponentDrag (stage, dx, dy) {
-    stage.trackballControls.panComponent(dx, dy);
-};
-/**
- * Pan picked atom based on mouse coordinate changes
- * @param {Stage} stage - the stage
- * @param {Number} dx - amount to pan in x direction
- * @param {Number} dy - amount to pan in y direction
- * @return {undefined}
- */
-MouseActions.panAtomDrag = function panAtomDrag (stage, dx, dy) {
-    stage.trackballControls.panAtom(dx, dy);
-};
-/**
- * Rotate picked component based on mouse coordinate changes
- * @param {Stage} stage - the stage
- * @param {Number} dx - amount to rotate in x direction
- * @param {Number} dy - amount to rotate in y direction
- * @return {undefined}
- */
-MouseActions.rotateComponentDrag = function rotateComponentDrag (stage, dx, dy) {
-    stage.trackballControls.rotateComponent(dx, dy);
-};
-/**
- * Move picked element to the center of the screen
- * @param {Stage} stage - the stage
- * @param {PickingProxy} pickingProxy - the picking data object
- * @return {undefined}
- */
-MouseActions.movePick = function movePick (stage, pickingProxy) {
-    if (pickingProxy) {
-        stage.animationControls.move(pickingProxy.position.clone());
-    }
-};
-/**
- * Show tooltip with information of picked element
- * @param {Stage} stage - the stage
- * @param {PickingProxy} pickingProxy - the picking data object
- * @return {undefined}
- */
-MouseActions.tooltipPick = function tooltipPick (stage, pickingProxy) {
-    var tt = stage.tooltip;
-    var sp = stage.getParameters();
-    if (sp.tooltip && pickingProxy) {
-        var mp = pickingProxy.mouse.position;
-        tt.innerText = pickingProxy.getLabel();
-        tt.style.bottom = (window.innerHeight - mp.y + 3) + 'px';
-        tt.style.left = (mp.x + 3) + 'px';
-        tt.style.display = 'block';
-    }
-    else {
-        tt.style.display = 'none';
-    }
-};
-MouseActions.measurePick = function measurePick (stage, pickingProxy) {
-    if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
-        var atom = pickingProxy.atom || pickingProxy.closestBondAtom;
-        var sc = pickingProxy.component;
-        sc.measurePick(atom);
-    }
-    else {
-        stage.measureClear();
-    }
-};
-var MouseActionPresets = {
-    default: [
-        ['scroll', MouseActions.zoomScroll],
-        ['scroll-shift', MouseActions.focusScroll],
-        ['scroll-ctrl', MouseActions.isolevelScroll],
-        ['scroll-shift-ctrl', MouseActions.zoomFocusScroll],
-        ['drag-left', MouseActions.rotateDrag],
-        ['drag-right', MouseActions.panDrag],
-        ['drag-ctrl-left', MouseActions.panDrag],
-        ['drag-ctrl-right', MouseActions.zRotateDrag],
-        ['drag-shift-left', MouseActions.zoomDrag],
-        ['drag-middle', MouseActions.zoomFocusDrag],
-        ['drag-ctrl-shift-right', MouseActions.panComponentDrag],
-        ['drag-ctrl-shift-left', MouseActions.rotateComponentDrag],
-        ['clickPick-right', MouseActions.measurePick],
-        ['clickPick-ctrl-left', MouseActions.measurePick],
-        ['clickPick-middle', MouseActions.movePick],
-        ['clickPick-left', MouseActions.movePick],
-        ['hoverPick', MouseActions.tooltipPick]
-    ],
-    pymol: [
-        ['drag-left', MouseActions.rotateDrag],
-        ['drag-middle', MouseActions.panDrag],
-        ['drag-right', MouseActions.zoomDrag],
-        ['drag-shift-right', MouseActions.focusScroll],
-        ['clickPick-ctrl+shift-middle', MouseActions.movePick],
-        ['hoverPick', MouseActions.tooltipPick]
-    ],
-    coot: [
-        ['scroll', MouseActions.isolevelScroll],
-        ['drag-left', MouseActions.rotateDrag],
-        ['drag-middle', MouseActions.panDrag],
-        ['drag-ctrl-left', MouseActions.panDrag],
-        ['drag-right', MouseActions.zoomFocusDrag],
-        ['drag-ctrl-right', MouseActions.focusScroll],
-        ['clickPick-middle', MouseActions.movePick],
-        ['hoverPick', MouseActions.tooltipPick]
-    ],
-    astexviewer: [
-        ['drag-left', MouseActions.rotateDrag],
-        ['drag-ctrl-left', MouseActions.panDrag],
-        ['drag-shift-left', MouseActions.zoomDrag],
-        ['scroll', MouseActions.focusScroll],
-        ['clickPick-middle', MouseActions.movePick],
-        ['hoverPick', MouseActions.tooltipPick]
-    ]
-};
-
-/**
- * @file Mouse Controls
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Strings to describe mouse events (including optional keyboard modifiers).
- * Must contain an event type: "scroll", "drag", "click", "doubleClick",
- * "hover", "clickPick" or "hoverPick". Optionally contain one or more
- * (seperated by plus signs) keyboard modifiers: "alt", "ctrl", "meta" or
- * "shift". Can contain the mouse button performing the event: "left",
- * "middle" or "right". The type, key and button parts must be seperated by
- * dashes.
- *
- * @example
- * // triggered on scroll event (no key or button)
- * "scroll"
- *
- * @example
- * // triggered on scroll event while shift key is pressed
- * "scroll-shift"
- *
- * @example
- * // triggered on drag event with left mouse button
- * "drag-left"
- *
- * @example
- * // triggered on drag event with right mouse button
- * // while ctrl and shift keys are pressed
- * "drag-right-ctrl+shift"
- *
- * @typedef {String} TriggerString
- */
-/**
- * Get event type, key and button
- * @param  {TriggerString} str - input trigger string
- * @return {Array} event type, key and button
- */
-function triggerFromString(str) {
-    var tokens = str.split(/[-+]/);
-    var type = '';
-    if (tokens.includes('scroll'))
-        { type = 'scroll'; }
-    if (tokens.includes('drag'))
-        { type = 'drag'; }
-    if (tokens.includes('click'))
-        { type = 'click'; }
-    if (tokens.includes('doubleClick'))
-        { type = 'doubleClick'; }
-    if (tokens.includes('hover'))
-        { type = 'hover'; }
-    if (tokens.includes('clickPick'))
-        { type = 'clickPick'; }
-    if (tokens.includes('hoverPick'))
-        { type = 'hoverPick'; }
-    var key = 0;
-    if (tokens.includes('alt'))
-        { key += 1; }
-    if (tokens.includes('ctrl'))
-        { key += 2; }
-    if (tokens.includes('meta'))
-        { key += 4; }
-    if (tokens.includes('shift'))
-        { key += 8; }
-    var button = 0;
-    if (tokens.includes('left'))
-        { button += 1; }
-    if (tokens.includes('right'))
-        { button += 2; }
-    if (tokens.includes('middle'))
-        { button += 4; }
-    return [type, key, button];
-}
-/**
- * Mouse controls
- */
-var MouseControls = function MouseControls(stage, params) {
-    if ( params === void 0 ) params = {};
-
-    this.stage = stage;
-    this.actionList = [];
-    this.mouse = stage.mouseObserver;
-    this.disabled = params.disabled || false;
-    this.preset(params.preset || 'default');
-};
-MouseControls.prototype.run = function run (type) {
-        var this$1 = this;
-        var args = [], len = arguments.length - 1;
-        while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
-
-    if (this.disabled)
-        { return; }
-    var key = this.mouse.key || 0;
-    var button = this.mouse.buttons || 0;
-    this.actionList.forEach(function (a) {
-        if (a.type === type && a.key === key && a.button === button) {
-            a.callback.apply(a, [ this$1.stage ].concat( args )); // TODO
-        }
-    });
-};
-/**
- * Add a new mouse action triggered by an event, key and button combination.
- * The {@link MouseActions} class provides a number of static methods for
- * use as callback functions.
- *
- * @example
- * // change ambient light intensity on mouse scroll
- * // while the ctrl and shift keys are pressed
- * stage.mouseControls.add( "scroll-ctrl+shift", function( stage, delta ){
- * var ai = stage.getParameters().ambientIntensity;
- * stage.setParameters( { ambientIntensity: Math.max( 0, ai + delta / 50 ) } );
- * } );
- *
- * @example
- * // Call the MouseActions.zoomDrag method on mouse drag events
- * // with left and right mouse buttons simultaneous
- * stage.mouseControls.add( "drag-left+right", MouseActions.zoomDrag );
- *
- * @param {TriggerString} triggerStr - the trigger for the action
- * @param {function(stage: Stage, ...args: Any)} callback - the callback function for the action
- * @return {undefined}
- */
-MouseControls.prototype.add = function add (triggerStr, callback) {
-    var ref = triggerFromString(triggerStr);
-        var type = ref[0];
-        var key = ref[1];
-        var button = ref[2];
-    this.actionList.push({ type: type, key: key, button: button, callback: callback });
-};
-/**
- * Remove a mouse action. The trigger string can contain an asterix (*)
- * as a wildcard for any key or mouse button. When the callback function
- * is given, only actions that call that function are removed.
- *
- * @example
- * // remove actions triggered solely by a scroll event
- * stage.mouseControls.remove( "scroll" );
- *
- * @example
- * // remove actions triggered by a scroll event, including
- * // those requiring a key pressed or mouse button used
- * stage.mouseControls.remove( "scroll-*" );
- *
- * @example
- * // remove actions triggered by a scroll event
- * // while the shift key is pressed
- * stage.mouseControls.remove( "scroll-shift" );
- *
- * @param {TriggerString} triggerStr - the trigger for the action
- * @param {Function} [callback] - the callback function for the action
- * @return {undefined}
- */
-MouseControls.prototype.remove = function remove (triggerStr, callback) {
-    var wildcard = triggerStr.includes('*');
-    var ref = triggerFromString(triggerStr);
-        var type = ref[0];
-        var key = ref[1];
-        var button = ref[2];
-    var actionList = this.actionList.filter(function (a) {
-        return !((a.type === type || (wildcard && type === '')) &&
-            (a.key === key || (wildcard && key === 0)) &&
-            (a.button === button || (wildcard && button === 0)) &&
-            (a.callback === callback || callback === undefined));
-    });
-    this.actionList = actionList;
-};
-/**
- * Set mouse action preset
- * @param  {String} name - one of "default", "pymol", "coot"
- * @return {undefined}
- */
-MouseControls.prototype.preset = function preset (name) {
-        var this$1 = this;
-
-    this.clear();
-    var list = MouseActionPresets[name] || [];
-    list.forEach(function (action) { return this$1.add(action[0], action[1]); });
-};
-/**
- * Remove all mouse actions
- * @return {undefined}
- */
-MouseControls.prototype.clear = function clear () {
-    this.actionList.length = 0;
-};
-
-/**
- * @file Key Actions
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Key actions provided as static methods
- */
-var KeyActions = function KeyActions () {};
-
-KeyActions.autoView = function autoView (stage) {
-    stage.autoView(1000);
-};
-/**
- * Toggle stage animations
- */
-KeyActions.toggleAnimations = function toggleAnimations (stage) {
-    stage.animationControls.toggle();
-};
-/**
- * Toggle stage rocking
- */
-KeyActions.toggleRock = function toggleRock (stage) {
-    stage.toggleRock();
-};
-/**
- * Toggle stage spinning
- */
-KeyActions.toggleSpin = function toggleSpin (stage) {
-    stage.toggleSpin();
-};
-/**
- * Toggle anti-aliasing
- */
-KeyActions.toggleAntialiasing = function toggleAntialiasing (stage) {
-    var p = stage.getParameters();
-    stage.setParameters({ sampleLevel: p.sampleLevel === -1 ? 0 : -1 });
-};
-var KeyActionPresets = {
-    default: [
-        ['i', KeyActions.toggleSpin],
-        ['k', KeyActions.toggleRock],
-        ['p', KeyActions.toggleAnimations],
-        ['a', KeyActions.toggleAntialiasing],
-        ['r', KeyActions.autoView]
-    ]
-};
-
-/**
- * @file Key Controls
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Mouse controls
- */
-var KeyControls = function KeyControls(stage, params) {
-    if ( params === void 0 ) params = {};
-
-    this.stage = stage;
-    this.actionList = [];
-    this.disabled = params.disabled || false;
-    this.preset(params.preset || 'default');
-};
-KeyControls.prototype.run = function run (key) {
-        var this$1 = this;
-
-    if (this.disabled)
-        { return; }
-    this.actionList.forEach(function (a) {
-        if (a.key === key) {
-            a.callback(this$1.stage);
-        }
-    });
-};
-/**
- * Add a key action triggered by pressing the given character.
- * The {@link KeyActions} class provides a number of static methods for
- * use as callback functions.
- *
- * @example
- * // call KeyActions.toggleRock when "k" is pressed
- * stage.keyControls.remove( "k", KeyActions.toggleRock );
- *
- * @param {Char} char - the key/character
- * @param {Function} callback - the callback function for the action
- * @return {undefined}
- */
-KeyControls.prototype.add = function add (char, callback) {
-    this.actionList.push({ key: char, callback: callback });
-};
-/**
- * Remove a key action. When the callback function
- * is given, only actions that call that function are removed.
- *
- * @example
- * // remove all actions triggered by pressing "k"
- * stage.keyControls.remove( "k" );
- *
- * @example
- * // remove action `toggleRock` triggered by pressing "k"
- * stage.keyControls.remove( "k", toggleRock );
- *
- * @param {Char} char - the key/character
- * @param {Function} [callback] - the callback function for the action
- * @return {undefined}
- */
-KeyControls.prototype.remove = function remove (char, callback) {
-    var actionList = this.actionList.filter(function (a) {
-        return !((a.key === char) &&
-            (a.callback === callback || callback === undefined));
-    });
-    this.actionList = actionList;
-};
-/**
- * Set key action preset
- * @param  {String} name - one of "default"
- * @return {undefined}
- */
-KeyControls.prototype.preset = function preset (name) {
-        var this$1 = this;
-
-    this.clear();
-    var list = KeyActionPresets[name] || [];
-    list.forEach(function (action) { return this$1.add(action[0], action[1]); });
-};
-/**
- * Remove all key actions
- * @return {undefined}
- */
-KeyControls.prototype.clear = function clear () {
-    this.actionList.length = 0;
-};
-
-/**
- * @file Picking Behavior
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var PickingBehavior = function PickingBehavior(stage) {
-    this.stage = stage;
-    this.stage = stage;
-    this.mouse = stage.mouseObserver;
-    this.controls = stage.mouseControls;
-    this.mouse.signals.clicked.add(this._onClick, this);
-    this.mouse.signals.hovered.add(this._onHover, this);
-};
-PickingBehavior.prototype._onClick = function _onClick (x, y) {
-    var pickingProxy = this.stage.pickingControls.pick(x, y);
-    this.stage.signals.clicked.dispatch(pickingProxy);
-    this.controls.run('clickPick', pickingProxy);
-};
-PickingBehavior.prototype._onHover = function _onHover (x, y) {
-    var pickingProxy = this.stage.pickingControls.pick(x, y);
-    if (pickingProxy && this.mouse.down.equals(this.mouse.position)) {
-        this.stage.transformComponent = pickingProxy.component;
-        this.stage.transformAtom = pickingProxy.atom;
-    }
-    this.stage.signals.hovered.dispatch(pickingProxy);
-    this.controls.run('hoverPick', pickingProxy);
-};
-PickingBehavior.prototype.dispose = function dispose () {
-    this.mouse.signals.clicked.remove(this._onClick, this);
-    this.mouse.signals.hovered.remove(this._onHover, this);
-};
-
-/**
- * @file Mouse Behavior
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var MouseBehavior = function MouseBehavior(stage) {
-    this.stage = stage;
-    this.stage = stage;
-    this.mouse = stage.mouseObserver;
-    this.controls = stage.mouseControls;
-    this.mouse.signals.moved.add(this._onMove, this);
-    this.mouse.signals.scrolled.add(this._onScroll, this);
-    this.mouse.signals.dragged.add(this._onDrag, this);
-    this.mouse.signals.clicked.add(this._onClick, this);
-    this.mouse.signals.hovered.add(this._onHover, this);
-    this.mouse.signals.doubleClicked.add(this._onDblclick, this);
-};
-MouseBehavior.prototype._onMove = function _onMove ( /* x, y */) {
-    this.stage.tooltip.style.display = 'none';
-};
-MouseBehavior.prototype._onScroll = function _onScroll (delta) {
-    this.controls.run('scroll', delta);
-};
-MouseBehavior.prototype._onDrag = function _onDrag (dx, dy) {
-    this.controls.run('drag', dx, dy);
-};
-MouseBehavior.prototype._onClick = function _onClick (x, y) {
-    this.controls.run('click', x, y);
-};
-MouseBehavior.prototype._onDblclick = function _onDblclick (x, y) {
-    this.controls.run('doubleClick', x, y);
-};
-MouseBehavior.prototype._onHover = function _onHover (x, y) {
-    this.controls.run('hover', x, y);
-};
-MouseBehavior.prototype.dispose = function dispose () {
-    this.mouse.signals.moved.remove(this._onMove, this);
-    this.mouse.signals.scrolled.remove(this._onScroll, this);
-    this.mouse.signals.dragged.remove(this._onDrag, this);
-    this.mouse.signals.clicked.remove(this._onClick, this);
-    this.mouse.signals.hovered.remove(this._onHover, this);
-};
-
-/**
- * @file Animation Behavior
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var AnimationBehavior = function AnimationBehavior(stage) {
-    this.stage = stage;
-    this.viewer = stage.viewer;
-    this.animationControls = stage.animationControls;
-    this.viewer.signals.ticked.add(this._onTick, this);
-};
-AnimationBehavior.prototype._onTick = function _onTick (stats) {
-    this.animationControls.run(stats);
-};
-AnimationBehavior.prototype.dispose = function dispose () {
-    this.viewer.signals.ticked.remove(this._onTick, this);
-};
-
-/**
- * @file Key Behavior
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var passive = SupportsPassiveEventHandler ? { passive: true } : false;
-var KeyBehavior = function KeyBehavior(stage) {
-    this.stage = stage;
-    this.stage = stage;
-    this.controls = stage.keyControls;
-    this.domElement = stage.viewer.renderer.domElement;
-    // ensure the domElement is focusable
-    this.domElement.setAttribute('tabIndex', '-1');
-    this.domElement.style.outline = 'none';
-    this._focusDomElement = this._focusDomElement.bind(this);
-    this._onKeydown = this._onKeydown.bind(this);
-    this._onKeyup = this._onKeyup.bind(this);
-    this._onKeypress = this._onKeypress.bind(this);
-    this.domElement.addEventListener('mousedown', this._focusDomElement);
-    this.domElement.addEventListener('touchstart', this._focusDomElement, passive); // TODO
-    this.domElement.addEventListener('keydown', this._onKeydown);
-    this.domElement.addEventListener('keyup', this._onKeyup);
-    this.domElement.addEventListener('keypress', this._onKeypress);
-};
-/**
- * handle key down
- * @param  {Event} event - key event
- * @return {undefined}
- */
-KeyBehavior.prototype._onKeydown = function _onKeydown ( /* event */) {
-    // console.log( "down", event.keyCode, String.fromCharCode( event.keyCode ) );
-};
-/**
- * handle key up
- * @param  {Event} event - key event
- * @return {undefined}
- */
-KeyBehavior.prototype._onKeyup = function _onKeyup ( /* event */) {
-    // console.log( "up", event.keyCode, String.fromCharCode( event.keyCode ) );
-};
-/**
- * handle key press
- * @param  {Event} event - key event
- * @return {undefined}
- */
-KeyBehavior.prototype._onKeypress = function _onKeypress (event) {
-    // console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
-    var pressedKey;
-    if ("key" in KeyboardEvent.prototype) {
-        pressedKey = event.key;
-        // some mobile browsers don't support this attribute
-    }
-    else {
-        pressedKey = String.fromCharCode(event.which || event.keyCode);
-    }
-    this.controls.run(pressedKey);
-};
-KeyBehavior.prototype._focusDomElement = function _focusDomElement () {
-    this.domElement.focus();
-};
-KeyBehavior.prototype.dispose = function dispose () {
-    this.domElement.removeEventListener('mousedown', this._focusDomElement);
-    this.domElement.removeEventListener('touchstart', this._focusDomElement, passive); // TODO
-    this.domElement.removeEventListener('keydown', this._onKeypress);
-    this.domElement.removeEventListener('keyup', this._onKeypress);
-    this.domElement.removeEventListener('keypress', this._onKeypress);
-};
 
 /**
  * @file Annotation
@@ -28732,6 +28038,2630 @@ ComponentRegistry.add('structure', StructureComponent);
 ComponentRegistry.add('structureview', StructureComponent);
 
 /**
+ * @file Spline
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var Interpolator = function Interpolator(m, tension) {
+    this.m = m;
+    this.tension = tension;
+    this.dt = 1.0 / this.m;
+    this.delta = 0.0001;
+    this.vec1 = new Vector3();
+    this.vec2 = new Vector3();
+    this.vDir = new Vector3();
+    this.vTan = new Vector3();
+    this.vNorm = new Vector3();
+    this.vBin = new Vector3();
+    this.m2 = Math.ceil(this.m / 2);
+};
+Interpolator.prototype.interpolateToArr = function interpolateToArr (v0, v1, v2, v3, t, arr, offset) {
+    arr[offset + 0] = spline(v0.x, v1.x, v2.x, v3.x, t, this.tension);
+    arr[offset + 1] = spline(v0.y, v1.y, v2.y, v3.y, t, this.tension);
+    arr[offset + 2] = spline(v0.z, v1.z, v2.z, v3.z, t, this.tension);
+};
+Interpolator.prototype.interpolateToVec = function interpolateToVec (v0, v1, v2, v3, t, vec) {
+    vec.x = spline(v0.x, v1.x, v2.x, v3.x, t, this.tension);
+    vec.y = spline(v0.y, v1.y, v2.y, v3.y, t, this.tension);
+    vec.z = spline(v0.z, v1.z, v2.z, v3.z, t, this.tension);
+};
+Interpolator.prototype.interpolatePosition = function interpolatePosition (v0, v1, v2, v3, pos, offset) {
+    for (var j = 0; j < this.m; ++j) {
+        var l = offset + j * 3;
+        var d = this.dt * j;
+        this.interpolateToArr(v0, v1, v2, v3, d, pos, l);
+    }
+};
+Interpolator.prototype.interpolateTangent = function interpolateTangent (v0, v1, v2, v3, tan, offset) {
+    for (var j = 0; j < this.m; ++j) {
+        var d = this.dt * j;
+        var d1 = d - this.delta;
+        var d2 = d + this.delta;
+        var l = offset + j * 3;
+        // capping as a precaution
+        if (d1 < 0)
+            { d1 = 0; }
+        if (d2 > 1)
+            { d2 = 1; }
+        //
+        this.interpolateToVec(v0, v1, v2, v3, d1, this.vec1);
+        this.interpolateToVec(v0, v1, v2, v3, d2, this.vec2);
+        //
+        this.vec2.sub(this.vec1).normalize();
+        this.vec2.toArray(tan, l);
+    }
+};
+Interpolator.prototype.vectorSubdivide = function vectorSubdivide (interpolationFn, iterator, array, offset, isCyclic) {
+    var v0;
+    var v1 = iterator.next();
+    var v2 = iterator.next();
+    var v3 = iterator.next();
+    //
+    var n = iterator.size;
+    var n1 = n - 1;
+    var k = offset || 0;
+    for (var i = 0; i < n1; ++i) {
+        v0 = v1;
+        v1 = v2;
+        v2 = v3;
+        v3 = iterator.next();
+        interpolationFn.apply(this, [v0, v1, v2, v3, array, k]);
+        k += 3 * this.m;
+    }
+    if (isCyclic) {
+        v0 = iterator.get(n - 2);
+        v1 = iterator.get(n - 1);
+        v2 = iterator.get(0);
+        v3 = iterator.get(1);
+        interpolationFn.apply(this, [v0, v1, v2, v3, array, k]);
+        k += 3 * this.m;
+    }
+};
+//
+Interpolator.prototype.getPosition = function getPosition (iterator, array, offset, isCyclic) {
+    iterator.reset();
+    this.vectorSubdivide(this.interpolatePosition, iterator, array, offset, isCyclic);
+    var n1 = iterator.size - 1;
+    var k = n1 * this.m * 3;
+    if (isCyclic)
+        { k += this.m * 3; }
+    var v = iterator.get(isCyclic ? 0 : n1);
+    array[k] = v.x;
+    array[k + 1] = v.y;
+    array[k + 2] = v.z;
+};
+Interpolator.prototype.getTangent = function getTangent (iterator, array, offset, isCyclic) {
+    iterator.reset();
+    this.vectorSubdivide(this.interpolateTangent, iterator, array, offset, isCyclic);
+    var n1 = iterator.size - 1;
+    var k = n1 * this.m * 3;
+    if (isCyclic)
+        { k += this.m * 3; }
+    copyArray(array, array, k - 3, k, 3);
+};
+Interpolator.prototype.interpolateNormalDir = function interpolateNormalDir (u0, u1, u2, u3, v0, v1, v2, v3, tan, norm, bin, offset, shift) {
+    for (var j = 0; j < this.m; ++j) {
+        var l = offset + j * 3;
+        if (shift)
+            { l += this.m2 * 3; }
+        var d = this.dt * j;
+        this.interpolateToVec(u0, u1, u2, u3, d, this.vec1);
+        this.interpolateToVec(v0, v1, v2, v3, d, this.vec2);
+        this.vDir.subVectors(this.vec2, this.vec1).normalize();
+        this.vTan.fromArray(tan, l);
+        this.vBin.crossVectors(this.vDir, this.vTan).normalize();
+        this.vBin.toArray(bin, l);
+        this.vNorm.crossVectors(this.vTan, this.vBin).normalize();
+        this.vNorm.toArray(norm, l);
+    }
+};
+Interpolator.prototype.interpolateNormal = function interpolateNormal (vDir, tan, norm, bin, offset) {
+    for (var j = 0; j < this.m; ++j) {
+        var l = offset + j * 3;
+        vDir.copy(this.vNorm);
+        this.vTan.fromArray(tan, l);
+        this.vBin.crossVectors(vDir, this.vTan).normalize();
+        this.vBin.toArray(bin, l);
+        this.vNorm.crossVectors(this.vTan, this.vBin).normalize();
+        this.vNorm.toArray(norm, l);
+    }
+};
+Interpolator.prototype.getNormal = function getNormal (size, tan, norm, bin, offset, isCyclic) {
+    this.vNorm.set(0, 0, 1);
+    var n = size;
+    var n1 = n - 1;
+    var k = offset || 0;
+    for (var i = 0; i < n1; ++i) {
+        this.interpolateNormal(this.vDir, tan, norm, bin, k);
+        k += 3 * this.m;
+    }
+    if (isCyclic) {
+        this.interpolateNormal(this.vDir, tan, norm, bin, k);
+        k += 3 * this.m;
+    }
+    this.vBin.toArray(bin, k);
+    this.vNorm.toArray(norm, k);
+};
+Interpolator.prototype.getNormalDir = function getNormalDir (iterDir1, iterDir2, tan, norm, bin, offset, isCyclic, shift) {
+    iterDir1.reset();
+    iterDir2.reset();
+    //
+    var vSub1 = new Vector3();
+    var vSub2 = new Vector3();
+    var vSub3 = new Vector3();
+    var vSub4 = new Vector3();
+    //
+    var d1v1 = new Vector3();
+    var d1v2 = new Vector3().copy(iterDir1.next());
+    var d1v3 = new Vector3().copy(iterDir1.next());
+    var d1v4 = new Vector3().copy(iterDir1.next());
+    var d2v1 = new Vector3();
+    var d2v2 = new Vector3().copy(iterDir2.next());
+    var d2v3 = new Vector3().copy(iterDir2.next());
+    var d2v4 = new Vector3().copy(iterDir2.next());
+    //
+    this.vNorm.set(0, 0, 1);
+    var n = iterDir1.size;
+    var n1 = n - 1;
+    var k = offset || 0;
+    for (var i = 0; i < n1; ++i) {
+        d1v1.copy(d1v2);
+        d1v2.copy(d1v3);
+        d1v3.copy(d1v4);
+        d1v4.copy(iterDir1.next());
+        d2v1.copy(d2v2);
+        d2v2.copy(d2v3);
+        d2v3.copy(d2v4);
+        d2v4.copy(iterDir2.next());
+        //
+        if (i === 0) {
+            vSub1.subVectors(d2v1, d1v1);
+            vSub2.subVectors(d2v2, d1v2);
+            if (vSub1.dot(vSub2) < 0) {
+                vSub2.multiplyScalar(-1);
+                d2v2.addVectors(d1v2, vSub2);
+            }
+            vSub3.subVectors(d2v3, d1v3);
+            if (vSub2.dot(vSub3) < 0) {
+                vSub3.multiplyScalar(-1);
+                d2v3.addVectors(d1v3, vSub3);
+            }
+        }
+        else {
+            vSub3.copy(vSub4);
+        }
+        vSub4.subVectors(d2v4, d1v4);
+        if (vSub3.dot(vSub4) < 0) {
+            vSub4.multiplyScalar(-1);
+            d2v4.addVectors(d1v4, vSub4);
+        }
+        this.interpolateNormalDir(d1v1, d1v2, d1v3, d1v4, d2v1, d2v2, d2v3, d2v4, tan, norm, bin, k, shift);
+        k += 3 * this.m;
+    }
+    if (isCyclic) {
+        d1v1.copy(iterDir1.get(n - 2));
+        d1v2.copy(iterDir1.get(n - 1));
+        d1v3.copy(iterDir1.get(0));
+        d1v4.copy(iterDir1.get(1));
+        d2v1.copy(iterDir2.get(n - 2));
+        d2v2.copy(iterDir2.get(n - 1));
+        d2v3.copy(iterDir2.get(0));
+        d2v4.copy(iterDir2.get(1));
+        //
+        vSub3.copy(vSub4);
+        vSub4.subVectors(d2v4, d1v4);
+        if (vSub3.dot(vSub4) < 0) {
+            vSub4.multiplyScalar(-1);
+            d2v4.addVectors(d1v4, vSub4);
+        }
+        this.interpolateNormalDir(d1v1, d1v2, d1v3, d1v4, d2v1, d2v2, d2v3, d2v4, tan, norm, bin, k, shift);
+        k += 3 * this.m;
+    }
+    if (shift) {
+        // FIXME shift requires data from one this.more preceeding residue
+        this.vBin.fromArray(bin, this.m2 * 3);
+        this.vNorm.fromArray(norm, this.m2 * 3);
+        for (var j = 0; j < this.m2; ++j) {
+            this.vBin.toArray(bin, j * 3);
+            this.vNorm.toArray(norm, j * 3);
+        }
+    }
+    else {
+        this.vBin.toArray(bin, k);
+        this.vNorm.toArray(norm, k);
+    }
+};
+//
+Interpolator.prototype.interpolateColor = function interpolateColor (item1, item2, colFn, col, offset) {
+    var j, l;
+    for (j = 0; j < this.m2; ++j) {
+        l = offset + j * 3;
+        colFn.apply(this, [item1, col, l]); // itemColorToArray
+    }
+    for (j = this.m2; j < this.m; ++j) {
+        l = offset + j * 3;
+        colFn.apply(this, [item2, col, l]); // itemColorToArray
+    }
+};
+Interpolator.prototype.getColor = function getColor (iterator, colFn, col, offset, isCyclic) {
+    iterator.reset();
+    iterator.next(); // first element not needed
+    var i0;
+    var i1 = iterator.next();
+    //
+    var n = iterator.size;
+    var n1 = n - 1;
+    var k = offset || 0;
+    for (var i = 0; i < n1; ++i) {
+        i0 = i1;
+        i1 = iterator.next();
+        this.interpolateColor(i0, i1, colFn, col, k);
+        k += 3 * this.m;
+    }
+    if (isCyclic) {
+        i0 = iterator.get(n - 1);
+        i1 = iterator.get(0);
+        this.interpolateColor(i0, i1, colFn, col, k);
+        k += 3 * this.m;
+    }
+    //
+    col[k] = col[k - 3];
+    col[k + 1] = col[k - 2];
+    col[k + 2] = col[k - 1];
+};
+//
+Interpolator.prototype.interpolatePicking = function interpolatePicking (item1, item2, pickFn, pick, offset) {
+    var j;
+    for (j = 0; j < this.m2; ++j) {
+        pick[offset + j] = pickFn.apply(this, [item1]);
+    }
+    for (j = this.m2; j < this.m; ++j) {
+        pick[offset + j] = pickFn.apply(this, [item2]);
+    }
+};
+Interpolator.prototype.getPicking = function getPicking (iterator, pickFn, pick, offset, isCyclic) {
+    iterator.reset();
+    iterator.next(); // first element not needed
+    var i0;
+    var i1 = iterator.next();
+    //
+    var n = iterator.size;
+    var n1 = n - 1;
+    var k = offset || 0;
+    for (var i = 0; i < n1; ++i) {
+        i0 = i1;
+        i1 = iterator.next();
+        this.interpolatePicking(i0, i1, pickFn, pick, k);
+        k += this.m;
+    }
+    if (isCyclic) {
+        i0 = iterator.get(n - 1);
+        i1 = iterator.get(0);
+        this.interpolatePicking(i0, i1, pickFn, pick, k);
+        k += this.m;
+    }
+    //
+    pick[k] = pick[k - 1];
+};
+//
+Interpolator.prototype.interpolateSize = function interpolateSize (item1, item2, sizeFn, size, offset) {
+    var s1 = sizeFn.apply(this, [item1]);
+    var s2 = sizeFn.apply(this, [item2]);
+    for (var j = 0; j < this.m; ++j) {
+        // linear interpolation
+        var t = j / this.m;
+        size[offset + j] = (1 - t) * s1 + t * s2;
+    }
+};
+Interpolator.prototype.getSize = function getSize (iterator, sizeFn, size, offset, isCyclic) {
+    iterator.reset();
+    iterator.next(); // first element not needed
+    var i0;
+    var i1 = iterator.next();
+    //
+    var n = iterator.size;
+    var n1 = n - 1;
+    var k = offset || 0;
+    for (var i = 0; i < n1; ++i) {
+        i0 = i1;
+        i1 = iterator.next();
+        this.interpolateSize(i0, i1, sizeFn, size, k);
+        k += this.m;
+    }
+    if (isCyclic) {
+        i0 = iterator.get(n - 1);
+        i1 = iterator.get(0);
+        this.interpolateSize(i0, i1, sizeFn, size, k);
+        k += this.m;
+    }
+    //
+    size[k] = size[k - 1];
+};
+var Spline = function Spline(polymer, params) {
+    this.polymer = polymer;
+    this.size = polymer.residueCount;
+    var p = params || {};
+    this.directional = p.directional || false;
+    this.positionIterator = p.positionIterator || false;
+    this.subdiv = p.subdiv || 1;
+    this.smoothSheet = p.smoothSheet || false;
+    if (!p.tension) {
+        this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
+    }
+    else {
+        this.tension = p.tension;
+    }
+    this.interpolator = new Interpolator(this.subdiv, this.tension);
+};
+Spline.prototype.getAtomIterator = function getAtomIterator (type, smooth) {
+    var polymer = this.polymer;
+    var structure = polymer.structure;
+    var n = polymer.residueCount;
+    var i = 0;
+    var j = -1;
+    var cache = [
+        structure.getAtomProxy(),
+        structure.getAtomProxy(),
+        structure.getAtomProxy(),
+        structure.getAtomProxy()
+    ];
+    var cache2 = [
+        new Vector3(),
+        new Vector3(),
+        new Vector3(),
+        new Vector3()
+    ];
+    function next() {
+        var atomProxy = get(j);
+        j += 1;
+        return atomProxy;
+    }
+    var apPrev = structure.getAtomProxy();
+    var apNext = structure.getAtomProxy();
+    function get(idx) {
+        var atomProxy = cache[i % 4];
+        atomProxy.index = polymer.getAtomIndexByType(idx, type);
+        if (smooth && idx > 0 && idx < n && atomProxy.sstruc === 'e') {
+            var vec = cache2[i % 4];
+            apPrev.index = polymer.getAtomIndexByType(idx + 1, type);
+            apNext.index = polymer.getAtomIndexByType(idx - 1, type);
+            vec.addVectors(apPrev, apNext)
+                .add(atomProxy).add(atomProxy)
+                .multiplyScalar(0.25);
+            i += 1;
+            return vec;
+        }
+        i += 1;
+        return atomProxy;
+    }
+    function reset() {
+        i = 0;
+        j = -1;
+    }
+    return {
+        size: n,
+        next: next,
+        get: get,
+        reset: reset
+    };
+};
+Spline.prototype.getSubdividedColor = function getSubdividedColor (params) {
+    var m = this.subdiv;
+    var polymer = this.polymer;
+    var n = polymer.residueCount;
+    var n1 = n - 1;
+    var nCol = n1 * m * 3 + 3;
+    if (polymer.isCyclic)
+        { nCol += m * 3; }
+    var col = new Float32Array(nCol);
+    var iterator = this.getAtomIterator('trace');
+    var p = params || {};
+    p.structure = polymer.structure;
+    var colormaker = ColormakerRegistry$1.getScheme(p);
+    function colFn(item, array, offset) {
+        colormaker.atomColorToArray(item, array, offset);
+    }
+    this.interpolator.getColor(iterator, colFn, col, 0, polymer.isCyclic);
+    return {
+        'color': col
+    };
+};
+Spline.prototype.getSubdividedPicking = function getSubdividedPicking () {
+    var m = this.subdiv;
+    var polymer = this.polymer;
+    var n = polymer.residueCount;
+    var n1 = n - 1;
+    var nCol = n1 * m + 1;
+    if (polymer.isCyclic)
+        { nCol += m; }
+    var structure = polymer.structure;
+    var iterator = this.getAtomIterator('trace');
+    var pick = new Float32Array(nCol);
+    function pickFn(item) {
+        return item.index;
+    }
+    this.interpolator.getPicking(iterator, pickFn, pick, 0, polymer.isCyclic);
+    return {
+        'picking': new AtomPicker(pick, structure)
+    };
+};
+Spline.prototype.getSubdividedPosition = function getSubdividedPosition () {
+    var pos = this.getPosition();
+    return {
+        'position': pos
+    };
+};
+Spline.prototype.getSubdividedOrientation = function getSubdividedOrientation () {
+    var tan = this.getTangent();
+    var normals = this.getNormals(tan);
+    return {
+        'tangent': tan,
+        'normal': normals.normal,
+        'binormal': normals.binormal
+    };
+};
+Spline.prototype.getSubdividedSize = function getSubdividedSize (params) {
+    var m = this.subdiv;
+    var polymer = this.polymer;
+    var n = polymer.residueCount;
+    var n1 = n - 1;
+    var nSize = n1 * m + 1;
+    if (polymer.isCyclic)
+        { nSize += m; }
+    var size = new Float32Array(nSize);
+    var iterator = this.getAtomIterator('trace');
+    var radiusFactory = new RadiusFactory(params);
+    function sizeFn(item) {
+        return radiusFactory.atomRadius(item);
+    }
+    this.interpolator.getSize(iterator, sizeFn, size, 0, polymer.isCyclic);
+    return {
+        'size': size
+    };
+};
+Spline.prototype.getPosition = function getPosition () {
+    var m = this.subdiv;
+    var polymer = this.polymer;
+    var n = polymer.residueCount;
+    var n1 = n - 1;
+    var nPos = n1 * m * 3 + 3;
+    if (polymer.isCyclic)
+        { nPos += m * 3; }
+    var pos = new Float32Array(nPos);
+    var iterator = this.positionIterator || this.getAtomIterator('trace', this.smoothSheet);
+    this.interpolator.getPosition(iterator, pos, 0, polymer.isCyclic);
+    return pos;
+};
+Spline.prototype.getTangent = function getTangent () {
+    var m = this.subdiv;
+    var polymer = this.polymer;
+    var n = this.size;
+    var n1 = n - 1;
+    var nTan = n1 * m * 3 + 3;
+    if (polymer.isCyclic)
+        { nTan += m * 3; }
+    var tan = new Float32Array(nTan);
+    var iterator = this.positionIterator || this.getAtomIterator('trace', this.smoothSheet);
+    this.interpolator.getTangent(iterator, tan, 0, polymer.isCyclic);
+    return tan;
+};
+Spline.prototype.getNormals = function getNormals (tan) {
+    var m = this.subdiv;
+    var polymer = this.polymer;
+    var isProtein = polymer.isProtein();
+    var n = this.size;
+    var n1 = n - 1;
+    var nNorm = n1 * m * 3 + 3;
+    if (polymer.isCyclic)
+        { nNorm += m * 3; }
+    var norm = new Float32Array(nNorm);
+    var bin = new Float32Array(nNorm);
+    if (this.directional && !this.polymer.isCg()) {
+        var iterDir1 = this.getAtomIterator('direction1');
+        var iterDir2 = this.getAtomIterator('direction2');
+        this.interpolator.getNormalDir(iterDir1, iterDir2, tan, norm, bin, 0, polymer.isCyclic, isProtein);
+    }
+    else {
+        this.interpolator.getNormal(n, tan, norm, bin, 0, polymer.isCyclic);
+    }
+    return {
+        'normal': norm,
+        'binormal': bin
+    };
+};
+
+/**
+ * @file Structure Representation
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+/**
+ * Structure representation
+ * @interface
+ */
+var StructureRepresentation = /*@__PURE__*/(function (Representation$$1) {
+    function StructureRepresentation(structure, viewer, params) {
+        var p = params || {};
+        Representation$$1.call(this, structure, viewer, p);
+        this.type = 'structure';
+        this.parameters = Object.assign({
+            radiusType: {
+                type: 'select', options: RadiusFactory.types
+            },
+            radiusData: {
+                type: 'hidden'
+            },
+            radiusSize: {
+                type: 'number', precision: 3, max: 10.0, min: 0.001
+            },
+            radiusScale: {
+                type: 'number', precision: 3, max: 10.0, min: 0.001
+            },
+            assembly: null,
+            defaultAssembly: {
+                type: 'hidden'
+            }
+        }, this.parameters);
+        /**
+         * @type {Selection}
+         * @private
+         */
+        this.selection = new Selection(p.sele);
+        /**
+         * @type {Array}
+         * @private
+         */
+        this.dataList = [];
+        /**
+         * @type {Structure}
+         */
+        this.structure = structure;
+        /**
+         * @type {StructureView}
+         */
+        this.structureView = this.structure.getView(this.selection);
+        if (structure.biomolDict) {
+            var biomolOptions = {
+                'default': 'default',
+                '': (structure.unitcell ? 'AU' : 'FULL')
+            };
+            Object.keys(structure.biomolDict).forEach(function (k) {
+                biomolOptions[k] = k;
+            });
+            this.parameters.assembly = {
+                type: 'select',
+                options: biomolOptions,
+                rebuild: true
+            };
+        }
+        else {
+            this.parameters.assembly = null;
+        }
+    }
+
+    if ( Representation$$1 ) StructureRepresentation.__proto__ = Representation$$1;
+    StructureRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
+    StructureRepresentation.prototype.constructor = StructureRepresentation;
+
+    var prototypeAccessors = { defaultScale: { configurable: true } };
+    prototypeAccessors.defaultScale.get = function () {
+        return {
+            'vdw': 1.0,
+            'covalent': 1.0,
+            'bfactor': 0.01,
+            'sstruc': 1.0
+        };
+    };
+    StructureRepresentation.prototype.init = function init (params) {
+        var this$1 = this;
+
+        var p = params || {};
+        p.colorScheme = defaults(p.colorScheme, 'element');
+        this.setRadius(p.radius, p);
+        this.radiusType = defaults(p.radiusType, 'vdw');
+        this.radiusData = defaults(p.radiusData, {});
+        this.radiusSize = defaults(p.radiusSize, 1.0);
+        this.radiusScale = defaults(p.radiusScale, 1.0);
+        this.assembly = defaults(p.assembly, 'default');
+        this.defaultAssembly = defaults(p.defaultAssembly, '');
+        if (p.quality === 'auto') {
+            p.quality = this.getQuality();
+        }
+        Representation$$1.prototype.init.call(this, p);
+        this.selection.signals.stringChanged.add(function ( /* sele */) {
+            this$1.build();
+        });
+        this.build();
+    };
+    StructureRepresentation.prototype.setRadius = function setRadius (value, p) {
+        var types = Object.keys(RadiusFactoryTypes);
+        if (typeof value === 'string' && types.includes(value.toLowerCase())) {
+            p.radiusType = value;
+        }
+        else if (value !== undefined) {
+            p.radiusType = 'size';
+            p.radiusSize = value;
+        }
+        return this;
+    };
+    StructureRepresentation.prototype.getAssembly = function getAssembly () {
+        var name = this.assembly === 'default' ? this.defaultAssembly : this.assembly;
+        return this.structure.biomolDict[name];
+    };
+    StructureRepresentation.prototype.getQuality = function getQuality () {
+        var atomCount;
+        var s = this.structureView;
+        var assembly = this.getAssembly();
+        if (assembly) {
+            atomCount = assembly.getAtomCount(s);
+        }
+        else {
+            atomCount = s.atomCount;
+        }
+        if (Mobile) {
+            atomCount *= 4;
+        }
+        var backboneOnly = s.atomStore.count / s.residueStore.count < 2;
+        if (backboneOnly) {
+            atomCount *= 10;
+        }
+        if (atomCount < 15000) {
+            return 'high';
+        }
+        else if (atomCount < 80000) {
+            return 'medium';
+        }
+        else {
+            return 'low';
+        }
+    };
+    StructureRepresentation.prototype.create = function create () {
+        var this$1 = this;
+
+        if (this.structureView.atomCount === 0)
+            { return; }
+        if (!this.structureView.hasCoords()) {
+            this.needsBuild = true;
+            return;
+        }
+        else {
+            this.needsBuild = false;
+        }
+        var assembly = this.getAssembly();
+        if (assembly) {
+            assembly.partList.forEach(function (part, i) {
+                var sview = part.getView(this$1.structureView);
+                if (sview.atomCount === 0)
+                    { return; }
+                var data = this$1.createData(sview, i);
+                if (data) {
+                    data.sview = sview;
+                    data.instanceList = part.getInstanceList();
+                    this$1.dataList.push(data);
+                }
+            });
+        }
+        else {
+            var data = this.createData(this.structureView, 0);
+            if (data) {
+                data.sview = this.structureView;
+                this.dataList.push(data);
+            }
+        }
+    };
+    StructureRepresentation.prototype.update = function update (what) {
+        var this$1 = this;
+
+        if (this.lazy && !this.visible) {
+            Object.assign(this.lazyProps.what, what);
+            return;
+        }
+        if (this.needsBuild) {
+            this.build();
+            return;
+        }
+        this.dataList.forEach(function (data) {
+            if (data.bufferList.length > 0) {
+                this$1.updateData(what, data);
+            }
+        }, this);
+    };
+    StructureRepresentation.prototype.updateData = function updateData (what, data) {
+        this.build();
+    };
+    StructureRepresentation.prototype.getColorParams = function getColorParams () {
+        return Object.assign(Object.assign({}, Representation$$1.prototype.getColorParams.call(this)), { structure: this.structure });
+    };
+    StructureRepresentation.prototype.getRadiusParams = function getRadiusParams (param) {
+        return {
+            type: this.radiusType,
+            scale: this.radiusScale,
+            size: this.radiusSize,
+            data: this.radiusData
+        };
+    };
+    StructureRepresentation.prototype.getAtomParams = function getAtomParams (what, params) {
+        return Object.assign({
+            what: what,
+            colorParams: this.getColorParams(),
+            radiusParams: this.getRadiusParams()
+        }, params);
+    };
+    StructureRepresentation.prototype.getBondParams = function getBondParams (what, params) {
+        return Object.assign({
+            what: what,
+            colorParams: this.getColorParams(),
+            radiusParams: this.getRadiusParams()
+        }, params);
+    };
+    StructureRepresentation.prototype.getAtomRadius = function getAtomRadius (atom) {
+        if (this.structureView.atomSet.isSet(atom.index)) {
+            var radiusFactory = new RadiusFactory(this.getRadiusParams());
+            return radiusFactory.atomRadius(atom);
+        }
+        return 0;
+    };
+    /**
+     * Set representation parameters
+     * @alias StructureRepresentation#setSelection
+     * @param {String} string - selection string, see {@tutorial selection-language}
+     * @param {Boolean} [silent] - don't trigger a change event in the selection
+     * @return {StructureRepresentation} this object
+     */
+    StructureRepresentation.prototype.setSelection = function setSelection (string, silent) {
+        this.selection.setString(string, silent);
+        return this;
+    };
+    /**
+     * Set representation parameters
+     * @alias StructureRepresentation#setParameters
+     * @param {StructureRepresentationParameters} params - structure parameter object
+     * @param {Object} [what] - buffer data attributes to be updated,
+     *                        note that this needs to be implemented in the
+     *                        derived classes. Generally it allows more
+     *                        fine-grained control over updating than
+     *                        forcing a rebuild.
+     * @param {Boolean} what.position - update position data
+     * @param {Boolean} what.color - update color data
+     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+     * @return {StructureRepresentation} this object
+     */
+    StructureRepresentation.prototype.setParameters = function setParameters (params, what, rebuild) {
+        if ( what === void 0 ) what = {};
+        if ( rebuild === void 0 ) rebuild = false;
+
+        var p = params || {};
+        this.setRadius(p.radius, p);
+        if (p.radiusType !== undefined || p.radiusData !== undefined || p.radiusSize !== undefined || p.radiusScale !== undefined) {
+            what.radius = true;
+            if (!ExtensionFragDepth || this.disableImpostor) {
+                rebuild = true;
+            }
+        }
+        if (p.defaultAssembly !== undefined &&
+            p.defaultAssembly !== this.defaultAssembly &&
+            ((this.assembly === 'default' && p.assembly === undefined) ||
+                p.assembly === 'default')) {
+            rebuild = true;
+        }
+        Representation$$1.prototype.setParameters.call(this, p, what, rebuild);
+        return this;
+    };
+    StructureRepresentation.prototype.getParameters = function getParameters () {
+        var params = Object.assign(Representation$$1.prototype.getParameters.call(this), {
+            sele: this.selection ? this.selection.string : undefined,
+            defaultAssembly: this.defaultAssembly
+        });
+        return params;
+    };
+    StructureRepresentation.prototype.attach = function attach (callback) {
+        var viewer = this.viewer;
+        var bufferList = this.bufferList;
+        this.dataList.forEach(function (data) {
+            data.bufferList.forEach(function (buffer) {
+                bufferList.push(buffer);
+                viewer.add(buffer, data.instanceList);
+            });
+        });
+        this.setVisibility(this.visible);
+        callback();
+    };
+    StructureRepresentation.prototype.clear = function clear () {
+        this.dataList.length = 0;
+        Representation$$1.prototype.clear.call(this);
+    };
+    StructureRepresentation.prototype.dispose = function dispose () {
+        this.structureView.dispose();
+        delete this.structure;
+        delete this.structureView;
+        Representation$$1.prototype.dispose.call(this);
+    };
+
+    Object.defineProperties( StructureRepresentation.prototype, prototypeAccessors );
+
+    return StructureRepresentation;
+}(Representation));
+
+/**
+ * @file Tube Mesh Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var vTangent = new Vector3();
+var vMeshNormal = new Vector3();
+var TubeMeshBufferDefaultParameters = Object.assign({
+    radialSegments: 4,
+    capped: false,
+    aspectRatio: 1.0
+}, BufferDefaultParameters);
+function getData$1(data, params) {
+    if ( params === void 0 ) params = {};
+
+    var radialSegments = defaults(params.radialSegments, 4);
+    var capped = defaults(params.capped, false);
+    var capVertices = capped ? radialSegments : 0;
+    var capTriangles = capped ? radialSegments - 2 : 0;
+    var n = data.position.length / 3;
+    var n1 = n - 1;
+    var x = n * radialSegments * 3 + 2 * capVertices * 3;
+    var xi = n1 * 2 * radialSegments * 3 + 2 * capTriangles * 3;
+    return {
+        position: new Float32Array(x),
+        color: new Float32Array(x),
+        index: getUintArray(xi, x / 3),
+        normal: new Float32Array(x),
+        picking: data.picking
+    };
+}
+/**
+ * Tube mesh buffer. Draws a tube.
+ */
+var TubeMeshBuffer = /*@__PURE__*/(function (MeshBuffer$$1) {
+    function TubeMeshBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        MeshBuffer$$1.call(this, getData$1(data, params), params);
+        this.capVertices = this.parameters.capped ? this.parameters.radialSegments : 0;
+        this.capTriangles = this.parameters.capped ? this.parameters.radialSegments - 2 : 0;
+        this.size2 = data.position.length / 3;
+        data.primitiveId = serialArray(this.size2);
+        this.setAttributes(data);
+        this.makeIndex();
+    }
+
+    if ( MeshBuffer$$1 ) TubeMeshBuffer.__proto__ = MeshBuffer$$1;
+    TubeMeshBuffer.prototype = Object.create( MeshBuffer$$1 && MeshBuffer$$1.prototype );
+    TubeMeshBuffer.prototype.constructor = TubeMeshBuffer;
+
+    var prototypeAccessors = { defaultParameters: { configurable: true } };
+    prototypeAccessors.defaultParameters.get = function () { return TubeMeshBufferDefaultParameters; };
+    TubeMeshBuffer.prototype.setAttributes = function setAttributes (data) {
+        if ( data === void 0 ) data = {};
+
+        var aspectRatio = this.parameters.aspectRatio;
+        var n = this.size2;
+        var n1 = n - 1;
+        var radialSegments = this.parameters.radialSegments;
+        var attributes = this.geometry.attributes;
+        var position, normal, binormal, tangent, color, size, primitiveId;
+        var meshPosition, meshColor, meshNormal, meshPrimitiveId;
+        if (data.position) {
+            position = data.position;
+            normal = data.normal;
+            binormal = data.binormal;
+            tangent = data.tangent;
+            size = data.size;
+            meshPosition = attributes.position.array;
+            meshNormal = attributes.normal.array;
+            attributes.position.needsUpdate = true;
+            attributes.normal.needsUpdate = true;
+        }
+        if (data.color) {
+            color = data.color;
+            meshColor = attributes.color.array;
+            attributes.color.needsUpdate = true;
+        }
+        if (data.primitiveId) {
+            primitiveId = data.primitiveId;
+            meshPrimitiveId = attributes.primitiveId.array;
+            attributes.primitiveId.needsUpdate = true;
+        }
+        var k, l;
+        var radius = 0;
+        var normX = 0;
+        var normY = 0;
+        var normZ = 0;
+        var biX = 0;
+        var biY = 0;
+        var biZ = 0;
+        var posX = 0;
+        var posY = 0;
+        var posZ = 0;
+        var cxArr = [];
+        var cyArr = [];
+        var cx1Arr = [];
+        var cy1Arr = [];
+        var cx2Arr = [];
+        var cy2Arr = [];
+        if (position) {
+            for (var j = 0; j < radialSegments; ++j) {
+                var v = (j / radialSegments) * 2 * Math.PI;
+                cxArr[j] = aspectRatio * Math.cos(v);
+                cyArr[j] = Math.sin(v);
+                cx1Arr[j] = aspectRatio * Math.cos(v - 0.01);
+                cy1Arr[j] = Math.sin(v - 0.01);
+                cx2Arr[j] = aspectRatio * Math.cos(v + 0.01);
+                cy2Arr[j] = Math.sin(v + 0.01);
+            }
+        }
+        for (var i = 0; i < n; ++i) {
+            k = i * 3;
+            l = k * radialSegments;
+            if (position && tangent && normal && binormal && size) {
+                vTangent.set(tangent[k], tangent[k + 1], tangent[k + 2]);
+                normX = normal[k];
+                normY = normal[k + 1];
+                normZ = normal[k + 2];
+                biX = binormal[k];
+                biY = binormal[k + 1];
+                biZ = binormal[k + 2];
+                posX = position[k];
+                posY = position[k + 1];
+                posZ = position[k + 2];
+                radius = size[i];
+            }
+            for (var j$1 = 0; j$1 < radialSegments; ++j$1) {
+                var s = l + j$1 * 3;
+                if (position) {
+                    var cx = -radius * cxArr[j$1]; // TODO: Hack: Negating it so it faces outside.
+                    var cy = radius * cyArr[j$1];
+                    var cx1 = -radius * cx1Arr[j$1];
+                    var cy1 = radius * cy1Arr[j$1];
+                    var cx2 = -radius * cx2Arr[j$1];
+                    var cy2 = radius * cy2Arr[j$1];
+                    meshPosition[s] = posX + cx * normX + cy * biX;
+                    meshPosition[s + 1] = posY + cx * normY + cy * biY;
+                    meshPosition[s + 2] = posZ + cx * normZ + cy * biZ;
+                    // TODO half of these are symmetric
+                    vMeshNormal.set(
+                    // ellipse tangent approximated as vector from/to adjacent points
+                    (cx2 * normX + cy2 * biX) - (cx1 * normX + cy1 * biX), (cx2 * normY + cy2 * biY) - (cx1 * normY + cy1 * biY), (cx2 * normZ + cy2 * biZ) - (cx1 * normZ + cy1 * biZ)).cross(vTangent);
+                    meshNormal[s] = vMeshNormal.x;
+                    meshNormal[s + 1] = vMeshNormal.y;
+                    meshNormal[s + 2] = vMeshNormal.z;
+                }
+                if (color) {
+                    meshColor[s] = color[k];
+                    meshColor[s + 1] = color[k + 1];
+                    meshColor[s + 2] = color[k + 2];
+                }
+                if (primitiveId) {
+                    meshPrimitiveId[i * radialSegments + j$1] = primitiveId[i];
+                }
+            }
+        }
+        // front cap
+        k = 0;
+        l = n * 3 * radialSegments;
+        for (var j$2 = 0; j$2 < radialSegments; ++j$2) {
+            var s$1 = k + j$2 * 3;
+            var t = l + j$2 * 3;
+            if (position && tangent) {
+                meshPosition[t] = meshPosition[s$1];
+                meshPosition[t + 1] = meshPosition[s$1 + 1];
+                meshPosition[t + 2] = meshPosition[s$1 + 2];
+                meshNormal[t] = tangent[k];
+                meshNormal[t + 1] = tangent[k + 1];
+                meshNormal[t + 2] = tangent[k + 2];
+            }
+            if (color) {
+                meshColor[t] = meshColor[s$1];
+                meshColor[t + 1] = meshColor[s$1 + 1];
+                meshColor[t + 2] = meshColor[s$1 + 2];
+            }
+            if (primitiveId) {
+                meshPrimitiveId[n * radialSegments + j$2] = meshPrimitiveId[0 + j$2];
+            }
+        }
+        // back cap
+        k = (n - 1) * 3 * radialSegments;
+        l = (n + 1) * 3 * radialSegments;
+        for (var j$3 = 0; j$3 < radialSegments; ++j$3) {
+            var s$2 = k + j$3 * 3;
+            var t$1 = l + j$3 * 3;
+            if (position && tangent) {
+                meshPosition[t$1] = meshPosition[s$2];
+                meshPosition[t$1 + 1] = meshPosition[s$2 + 1];
+                meshPosition[t$1 + 2] = meshPosition[s$2 + 2];
+                meshNormal[t$1] = tangent[n1 * 3];
+                meshNormal[t$1 + 1] = tangent[n1 * 3 + 1];
+                meshNormal[t$1 + 2] = tangent[n1 * 3 + 2];
+            }
+            if (color) {
+                meshColor[t$1] = meshColor[s$2];
+                meshColor[t$1 + 1] = meshColor[s$2 + 1];
+                meshColor[t$1 + 2] = meshColor[s$2 + 2];
+            }
+            if (primitiveId) {
+                meshPrimitiveId[(n + 1) * radialSegments + j$3] = meshPrimitiveId[(n - 1) * radialSegments + j$3];
+            }
+        }
+    };
+    TubeMeshBuffer.prototype.makeIndex = function makeIndex () {
+        var index = this.geometry.getIndex();
+        if (!index) {
+            Log.error('Index is null');
+            return;
+        }
+        var meshIndex = index.array;
+        var n = this.size2;
+        var n1 = n - 1;
+        var capTriangles = this.capTriangles;
+        var radialSegments = this.parameters.radialSegments;
+        var radialSegments1 = this.parameters.radialSegments + 1;
+        var k, l;
+        for (var i = 0; i < n1; ++i) {
+            var k$1 = i * radialSegments * 3 * 2;
+            var irs = i * radialSegments;
+            var irs1 = (i + 1) * radialSegments;
+            for (var j = 0; j < radialSegments; ++j) {
+                l = k$1 + j * 3 * 2;
+                // meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
+                meshIndex[l] = irs + j;
+                meshIndex[l + 1] = irs + ((j + 1) % radialSegments);
+                // meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
+                meshIndex[l + 2] = irs1 + j;
+                // meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
+                meshIndex[l + 3] = irs1 + j;
+                meshIndex[l + 4] = irs + ((j + 1) % radialSegments);
+                meshIndex[l + 5] = irs1 + ((j + 1) % radialSegments);
+            }
+        }
+        // capping
+        var strip = [0];
+        for (var j$1 = 1; j$1 < radialSegments1 / 2; ++j$1) {
+            strip.push(j$1);
+            if (radialSegments - j$1 !== j$1) {
+                strip.push(radialSegments - j$1);
+            }
+        }
+        // front cap
+        l = n1 * radialSegments * 3 * 2;
+        k = n * radialSegments;
+        for (var j$2 = 0; j$2 < strip.length - 2; ++j$2) {
+            if (j$2 % 2 === 0) {
+                meshIndex[l + j$2 * 3 + 0] = k + strip[j$2 + 0];
+                meshIndex[l + j$2 * 3 + 1] = k + strip[j$2 + 1];
+                meshIndex[l + j$2 * 3 + 2] = k + strip[j$2 + 2];
+            }
+            else {
+                meshIndex[l + j$2 * 3 + 0] = k + strip[j$2 + 2];
+                meshIndex[l + j$2 * 3 + 1] = k + strip[j$2 + 1];
+                meshIndex[l + j$2 * 3 + 2] = k + strip[j$2 + 0];
+            }
+        }
+        // back cap
+        l = n1 * radialSegments * 3 * 2 + 3 * capTriangles;
+        k = n * radialSegments + radialSegments;
+        for (var j$3 = 0; j$3 < strip.length - 2; ++j$3) {
+            if (j$3 % 2 === 0) {
+                meshIndex[l + j$3 * 3 + 0] = k + strip[j$3 + 0];
+                meshIndex[l + j$3 * 3 + 1] = k + strip[j$3 + 1];
+                meshIndex[l + j$3 * 3 + 2] = k + strip[j$3 + 2];
+            }
+            else {
+                meshIndex[l + j$3 * 3 + 0] = k + strip[j$3 + 2];
+                meshIndex[l + j$3 * 3 + 1] = k + strip[j$3 + 1];
+                meshIndex[l + j$3 * 3 + 2] = k + strip[j$3 + 0];
+            }
+        }
+    };
+
+    Object.defineProperties( TubeMeshBuffer.prototype, prototypeAccessors );
+
+    return TubeMeshBuffer;
+}(MeshBuffer));
+
+/**
+ * @file Cartoon Representation
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+/**
+ * Cartoon representation. Show a thick ribbon that
+ * smoothly connecting backbone atoms in polymers.
+ *
+ * __Name:__ _cartoon_
+ *
+ * @example
+ * stage.loadFile( "rcsb://1crn" ).then( function( o ){
+ *     o.addRepresentation( "cartoon" );
+ *     o.autoView();
+ * } );
+ */
+var CartoonRepresentation = /*@__PURE__*/(function (StructureRepresentation$$1) {
+    function CartoonRepresentation(structure, viewer, params) {
+        StructureRepresentation$$1.call(this, structure, viewer, params);
+        this.type = 'cartoon';
+        this.parameters = Object.assign({
+            aspectRatio: {
+                type: 'number', precision: 1, max: 10.0, min: 1.0, rebuild: true
+            },
+            subdiv: {
+                type: 'integer', max: 50, min: 1, rebuild: true
+            },
+            radialSegments: {
+                type: 'integer', max: 50, min: 1, rebuild: true
+            },
+            tension: {
+                type: 'number', precision: 1, max: 1.0, min: 0.1
+            },
+            capped: {
+                type: 'boolean', rebuild: true
+            },
+            smoothSheet: {
+                type: 'boolean', rebuild: true
+            }
+        }, this.parameters);
+        this.init(params);
+    }
+
+    if ( StructureRepresentation$$1 ) CartoonRepresentation.__proto__ = StructureRepresentation$$1;
+    CartoonRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    CartoonRepresentation.prototype.constructor = CartoonRepresentation;
+    CartoonRepresentation.prototype.init = function init (params) {
+        var p = params || {};
+        p.colorScheme = defaults(p.colorScheme, 'chainname');
+        p.colorScale = defaults(p.colorScale, 'RdYlBu');
+        p.radiusType = defaults(p.radiusType, 'sstruc');
+        p.radiusScale = defaults(p.radiusScale, 0.7);
+        p.useInteriorColor = defaults(p.useInteriorColor, true);
+        this.aspectRatio = defaults(p.aspectRatio, 5.0);
+        this.tension = defaults(p.tension, NaN);
+        this.capped = defaults(p.capped, true);
+        this.smoothSheet = defaults(p.smoothSheet, false);
+        if (p.quality === 'low') {
+            this.subdiv = 3;
+            this.radialSegments = 6;
+        }
+        else if (p.quality === 'medium') {
+            this.subdiv = 6;
+        }
+        else if (p.quality === 'high') {
+            this.subdiv = 12;
+        }
+        else {
+            this.subdiv = defaults(p.subdiv, 6);
+        }
+        StructureRepresentation$$1.prototype.init.call(this, p);
+    };
+    CartoonRepresentation.prototype.getSplineParams = function getSplineParams (params) {
+        return Object.assign({
+            subdiv: this.subdiv,
+            tension: this.tension,
+            directional: this.aspectRatio !== 1.0,
+            smoothSheet: this.smoothSheet
+        }, params);
+    };
+    CartoonRepresentation.prototype.getSpline = function getSpline (polymer) {
+        return new Spline(polymer, this.getSplineParams());
+    };
+    CartoonRepresentation.prototype.getAspectRatio = function getAspectRatio (polymer) {
+        return polymer.isCg() ? 1.0 : this.aspectRatio;
+    };
+    CartoonRepresentation.prototype.getAtomRadius = function getAtomRadius (atom) {
+        return atom.isTrace() ? StructureRepresentation$$1.prototype.getAtomRadius.call(this, atom) : 0;
+    };
+    CartoonRepresentation.prototype.createData = function createData (sview) {
+        var this$1 = this;
+
+        var bufferList = [];
+        var polymerList = [];
+        this.structure.eachPolymer(function (polymer) {
+            if (polymer.residueCount < 4)
+                { return; }
+            polymerList.push(polymer);
+            var spline = this$1.getSpline(polymer);
+            var aspectRatio = this$1.getAspectRatio(polymer);
+            var subPos = spline.getSubdividedPosition();
+            var subOri = spline.getSubdividedOrientation();
+            var subCol = spline.getSubdividedColor(this$1.getColorParams());
+            var subPick = spline.getSubdividedPicking();
+            var subSize = spline.getSubdividedSize(this$1.getRadiusParams());
+            bufferList.push(new TubeMeshBuffer(Object.assign({}, subPos, subOri, subCol, subPick, subSize), this$1.getBufferParams({
+                radialSegments: this$1.radialSegments,
+                aspectRatio: aspectRatio,
+                capped: this$1.capped
+            })));
+        }, sview.getSelection());
+        return {
+            bufferList: bufferList,
+            polymerList: polymerList
+        };
+    };
+    CartoonRepresentation.prototype.updateData = function updateData (what, data) {
+        if (Debug)
+            { Log.time(this.type + ' repr update'); }
+        what = what || {};
+        for (var i = 0, il = data.polymerList.length; i < il; ++i) {
+            var bufferData = {};
+            var polymer = data.polymerList[i];
+            var spline = this.getSpline(polymer);
+            var aspectRatio = this.getAspectRatio(polymer);
+            Object.assign(data.bufferList[i], { aspectRatio: aspectRatio });
+            if (what.position || what.radius) {
+                var subPos = spline.getSubdividedPosition();
+                var subOri = spline.getSubdividedOrientation();
+                var subSize = spline.getSubdividedSize(this.getRadiusParams(aspectRatio));
+                bufferData.position = subPos.position;
+                bufferData.normal = subOri.normal;
+                bufferData.binormal = subOri.binormal;
+                bufferData.tangent = subOri.tangent;
+                bufferData.size = subSize.size;
+            }
+            if (what.color) {
+                var subCol = spline.getSubdividedColor(this.getColorParams());
+                bufferData.color = subCol.color;
+            }
+            if (what.picking) {
+                var subPick = spline.getSubdividedPicking();
+                bufferData.picking = subPick.picking;
+            }
+            data.bufferList[i].setAttributes(bufferData);
+        }
+        if (Debug)
+            { Log.timeEnd(this.type + ' repr update'); }
+    };
+    CartoonRepresentation.prototype.setParameters = function setParameters (params) {
+        var rebuild = false;
+        var what = {};
+        if (params && params.aspectRatio) {
+            what.radius = true;
+        }
+        if (params && params.tension) {
+            what.position = true;
+        }
+        StructureRepresentation$$1.prototype.setParameters.call(this, params, what, rebuild);
+        return this;
+    };
+
+    return CartoonRepresentation;
+}(StructureRepresentation));
+RepresentationRegistry.add('cartoon', CartoonRepresentation);
+
+/**
+ * @file Cylinder Geometry Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var scale$2 = new Vector3();
+var eye = new Vector3();
+var target = new Vector3();
+var up = new Vector3(0, 1, 0);
+var CylinderGeometryBufferDefaultParameters = Object.assign({
+    radialSegments: 1,
+    openEnded: true
+}, BufferDefaultParameters);
+function getData$2(data, params) {
+    if ( params === void 0 ) params = {};
+
+    var geo = getGeo(params);
+    var n = data.position1.length;
+    var geoLength = geo.attributes.position.array.length / 3;
+    var count = n / 3;
+    var primitiveId = new Float32Array(count * 2 * geoLength);
+    serialBlockArray(count, geoLength, 0, primitiveId);
+    serialBlockArray(count, geoLength, count * geoLength, primitiveId);
+    var position = new Float32Array(n * 2);
+    var color = new Float32Array(n * 2);
+    return {
+        position: position, color: color, primitiveId: primitiveId, picking: data.picking
+    };
+}
+function getGeo(params) {
+    if ( params === void 0 ) params = {};
+
+    var radialSegments = defaults(params.radialSegments, 10);
+    var openEnded = defaults(params.openEnded, true);
+    var matrix = new Matrix4().makeRotationX(Math.PI / 2);
+    var geo = new CylinderBufferGeometry(1, // radiusTop,
+    1, // radiusBottom,
+    1, // height,
+    radialSegments, // radialSegments,
+    1, // heightSegments,
+    openEnded // openEnded
+    );
+    geo.applyMatrix4(matrix);
+    return geo;
+}
+/**
+ * Cylinder geometry buffer.
+ *
+ * @example
+ * var cylinderGeometryBuffer = new CylinderGeometryBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 1, 1, 1 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
+ */
+var CylinderGeometryBuffer = /*@__PURE__*/(function (GeometryBuffer$$1) {
+    function CylinderGeometryBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        GeometryBuffer$$1.call(this, getData$2(data, params), params, getGeo(params));
+        this.updateNormals = true;
+        var n = data.position1.length;
+        var m = data.radius.length;
+        this.__center = new Float32Array(n);
+        this._position = new Float32Array(n * 2);
+        this._color = new Float32Array(n * 2);
+        this._from = new Float32Array(n * 2);
+        this._to = new Float32Array(n * 2);
+        this._radius = new Float32Array(m * 2);
+        this.setAttributes(data, true);
+    }
+
+    if ( GeometryBuffer$$1 ) CylinderGeometryBuffer.__proto__ = GeometryBuffer$$1;
+    CylinderGeometryBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
+    CylinderGeometryBuffer.prototype.constructor = CylinderGeometryBuffer;
+
+    var prototypeAccessors = { defaultParameters: { configurable: true } };
+    prototypeAccessors.defaultParameters.get = function () { return CylinderGeometryBufferDefaultParameters; };
+    CylinderGeometryBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
+        eye.fromArray(this._from, i3);
+        target.fromArray(this._to, i3);
+        matrix.lookAt(eye, target, up);
+        var r = this._radius[i];
+        scale$2.set(r, r, eye.distanceTo(target));
+        matrix.scale(scale$2);
+    };
+    CylinderGeometryBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
+        if ( data === void 0 ) data = {};
+
+        var meshData = {};
+        if (data.position1 && data.position2) {
+            calculateCenterArray(data.position1, data.position2, this.__center);
+            calculateCenterArray(data.position1, this.__center, this._position);
+            calculateCenterArray(this.__center, data.position2, this._position, data.position1.length);
+            this._from.set(data.position1);
+            this._from.set(this.__center, data.position1.length);
+            this._to.set(this.__center);
+            this._to.set(data.position2, this.__center.length);
+            meshData.position = this._position;
+        }
+        if (data.color && data.color2) {
+            this._color.set(data.color);
+            this._color.set(data.color2, data.color.length);
+            meshData.color = this._color;
+        }
+        if (data.radius) {
+            this._radius.set(data.radius);
+            this._radius.set(data.radius, data.radius.length);
+            meshData.radius = this._radius;
+        }
+        GeometryBuffer$$1.prototype.setAttributes.call(this, meshData, initNormals);
+    };
+
+    Object.defineProperties( CylinderGeometryBuffer.prototype, prototypeAccessors );
+
+    return CylinderGeometryBuffer;
+}(GeometryBuffer));
+
+ShaderRegistry.add('shader/CylinderImpostor.vert', "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\r\n//\r\n// All Rights Reserved\r\n//\r\n// Permission to use, copy, modify, distribute, and distribute modified\r\n// versions of this software and its built-in documentation for any\r\n// purpose and without fee is hereby granted, provided that the above\r\n// copyright notice appears in all copies and that both the copyright\r\n// notice and this permission notice appear in supporting documentation,\r\n// and that the name of Schrodinger, LLC not be used in advertising or\r\n// publicity pertaining to distribution of the software without specific,\r\n// written prior permission.\r\n//\r\n// SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\r\n// INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\r\n// NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\r\n// CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\r\n// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\r\n// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\r\n// USE OR PERFORMANCE OF THIS SOFTWARE.\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n// - shift\r\n\r\nattribute vec3 mapping;\r\nattribute vec3 position1;\r\nattribute vec3 position2;\r\nattribute float radius;\r\n\r\nvarying vec3 axis;\r\nvarying vec4 base_radius;\r\nvarying vec4 end_b;\r\nvarying vec3 U;\r\nvarying vec3 V;\r\nvarying vec4 w;\r\n\r\n#ifdef PICKING\r\n#include unpack_color\r\nattribute float primitiveId;\r\nvarying vec3 vPickingColor;\r\n#else\r\nattribute vec3 color2;\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#endif\r\n\r\nuniform mat4 modelViewMatrixInverse;\r\nuniform float ortho;\r\n\r\n#include matrix_scale\r\n\r\nvoid main(){\r\n\r\n#ifdef PICKING\r\nvPickingColor = unpackColor( primitiveId );\r\n#else\r\nvColor1 = color;\r\nvColor2 = color2;\r\n#endif\r\n\r\n// vRadius = radius;\r\nbase_radius.w = radius * matrixScale( modelViewMatrix );\r\n\r\nvec3 center = position;\r\nvec3 dir = normalize( position2 - position1 );\r\nfloat ext = length( position2 - position1 ) / 2.0;\r\n\r\n// using cameraPosition fails on some machines, not sure why\r\n// vec3 cam_dir = normalize( cameraPosition - mix( center, vec3( 0.0 ), ortho ) );\r\nvec3 cam_dir;\r\nif( ortho == 0.0 ){\r\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center;\r\n}else{\r\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 1, 0 ) ).xyz;\r\n}\r\ncam_dir = normalize( cam_dir );\r\n\r\nvec3 ldir;\r\n\r\nfloat b = dot( cam_dir, dir );\r\nend_b.w = b;\r\n// direction vector looks away, so flip\r\nif( b < 0.0 )\r\nldir = -ext * dir;\r\n// direction vector already looks in my direction\r\nelse\r\nldir = ext * dir;\r\n\r\nvec3 left = normalize( cross( cam_dir, ldir ) );\r\nleft = radius * left;\r\nvec3 up = radius * normalize( cross( left, ldir ) );\r\n\r\n// transform to modelview coordinates\r\naxis = normalize( normalMatrix * ldir );\r\nU = normalize( normalMatrix * up );\r\nV = normalize( normalMatrix * left );\r\n\r\nvec4 base4 = modelViewMatrix * vec4( center - ldir, 1.0 );\r\nbase_radius.xyz = base4.xyz / base4.w;\r\n\r\nvec4 top_position = modelViewMatrix * vec4( center + ldir, 1.0 );\r\nvec4 end4 = top_position;\r\nend_b.xyz = end4.xyz / end4.w;\r\n\r\nw = modelViewMatrix * vec4(\r\ncenter + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0\r\n);\r\n\r\ngl_Position = projectionMatrix * w;\r\n\r\n// avoid clipping (1.0 seems to induce flickering with some drivers)\r\ngl_Position.z = 0.99;\r\n\r\n}");
+
+ShaderRegistry.add('shader/CylinderImpostor.frag', "#define STANDARD\r\n#define IMPOSTOR\r\n\r\n// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\r\n//\r\n// All Rights Reserved\r\n//\r\n// Permission to use, copy, modify, distribute, and distribute modified\r\n// versions of this software and its built-in documentation for any\r\n// purpose and without fee is hereby granted, provided that the above\r\n// copyright notice appears in all copies and that both the copyright\r\n// notice and this permission notice appear in supporting documentation,\r\n// and that the name of Schrodinger, LLC not be used in advertising or\r\n// publicity pertaining to distribution of the software without specific,\r\n// written prior permission.\r\n//\r\n// SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\r\n// INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\r\n// NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\r\n// CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\r\n// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\r\n// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\r\n// USE OR PERFORMANCE OF THIS SOFTWARE.\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n// - custom clipping\r\n// - three.js lighting\r\n\r\nuniform vec3 diffuse;\r\nuniform vec3 emissive;\r\nuniform vec3 interiorColor;\r\nuniform float interiorDarkening;\r\nuniform float roughness;\r\nuniform float metalness;\r\nuniform float opacity;\r\nuniform float clipNear;\r\nuniform mat4 projectionMatrix;\r\nuniform float ortho;\r\n\r\nvarying vec3 axis;\r\nvarying vec4 base_radius;\r\nvarying vec4 end_b;\r\nvarying vec3 U;\r\nvarying vec3 V;\r\nvarying vec4 w;\r\n\r\n#ifdef PICKING\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\n#else\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#include common\r\n#include fog_pars_fragment\r\n#include bsdfs\r\n#include lights_pars_begin\r\n#include lights_physical_pars_fragment\r\n#endif\r\n\r\nbool interior = false;\r\n\r\nfloat distSq3( vec3 v3a, vec3 v3b ){\r\nreturn (\r\n( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +\r\n( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +\r\n( v3a.z - v3b.z ) * ( v3a.z - v3b.z )\r\n);\r\n}\r\n\r\n// Calculate depth based on the given camera position.\r\nfloat calcDepth( in vec3 cameraPos ){\r\nvec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\r\nreturn 0.5 + 0.5 * clipZW.x / clipZW.y;\r\n}\r\n\r\nfloat calcClip( vec3 cameraPos ){\r\nreturn dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, clipNear - 0.5 ) );\r\n}\r\n\r\nvoid main(){\r\n\r\nvec3 point = w.xyz / w.w;\r\n\r\n// unpacking\r\nvec3 base = base_radius.xyz;\r\nfloat vRadius = base_radius.w;\r\nvec3 end = end_b.xyz;\r\nfloat b = end_b.w;\r\n\r\nvec3 end_cyl = end;\r\nvec3 surface_point = point;\r\n\r\nvec3 ray_target = surface_point;\r\nvec3 ray_origin = vec3(0.0);\r\nvec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\r\nmat3 basis = mat3( U, V, axis );\r\n\r\nvec3 diff = ray_target - 0.5 * (base + end_cyl);\r\nvec3 P = diff * basis;\r\n\r\n// angle (cos) between cylinder cylinder_axis and ray direction\r\nfloat dz = dot( axis, ray_direction );\r\n\r\nfloat radius2 = vRadius*vRadius;\r\n\r\n// calculate distance to the cylinder from ray origin\r\nvec3 D = vec3(dot(U, ray_direction),\r\ndot(V, ray_direction),\r\ndz);\r\nfloat a0 = P.x*P.x + P.y*P.y - radius2;\r\nfloat a1 = P.x*D.x + P.y*D.y;\r\nfloat a2 = D.x*D.x + D.y*D.y;\r\n\r\n// calculate a dicriminant of the above quadratic equation\r\nfloat d = a1*a1 - a0*a2;\r\nif (d < 0.0)\r\n// outside of the cylinder\r\ndiscard;\r\n\r\nfloat dist = (-a1 + sqrt(d)) / a2;\r\n\r\n// point of intersection on cylinder surface\r\nvec3 new_point = ray_target + dist * ray_direction;\r\n\r\nvec3 tmp_point = new_point - base;\r\nvec3 _normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\r\n\r\nray_origin = mix( ray_origin, surface_point, ortho );\r\n\r\n// test caps\r\nfloat front_cap_test = dot( tmp_point, axis );\r\nfloat end_cap_test = dot((new_point - end_cyl), axis);\r\n\r\n// to calculate caps, simply check the angle between\r\n// the point of intersection - cylinder end vector\r\n// and a cap plane normal (which is the cylinder cylinder_axis)\r\n// if the angle < 0, the point is outside of cylinder\r\n// test front cap\r\n\r\n#ifndef CAP\r\nvec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\nvec3 tmp_point2 = new_point2 - base;\r\n#endif\r\n\r\n// flat\r\nif (front_cap_test < 0.0)\r\n{\r\n// ray-plane intersection\r\nfloat dNV = dot(-axis, ray_direction);\r\nif (dNV < 0.0)\r\ndiscard;\r\nfloat near = dot(-axis, (base)) / dNV;\r\nvec3 front_point = ray_direction * near + ray_origin;\r\n// within the cap radius?\r\nif (dot(front_point - base, front_point-base) > radius2)\r\ndiscard;\r\n\r\n#ifdef CAP\r\nnew_point = front_point;\r\n_normal = axis;\r\n#else\r\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\ndNV = dot(-axis, ray_direction);\r\nnear = dot(axis, end_cyl) / dNV;\r\nnew_point2 = ray_direction * near + ray_origin;\r\nif (dot(new_point2 - end_cyl, new_point2-base) < radius2)\r\ndiscard;\r\ninterior = true;\r\n#endif\r\n}\r\n\r\n// test end cap\r\n\r\n\r\n// flat\r\nif( end_cap_test > 0.0 )\r\n{\r\n// ray-plane intersection\r\nfloat dNV = dot(axis, ray_direction);\r\nif (dNV < 0.0)\r\ndiscard;\r\nfloat near = dot(axis, end_cyl) / dNV;\r\nvec3 end_point = ray_direction * near + ray_origin;\r\n// within the cap radius?\r\nif( dot(end_point - end_cyl, end_point-base) > radius2 )\r\ndiscard;\r\n\r\n#ifdef CAP\r\nnew_point = end_point;\r\n_normal = axis;\r\n#else\r\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\ndNV = dot(-axis, ray_direction);\r\nnear = dot(-axis, (base)) / dNV;\r\nnew_point2 = ray_direction * near + ray_origin;\r\nif (dot(new_point2 - base, new_point2-base) < radius2)\r\ndiscard;\r\ninterior = true;\r\n#endif\r\n}\r\n\r\ngl_FragDepthEXT = calcDepth( new_point );\r\n\r\n#ifdef NEAR_CLIP\r\nif( calcClip( new_point ) > 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\nif( calcClip( new_point ) > 0.0 )\r\ndiscard;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( clipNear - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\r\n}\r\n}else if( gl_FragDepthEXT <= 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n}\r\n#else\r\nif( gl_FragDepthEXT <= 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n}\r\n#endif\r\n\r\n// this is a workaround necessary for Mac\r\n// otherwise the modified fragment won't clip properly\r\nif (gl_FragDepthEXT < 0.0)\r\ndiscard;\r\nif (gl_FragDepthEXT > 1.0)\r\ndiscard;\r\n\r\n#ifdef PICKING\r\n\r\nif( opacity < 0.3 )\r\ndiscard;\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n\r\n#else\r\n\r\nvec3 vViewPosition = -new_point;\r\nvec3 vNormal = _normal;\r\nvec3 vColor;\r\n\r\nif( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\r\nif( b < 0.0 ){\r\nvColor = vColor1;\r\n}else{\r\nvColor = vColor2;\r\n}\r\n}else{\r\nif( b > 0.0 ){\r\nvColor = vColor1;\r\n}else{\r\nvColor = vColor2;\r\n}\r\n}\r\n\r\nvec4 diffuseColor = vec4( diffuse, opacity );\r\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\r\nvec3 totalEmissiveLight = emissive;\r\n\r\n#include color_fragment\r\n#include roughnessmap_fragment\r\n#include metalnessmap_fragment\r\n\r\n// @fredludlow: Previous comment from @arose says don't use normal_fragment_begin\r\n// though not clear why, but sticking with it. The r118 version of this chunk also\r\n// defines geometryNormal, so adding that here\r\n// #include normal_fragment_begin\r\nvec3 normal = normalize( vNormal );\r\nvec3 geometryNormal = normal;\r\n\r\n#include lights_physical_fragment\r\n#include lights_fragment_begin\r\n#include lights_fragment_end\r\n\r\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\r\n\r\nif( interior ){\r\n#ifdef USE_INTERIOR_COLOR\r\noutgoingLight.xyz = interiorColor;\r\n#else\r\n#ifdef DIFFUSE_INTERIOR\r\noutgoingLight.xyz = vColor;\r\n#endif\r\n#endif\r\noutgoingLight.xyz *= 1.0 - interiorDarkening;\r\n}\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#endif\r\n\r\n}");
+
+/**
+ * @file Mapped Aligned Box Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var mapping$1 = new Float32Array([
+    -1.0, 1.0, -1.0,
+    -1.0, -1.0, -1.0,
+    1.0, 1.0, -1.0,
+    1.0, 1.0, 1.0,
+    1.0, -1.0, -1.0,
+    1.0, -1.0, 1.0
+]);
+var mappingIndices$1 = new Uint16Array([
+    0, 1, 2,
+    1, 4, 2,
+    2, 4, 3,
+    4, 5, 3
+]);
+/**
+ * Mapped Aligned box buffer. Draws boxes where one side is always screen-space aligned.
+ * Used to render cylinder imposters.
+ * @interface
+ */
+var MappedAlignedBoxBuffer = /*@__PURE__*/(function (MappedBuffer$$1) {
+    function MappedAlignedBoxBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        MappedBuffer$$1.call(this, 'v3', data, params);
+    }
+
+    if ( MappedBuffer$$1 ) MappedAlignedBoxBuffer.__proto__ = MappedBuffer$$1;
+    MappedAlignedBoxBuffer.prototype = Object.create( MappedBuffer$$1 && MappedBuffer$$1.prototype );
+    MappedAlignedBoxBuffer.prototype.constructor = MappedAlignedBoxBuffer;
+
+    var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
+    prototypeAccessors.mapping.get = function () { return mapping$1; };
+    prototypeAccessors.mappingIndices.get = function () { return mappingIndices$1; };
+    prototypeAccessors.mappingIndicesSize.get = function () { return 12; };
+    prototypeAccessors.mappingSize.get = function () { return 6; };
+    prototypeAccessors.mappingItemSize.get = function () { return 3; };
+
+    Object.defineProperties( MappedAlignedBoxBuffer.prototype, prototypeAccessors );
+
+    return MappedAlignedBoxBuffer;
+}(MappedBuffer));
+
+/**
+ * @file Cylinder Impostor Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var CylinderImpostorBufferDefaultParameters = Object.assign({
+    openEnded: false
+}, BufferDefaultParameters);
+var CylinderImpostorBufferParameterTypes = Object.assign({
+    openEnded: { updateShader: true }
+}, BufferParameterTypes);
+/**
+ * Cylinder impostor buffer.
+ *
+ * @example
+ * var cylinderimpostorBuffer = new CylinderImpostorBuffer({
+ *     position1: new Float32Array([ 0, 0, 0 ]),
+ *     position2: new Float32Array([ 1, 1, 1 ]),
+ *     color: new Float32Array([ 1, 0, 0 ]),
+ *     color2: new Float32Array([ 0, 1, 0 ]),
+ *     radius: new Float32Array([ 1 ])
+ * });
+ */
+var CylinderImpostorBuffer = /*@__PURE__*/(function (MappedAlignedBoxBuffer$$1) {
+    function CylinderImpostorBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        MappedAlignedBoxBuffer$$1.call(this, data, params);
+        this.parameterTypes = CylinderImpostorBufferParameterTypes;
+        this.isImpostor = true;
+        this.vertexShader = 'CylinderImpostor.vert';
+        this.fragmentShader = 'CylinderImpostor.frag';
+        this.addUniforms({
+            'modelViewMatrixInverse': { value: new Matrix4() },
+            'ortho': { value: 0.0 }
+        });
+        this.addAttributes({
+            'position1': { type: 'v3', value: null },
+            'position2': { type: 'v3', value: null },
+            'color2': { type: 'c', value: null },
+            'radius': { type: 'f', value: null }
+        });
+        this.setAttributes(data);
+        this.makeMapping();
+    }
+
+    if ( MappedAlignedBoxBuffer$$1 ) CylinderImpostorBuffer.__proto__ = MappedAlignedBoxBuffer$$1;
+    CylinderImpostorBuffer.prototype = Object.create( MappedAlignedBoxBuffer$$1 && MappedAlignedBoxBuffer$$1.prototype );
+    CylinderImpostorBuffer.prototype.constructor = CylinderImpostorBuffer;
+
+    var prototypeAccessors = { defaultParameters: { configurable: true } };
+    prototypeAccessors.defaultParameters.get = function () { return CylinderImpostorBufferDefaultParameters; };
+    CylinderImpostorBuffer.prototype.getDefines = function getDefines (type) {
+        var defines = MappedAlignedBoxBuffer$$1.prototype.getDefines.call(this, type);
+        if (!this.parameters.openEnded) {
+            defines.CAP = 1;
+        }
+        return defines;
+    };
+
+    Object.defineProperties( CylinderImpostorBuffer.prototype, prototypeAccessors );
+
+    return CylinderImpostorBuffer;
+}(MappedAlignedBoxBuffer));
+
+/**
+ * @file Cylinder Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var CylinderBufferDefaultParameters = Object.assign({
+    disableImpostor: false
+}, CylinderGeometryBufferDefaultParameters, CylinderImpostorBufferDefaultParameters);
+/**
+ * Cylinder buffer. Depending on the value {@link ExtensionFragDepth} and
+ * `params.disableImpostor` the constructor returns either a
+ * {@link CylinderGeometryBuffer} or a {@link CylinderImpostorBuffer}
+ * @implements {Buffer}
+ *
+ * @example
+ * var cylinderBuffer = new CylinderBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 1, 1, 1 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
+ */
+var CylinderBuffer = function CylinderBuffer(data, params) {
+    if ( params === void 0 ) params = {};
+
+    if (!data.color2 && data.color)
+        { data.color2 = data.color; }
+    if (!ExtensionFragDepth || (params && params.disableImpostor)) {
+        return new CylinderGeometryBuffer(data, params);
+    }
+    else {
+        return new CylinderImpostorBuffer(data, params);
+    }
+};
+BufferRegistry.add('cylinder', CylinderBuffer);
+
+ShaderRegistry.add('shader/WideLine.vert', "// heavily based on code by WestLangley from https://github.com/WestLangley/three.js/blob/af28b2fb706ac109771ecad0a7447fad90ab3210/examples/js/lines/LineMaterial.js\r\n\r\nuniform float clipNear;\r\nuniform vec3 clipCenter;\r\nuniform float linewidth;\r\nuniform vec2 resolution;\r\nuniform mat4 projectionMatrixInverse;\r\n\r\nattribute vec2 mapping;\r\nattribute vec3 position1;\r\nattribute vec3 position2;\r\n\r\n#ifdef PICKING\r\n#include unpack_color\r\nattribute float primitiveId;\r\nvarying vec3 vPickingColor;\r\n#else\r\nattribute vec3 color2;\r\nvarying vec3 vColor;\r\nvarying vec3 vColor2;\r\nvarying float flag;\r\nvarying vec3 vViewPosition;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\nvoid trimSegment( const in vec4 start, inout vec4 end ) {\r\n// trim end segment so it terminates between the camera plane and the near plane\r\n// conservative estimate of the near plane\r\nfloat a = projectionMatrix[ 2 ][ 2 ]; // 3nd entry in 3th column\r\nfloat b = projectionMatrix[ 3 ][ 2 ]; // 3nd entry in 4th column\r\nfloat nearEstimate = - 0.5 * b / a;\r\nfloat alpha = ( nearEstimate - start.z ) / ( end.z - start.z );\r\nend.xyz = mix( start.xyz, end.xyz, alpha );\r\n}\r\n\r\nvoid main() {\r\n\r\nfloat aspect = resolution.x / resolution.y;\r\n\r\n#ifdef PICKING\r\nvPickingColor = unpackColor( primitiveId );\r\n#else\r\nflag = mapping.y;\r\nvColor = color;\r\nvColor2 = color2;\r\n#endif\r\n\r\n// camera space\r\nvec4 start = modelViewMatrix * vec4( position1, 1.0 );\r\nvec4 end = modelViewMatrix * vec4( position2, 1.0 );\r\n\r\n// special case for perspective projection, and segments that terminate either in, or behind, the camera plane\r\n// clearly the gpu firmware has a way of addressing this issue when projecting into ndc space\r\n// but we need to perform ndc-space calculations in the shader, so we must address this issue directly\r\n// perhaps there is a more elegant solution -- WestLangley\r\nbool perspective = ( projectionMatrix[ 2 ][ 3 ] == -1.0 ); // 4th entry in the 3rd column\r\nif ( perspective ) {\r\nif ( start.z < 0.0 && end.z >= 0.0 ) {\r\ntrimSegment( start, end );\r\n} else if ( end.z < 0.0 && start.z >= 0.0 ) {\r\ntrimSegment( end, start );\r\n}\r\n}\r\n\r\n// clip space\r\nvec4 clipStart = projectionMatrix * start;\r\nvec4 clipEnd = projectionMatrix * end;\r\n\r\n// ndc space\r\nvec2 ndcStart = clipStart.xy / clipStart.w;\r\nvec2 ndcEnd = clipEnd.xy / clipEnd.w;\r\n\r\n// direction\r\nvec2 dir = ndcEnd - ndcStart;\r\n\r\n// account for clip-space aspect ratio\r\ndir.x *= aspect;\r\ndir = normalize( dir );\r\n\r\n// perpendicular to dir\r\nvec2 offset = vec2( dir.y, - dir.x );\r\n\r\n// undo aspect ratio adjustment\r\ndir.x /= aspect;\r\noffset.x /= aspect;\r\n\r\n// sign flip\r\nif ( mapping.x < 0.0 ) offset *= - 1.0;\r\n\r\n// not used\r\n// // endcaps\r\n// if ( mapping.y < 0.0 ) {\r\n// offset += -dir;\r\n// } else if ( mapping.y > 0.0 ) {\r\n// offset += dir;\r\n// }\r\n\r\n// adjust for linewidth\r\noffset *= linewidth;\r\n\r\n// adjust for clip-space to screen-space conversion\r\noffset /= resolution.y;\r\n\r\n// select end\r\nvec4 clip = ( mapping.y < 0.5 ) ? clipStart : clipEnd;\r\n\r\n// back to clip space\r\noffset *= clip.w;\r\nclip.xy += offset;\r\ngl_Position = clip;\r\n\r\n#ifndef PICKING\r\nvViewPosition = ( projectionMatrixInverse * clip ).xyz;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n\r\n}");
+
+ShaderRegistry.add('shader/WideLine.frag', "uniform vec3 diffuse;\r\nuniform float opacity;\r\nuniform float clipNear;\r\nuniform float clipRadius;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n#ifdef PICKING\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\n#else\r\n#include common\r\n#include fog_pars_fragment\r\nvarying vec3 vViewPosition;\r\nvarying vec3 vColor;\r\nvarying vec3 vColor2;\r\nvarying float flag;\r\n#endif\r\n\r\nvoid main() {\r\n\r\n#include nearclip_fragment\r\n#include radiusclip_fragment\r\n\r\n#if defined( PICKING )\r\n\r\nif( opacity < 0.3 )\r\ndiscard;\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n\r\n#else\r\n\r\nvec3 outgoingLight = vec3( 0.0 );\r\nvec4 diffuseColor = vec4( diffuse, 1.0 );\r\n\r\nif ( flag < 0.0 ) {\r\ndiffuseColor.rgb *= vColor;\r\n} else {\r\ndiffuseColor.rgb *= vColor2;\r\n}\r\n\r\n#include alphatest_fragment\r\n\r\noutgoingLight = diffuseColor.rgb;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a * opacity );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#endif\r\n\r\n}");
+
+/**
+ * @file Wide Line Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var WideLineBufferDefaultParameters = Object.assign({
+    linewidth: 2
+}, BufferDefaultParameters);
+var WideLineBufferParameterTypes = Object.assign({
+    linewidth: { uniform: true }
+}, BufferParameterTypes);
+/**
+ * Wide Line buffer. Draws lines with a fixed width in pixels.
+ *
+ * @example
+ * var lineBuffer = new WideLineBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 1, 1, 1 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ])
+ * });
+ */
+var WideLineBuffer = /*@__PURE__*/(function (MappedQuadBuffer$$1) {
+    function WideLineBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        MappedQuadBuffer$$1.call(this, data, params);
+        this.parameterTypes = WideLineBufferParameterTypes;
+        this.vertexShader = 'WideLine.vert';
+        this.fragmentShader = 'WideLine.frag';
+        if (!data.color2 && data.color)
+            { data.color2 = data.color; }
+        this.addUniforms({
+            'linewidth': { value: this.parameters.linewidth },
+            'resolution': { value: new Vector2() },
+            'projectionMatrixInverse': { value: new Matrix4() }
+        });
+        this.addAttributes({
+            'position1': { type: 'v3', value: null },
+            'position2': { type: 'v3', value: null },
+            'color2': { type: 'c', value: null }
+        });
+        this.setAttributes(data);
+        this.makeMapping();
+    }
+
+    if ( MappedQuadBuffer$$1 ) WideLineBuffer.__proto__ = MappedQuadBuffer$$1;
+    WideLineBuffer.prototype = Object.create( MappedQuadBuffer$$1 && MappedQuadBuffer$$1.prototype );
+    WideLineBuffer.prototype.constructor = WideLineBuffer;
+
+    var prototypeAccessors = { defaultParameters: { configurable: true } };
+    prototypeAccessors.defaultParameters.get = function () { return WideLineBufferDefaultParameters; };
+    WideLineBuffer.prototype.setParameters = function setParameters (params) {
+        MappedQuadBuffer$$1.prototype.setParameters.call(this, params);
+    };
+
+    Object.defineProperties( WideLineBuffer.prototype, prototypeAccessors );
+
+    return WideLineBuffer;
+}(MappedQuadBuffer));
+BufferRegistry.add('wideline', WideLineBuffer);
+
+/**
+ * @file Ball And Stick Representation
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+/**
+ * Ball And Stick representation parameter object. Extends {@link RepresentationParameters} and
+ * {@link StructureRepresentationParameters}.
+ *
+ * @typedef {Object} BallAndStickRepresentationParameters - ball and stick representation parameters
+ *
+ * @property {Integer} sphereDetail - sphere quality (icosahedron subdivisions)
+ * @property {Integer} radialSegments - cylinder quality (number of segments)
+ * @property {Boolean} openEnded - capped or not
+ * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
+ * @property {Float} aspectRatio - size difference between atom and bond radii
+ * @property {Boolean} lineOnly - render only bonds, and only as lines
+ * @property {Integer} linewidth - width of lines
+ * @property {Boolean} cylinderOnly - render only bonds (no atoms)
+ * @property {String} multipleBond - one off "off", "symmetric", "offset"
+ * @property {Float} bondSpacing - spacing for multiple bond rendering
+ * @property {Float} bondScale - scale/radius for multiple bond rendering
+ */
+/**
+ * Ball And Stick representation. Show atoms as spheres and bonds as cylinders.
+ *
+ * __Name:__ _ball+stick_
+ *
+ * @example
+ * stage.loadFile( "rcsb://1crn" ).then( function( o ){
+ *     o.addRepresentation( "ball+stick" );
+ *     o.autoView();
+ * } );
+ */
+var BallAndStickRepresentation = /*@__PURE__*/(function (StructureRepresentation$$1) {
+    function BallAndStickRepresentation(structure, viewer, params) {
+        StructureRepresentation$$1.call(this, structure, viewer, params);
+        this.type = 'ball+stick';
+        this.parameters = Object.assign({
+            sphereDetail: true,
+            radialSegments: true,
+            openEnded: true,
+            disableImpostor: true,
+            aspectRatio: {
+                type: 'number', precision: 1, max: 10.0, min: 1.0
+            },
+            lineOnly: {
+                type: 'boolean', rebuild: true
+            },
+            cylinderOnly: {
+                type: 'boolean', rebuild: true
+            },
+            multipleBond: {
+                type: 'select',
+                rebuild: true,
+                options: {
+                    'off': 'off',
+                    'symmetric': 'symmetric',
+                    'offset': 'offset'
+                }
+            },
+            bondScale: {
+                type: 'number', precision: 2, max: 1.0, min: 0.01
+            },
+            bondSpacing: {
+                type: 'number', precision: 2, max: 2.0, min: 0.5
+            },
+            linewidth: {
+                type: 'integer', max: 50, min: 1, buffer: true
+            }
+        }, this.parameters);
+        this.init(params);
+    }
+
+    if ( StructureRepresentation$$1 ) BallAndStickRepresentation.__proto__ = StructureRepresentation$$1;
+    BallAndStickRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    BallAndStickRepresentation.prototype.constructor = BallAndStickRepresentation;
+    BallAndStickRepresentation.prototype.init = function init (params) {
+        var p = params || {};
+        p.radiusType = defaults(p.radiusType, 'size');
+        p.radiusSize = defaults(p.radiusSize, 0.15);
+        p.useInteriorColor = defaults(p.useInteriorColor, true);
+        this.aspectRatio = defaults(p.aspectRatio, 2.0);
+        this.lineOnly = defaults(p.lineOnly, false);
+        this.cylinderOnly = defaults(p.cylinderOnly, false);
+        this.multipleBond = defaults(p.multipleBond, 'off');
+        this.bondSpacing = defaults(p.bondSpacing, 1.0);
+        this.bondScale = defaults(p.bondScale, 0.4);
+        this.linewidth = defaults(p.linewidth, 2);
+        StructureRepresentation$$1.prototype.init.call(this, p);
+    };
+    BallAndStickRepresentation.prototype.getAtomRadius = function getAtomRadius (atom) {
+        return this.aspectRatio * StructureRepresentation$$1.prototype.getAtomRadius.call(this, atom);
+    };
+    BallAndStickRepresentation.prototype.getAtomParams = function getAtomParams (what, params) {
+        var p = StructureRepresentation$$1.prototype.getAtomParams.call(this, what, params);
+        p.radiusParams.scale *= this.aspectRatio;
+        return p;
+    };
+    BallAndStickRepresentation.prototype.getAtomData = function getAtomData (sview, what, params) {
+        return sview.getAtomData(this.getAtomParams(what, params));
+    };
+    BallAndStickRepresentation.prototype.getBondParams = function getBondParams (what, params) {
+        params = Object.assign({
+            multipleBond: this.multipleBond,
+            bondSpacing: this.bondSpacing,
+            bondScale: this.bondScale
+        }, params);
+        return StructureRepresentation$$1.prototype.getBondParams.call(this, what, params);
+    };
+    BallAndStickRepresentation.prototype.getBondData = function getBondData (sview, what, params) {
+        return sview.getBondData(this.getBondParams(what, params));
+    };
+    BallAndStickRepresentation.prototype.createData = function createData (sview) {
+        var bufferList = [];
+        if (this.lineOnly) {
+            this.lineBuffer = new WideLineBuffer(this.getBondData(sview, { position: true, color: true, picking: true }), this.getBufferParams({ linewidth: this.linewidth }));
+            bufferList.push(this.lineBuffer);
+        }
+        else {
+            var cylinderBuffer = new CylinderBuffer(this.getBondData(sview), this.getBufferParams({
+                openEnded: this.openEnded,
+                radialSegments: this.radialSegments,
+                disableImpostor: this.disableImpostor,
+                dullInterior: true
+            }));
+            bufferList.push(cylinderBuffer);
+            if (!this.cylinderOnly) {
+                var sphereBuffer = new SphereBuffer(this.getAtomData(sview), this.getBufferParams({
+                    sphereDetail: this.sphereDetail,
+                    disableImpostor: this.disableImpostor,
+                    dullInterior: true
+                }));
+                bufferList.push(sphereBuffer);
+            }
+        }
+        return {
+            bufferList: bufferList
+        };
+    };
+    BallAndStickRepresentation.prototype.updateData = function updateData (what, data) {
+        if (this.multipleBond !== 'off' && what && what.radius) {
+            what.position = true;
+        }
+        var bondData = this.getBondData(data.sview, what);
+        if (this.lineOnly) {
+            var lineData = {};
+            if (!what || what.position) {
+                Object.assign(lineData, {
+                    position1: bondData.position1,
+                    position2: bondData.position2
+                });
+            }
+            if (!what || what.color) {
+                Object.assign(lineData, {
+                    color: bondData.color,
+                    color2: bondData.color2
+                });
+            }
+            data.bufferList[0].setAttributes(lineData);
+        }
+        else {
+            var cylinderData = {};
+            if (!what || what.position) {
+                Object.assign(cylinderData, {
+                    position1: bondData.position1,
+                    position2: bondData.position2
+                });
+            }
+            if (!what || what.color) {
+                Object.assign(cylinderData, {
+                    color: bondData.color,
+                    color2: bondData.color2
+                });
+            }
+            if (!what || what.radius) {
+                Object.assign(cylinderData, {
+                    radius: bondData.radius
+                });
+            }
+            data.bufferList[0].setAttributes(cylinderData);
+            if (!this.cylinderOnly) {
+                var atomData = this.getAtomData(data.sview, what);
+                var sphereData = {};
+                if (!what || what.position) {
+                    Object.assign(sphereData, {
+                        position: atomData.position
+                    });
+                }
+                if (!what || what.color) {
+                    Object.assign(sphereData, {
+                        color: atomData.color
+                    });
+                }
+                if (!what || what.radius) {
+                    Object.assign(sphereData, {
+                        radius: atomData.radius
+                    });
+                }
+                data.bufferList[1].setAttributes(sphereData);
+            }
+        }
+    };
+    BallAndStickRepresentation.prototype.setParameters = function setParameters (params) {
+        if ( params === void 0 ) params = {};
+
+        var rebuild = false;
+        var what = {};
+        if (params.aspectRatio || params.bondSpacing || params.bondScale) {
+            Object.assign(what, { radius: true });
+            if (!ExtensionFragDepth || this.disableImpostor) {
+                rebuild = true;
+            }
+        }
+        StructureRepresentation$$1.prototype.setParameters.call(this, params, what, rebuild);
+        return this;
+    };
+
+    return BallAndStickRepresentation;
+}(StructureRepresentation));
+RepresentationRegistry.add('ball+stick', BallAndStickRepresentation);
+
+/**
+ *
+ */
+var TestModification = function TestModification( /* Maybe have some input*/) {
+    // Maybe do some stuff...
+};
+TestModification.prototype.hover = function hover (stage, pickingProxy) {
+};
+TestModification.prototype.clickPick_left = function clickPick_left (stage, pickingProxy) {
+    if (pickingProxy) {
+        var text = "You've picked";
+        if (pickingProxy.atom) {
+            text += " an atom";
+        }
+        else if (pickingProxy.bond) {
+            text += " a bond";
+        }
+        else {
+            text += "... something";
+        }
+        text += "! Here's its component and also the stage:";
+        console.log(text);
+        console.log(pickingProxy.component);
+        console.log(stage);
+        if (pickingProxy.component instanceof StructureComponent) {
+            var component = pickingProxy.component;
+            var structure = component.object;
+            var atomStore = structure.atomStore; // Atom data is stored here!
+            var bondStore = structure.bondStore; // Bond data is stored here!
+            console.log("And now the AtomStore and BondStore:");
+            console.log(atomStore);
+            console.log(bondStore);
+            console.assert(stage === component.stage);
+            console.assert(stage.viewer === component.viewer);
+            console.log("And now some representations of this component");
+            component.reprList.forEach(function (value) {
+                var reprName = value.parameters.name;
+                var repr = value.repr;
+                if (reprName === 'cartoon') {
+                    console.assert(repr instanceof CartoonRepresentation);
+                    console.log(repr);
+                }
+                else if (reprName === 'ball+stick') {
+                    console.assert(repr instanceof BallAndStickRepresentation);
+                    console.log(repr);
+                }
+            });
+        }
+    }
+};
+
+/**
+ * @file Mouse Actions
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var testModification = new TestModification();
+/**
+ * Mouse actions provided as static methods
+ */
+var MouseActions = function MouseActions () {};
+
+MouseActions.zoomScroll = function zoomScroll (stage, delta) {
+    stage.trackballControls.zoom(delta);
+};
+/**
+ * Move near clipping plane based on scroll-delta
+ * @param {Stage} stage - the stage
+ * @param {Number} delta - amount to move clipping plane
+ * @return {undefined}
+ */
+MouseActions.clipNearScroll = function clipNearScroll (stage, delta) {
+    var sp = stage.getParameters();
+    stage.setParameters({ clipNear: sp.clipNear + delta / 10 });
+};
+/**
+ * Move clipping planes based on scroll-delta.
+ * @param {Stage} stage - the stage
+ * @param {Number} delta - direction to move planes
+ * @return {undefined}
+ */
+MouseActions.focusScroll = function focusScroll (stage, delta) {
+    var focus = stage.getFocus();
+    var sign = Math.sign(delta);
+    var step = sign * almostIdentity((100 - focus) / 10, 5, 0.2);
+    stage.setFocus(focus + step);
+};
+/**
+ * Zoom scene based on scroll-delta and
+ * move focus planes based on camera position (zoom)
+ * @param {Stage} stage - the stage
+ * @param {Number} delta - amount to move focus planes and zoom
+ * @return {undefined}
+ */
+MouseActions.zoomFocusScroll = function zoomFocusScroll (stage, delta) {
+    stage.trackballControls.zoom(delta);
+    var z = stage.viewer.camera.position.z;
+    stage.setFocus(100 - Math.abs(z / 8));
+};
+/**
+ * Change isolevel of volume surfaces based on scroll-delta
+ * @param {Stage} stage - the stage
+ * @param {Number} delta - amount to change isolevel
+ * @return {undefined}
+ */
+MouseActions.isolevelScroll = function isolevelScroll (stage, delta) {
+    var d = Math.sign(delta) / 10;
+    stage.eachRepresentation(function (reprElem, comp) {
+        if (reprElem.repr instanceof SurfaceRepresentation) {
+            var p = reprElem.getParameters(); // TODO
+            if (p.isolevelScroll) {
+                reprElem.setParameters({ isolevel: p.isolevel + d });
+            }
+        }
+    });
+};
+/**
+ * Pan scene based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to pan in x direction
+ * @param {Number} dy - amount to pan in y direction
+ * @return {undefined}
+ */
+MouseActions.panDrag = function panDrag (stage, dx, dy) {
+    stage.trackballControls.pan(dx, dy);
+};
+/**
+ * Rotate scene based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to rotate in x direction
+ * @param {Number} dy - amount to rotate in y direction
+ * @return {undefined}
+ */
+MouseActions.rotateDrag = function rotateDrag (stage, dx, dy) {
+    stage.trackballControls.rotate(dx, dy);
+};
+/**
+ * Rotate scene around z axis based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to rotate in x direction
+ * @param {Number} dy - amount to rotate in y direction
+ * @return {undefined}
+ */
+MouseActions.zRotateDrag = function zRotateDrag (stage, dx, dy) {
+    stage.trackballControls.zRotate(dx, dy);
+};
+/**
+ * Zoom scene based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to zoom
+ * @param {Number} dy - amount to zoom
+ * @return {undefined}
+ */
+MouseActions.zoomDrag = function zoomDrag (stage, dx, dy) {
+    stage.trackballControls.zoom((dx + dy) / -2);
+};
+/**
+ * Zoom scene based on mouse coordinate changes and
+ * move focus planes based on camera position (zoom)
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to zoom and focus
+ * @param {Number} dy - amount to zoom and focus
+ * @return {undefined}
+ */
+MouseActions.zoomFocusDrag = function zoomFocusDrag (stage, dx, dy) {
+    stage.trackballControls.zoom((dx + dy) / -2);
+    var z = stage.viewer.camera.position.z;
+    stage.setFocus(100 - Math.abs(z / 8));
+};
+/**
+ * Pan picked component based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to pan in x direction
+ * @param {Number} dy - amount to pan in y direction
+ * @return {undefined}
+ */
+MouseActions.panComponentDrag = function panComponentDrag (stage, dx, dy) {
+    stage.trackballControls.panComponent(dx, dy);
+};
+/**
+ * Pan picked atom based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to pan in x direction
+ * @param {Number} dy - amount to pan in y direction
+ * @return {undefined}
+ */
+MouseActions.panAtomDrag = function panAtomDrag (stage, dx, dy) {
+    stage.trackballControls.panAtom(dx, dy);
+};
+/**
+ * Rotate picked component based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to rotate in x direction
+ * @param {Number} dy - amount to rotate in y direction
+ * @return {undefined}
+ */
+MouseActions.rotateComponentDrag = function rotateComponentDrag (stage, dx, dy) {
+    stage.trackballControls.rotateComponent(dx, dy);
+};
+/**
+ * Move picked element to the center of the screen
+ * @param {Stage} stage - the stage
+ * @param {PickingProxy} pickingProxy - the picking data object
+ * @return {undefined}
+ */
+MouseActions.movePick = function movePick (stage, pickingProxy) {
+    if (pickingProxy) {
+        stage.animationControls.move(pickingProxy.position.clone());
+    }
+};
+/**
+ * Show tooltip with information of picked element
+ * @param {Stage} stage - the stage
+ * @param {PickingProxy} pickingProxy - the picking data object
+ * @return {undefined}
+ */
+MouseActions.tooltipPick = function tooltipPick (stage, pickingProxy) {
+    var tt = stage.tooltip;
+    var sp = stage.getParameters();
+    if (sp.tooltip && pickingProxy) {
+        var mp = pickingProxy.mouse.position;
+        tt.innerText = pickingProxy.getLabel();
+        tt.style.bottom = (window.innerHeight - mp.y + 3) + 'px';
+        tt.style.left = (mp.x + 3) + 'px';
+        tt.style.display = 'block';
+    }
+    else {
+        tt.style.display = 'none';
+    }
+};
+MouseActions.measurePick = function measurePick (stage, pickingProxy) {
+    if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+        var atom = pickingProxy.atom || pickingProxy.closestBondAtom;
+        var sc = pickingProxy.component;
+        sc.measurePick(atom);
+    }
+    else {
+        stage.measureClear();
+    }
+};
+var MouseActionPresets = {
+    default: [
+        ['scroll', MouseActions.zoomScroll],
+        ['scroll-shift', MouseActions.focusScroll],
+        ['scroll-ctrl', MouseActions.isolevelScroll],
+        ['scroll-shift-ctrl', MouseActions.zoomFocusScroll],
+        ['drag-left', MouseActions.rotateDrag],
+        ['drag-right', MouseActions.panDrag],
+        ['drag-ctrl-left', MouseActions.panDrag],
+        ['drag-ctrl-right', MouseActions.zRotateDrag],
+        ['drag-shift-left', MouseActions.zoomDrag],
+        ['drag-middle', MouseActions.zoomFocusDrag],
+        ['drag-ctrl-shift-right', MouseActions.panComponentDrag],
+        ['drag-ctrl-shift-left', MouseActions.rotateComponentDrag],
+        ['clickPick-right', MouseActions.measurePick],
+        ['clickPick-ctrl-left', MouseActions.measurePick],
+        ['clickPick-middle', MouseActions.movePick],
+        //[ 'clickPick-left', MouseActions.movePick ],
+        ['clickPick-left', testModification.clickPick_left],
+        ['hoverPick', MouseActions.tooltipPick],
+        ['hoverPick', testModification.hover]
+    ],
+    pymol: [
+        ['drag-left', MouseActions.rotateDrag],
+        ['drag-middle', MouseActions.panDrag],
+        ['drag-right', MouseActions.zoomDrag],
+        ['drag-shift-right', MouseActions.focusScroll],
+        ['clickPick-ctrl+shift-middle', MouseActions.movePick],
+        ['hoverPick', MouseActions.tooltipPick]
+    ],
+    coot: [
+        ['scroll', MouseActions.isolevelScroll],
+        ['drag-left', MouseActions.rotateDrag],
+        ['drag-middle', MouseActions.panDrag],
+        ['drag-ctrl-left', MouseActions.panDrag],
+        ['drag-right', MouseActions.zoomFocusDrag],
+        ['drag-ctrl-right', MouseActions.focusScroll],
+        ['clickPick-middle', MouseActions.movePick],
+        ['hoverPick', MouseActions.tooltipPick]
+    ],
+    astexviewer: [
+        ['drag-left', MouseActions.rotateDrag],
+        ['drag-ctrl-left', MouseActions.panDrag],
+        ['drag-shift-left', MouseActions.zoomDrag],
+        ['scroll', MouseActions.focusScroll],
+        ['clickPick-middle', MouseActions.movePick],
+        ['hoverPick', MouseActions.tooltipPick]
+    ]
+};
+
+/**
+ * @file Mouse Controls
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+/**
+ * Strings to describe mouse events (including optional keyboard modifiers).
+ * Must contain an event type: "scroll", "drag", "click", "doubleClick",
+ * "hover", "clickPick" or "hoverPick". Optionally contain one or more
+ * (seperated by plus signs) keyboard modifiers: "alt", "ctrl", "meta" or
+ * "shift". Can contain the mouse button performing the event: "left",
+ * "middle" or "right". The type, key and button parts must be seperated by
+ * dashes.
+ *
+ * @example
+ * // triggered on scroll event (no key or button)
+ * "scroll"
+ *
+ * @example
+ * // triggered on scroll event while shift key is pressed
+ * "scroll-shift"
+ *
+ * @example
+ * // triggered on drag event with left mouse button
+ * "drag-left"
+ *
+ * @example
+ * // triggered on drag event with right mouse button
+ * // while ctrl and shift keys are pressed
+ * "drag-right-ctrl+shift"
+ *
+ * @typedef {String} TriggerString
+ */
+/**
+ * Get event type, key and button
+ * @param  {TriggerString} str - input trigger string
+ * @return {Array} event type, key and button
+ */
+function triggerFromString(str) {
+    var tokens = str.split(/[-+]/);
+    var type = '';
+    if (tokens.includes('scroll'))
+        { type = 'scroll'; }
+    if (tokens.includes('drag'))
+        { type = 'drag'; }
+    if (tokens.includes('click'))
+        { type = 'click'; }
+    if (tokens.includes('doubleClick'))
+        { type = 'doubleClick'; }
+    if (tokens.includes('hover'))
+        { type = 'hover'; }
+    if (tokens.includes('clickPick'))
+        { type = 'clickPick'; }
+    if (tokens.includes('hoverPick'))
+        { type = 'hoverPick'; }
+    var key = 0;
+    if (tokens.includes('alt'))
+        { key += 1; }
+    if (tokens.includes('ctrl'))
+        { key += 2; }
+    if (tokens.includes('meta'))
+        { key += 4; }
+    if (tokens.includes('shift'))
+        { key += 8; }
+    var button = 0;
+    if (tokens.includes('left'))
+        { button += 1; }
+    if (tokens.includes('right'))
+        { button += 2; }
+    if (tokens.includes('middle'))
+        { button += 4; }
+    return [type, key, button];
+}
+/**
+ * Mouse controls
+ */
+var MouseControls = function MouseControls(stage, params) {
+    if ( params === void 0 ) params = {};
+
+    this.stage = stage;
+    this.actionList = [];
+    this.mouse = stage.mouseObserver;
+    this.disabled = params.disabled || false;
+    this.preset(params.preset || 'default');
+};
+MouseControls.prototype.run = function run (type) {
+        var this$1 = this;
+        var args = [], len = arguments.length - 1;
+        while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
+
+    if (this.disabled)
+        { return; }
+    var key = this.mouse.key || 0;
+    var button = this.mouse.buttons || 0;
+    this.actionList.forEach(function (a) {
+        if (a.type === type && a.key === key && a.button === button) {
+            a.callback.apply(a, [ this$1.stage ].concat( args )); // TODO
+        }
+    });
+};
+/**
+ * Add a new mouse action triggered by an event, key and button combination.
+ * The {@link MouseActions} class provides a number of static methods for
+ * use as callback functions.
+ *
+ * @example
+ * // change ambient light intensity on mouse scroll
+ * // while the ctrl and shift keys are pressed
+ * stage.mouseControls.add( "scroll-ctrl+shift", function( stage, delta ){
+ * var ai = stage.getParameters().ambientIntensity;
+ * stage.setParameters( { ambientIntensity: Math.max( 0, ai + delta / 50 ) } );
+ * } );
+ *
+ * @example
+ * // Call the MouseActions.zoomDrag method on mouse drag events
+ * // with left and right mouse buttons simultaneous
+ * stage.mouseControls.add( "drag-left+right", MouseActions.zoomDrag );
+ *
+ * @param {TriggerString} triggerStr - the trigger for the action
+ * @param {function(stage: Stage, ...args: Any)} callback - the callback function for the action
+ * @return {undefined}
+ */
+MouseControls.prototype.add = function add (triggerStr, callback) {
+    var ref = triggerFromString(triggerStr);
+        var type = ref[0];
+        var key = ref[1];
+        var button = ref[2];
+    this.actionList.push({ type: type, key: key, button: button, callback: callback });
+};
+/**
+ * Remove a mouse action. The trigger string can contain an asterix (*)
+ * as a wildcard for any key or mouse button. When the callback function
+ * is given, only actions that call that function are removed.
+ *
+ * @example
+ * // remove actions triggered solely by a scroll event
+ * stage.mouseControls.remove( "scroll" );
+ *
+ * @example
+ * // remove actions triggered by a scroll event, including
+ * // those requiring a key pressed or mouse button used
+ * stage.mouseControls.remove( "scroll-*" );
+ *
+ * @example
+ * // remove actions triggered by a scroll event
+ * // while the shift key is pressed
+ * stage.mouseControls.remove( "scroll-shift" );
+ *
+ * @param {TriggerString} triggerStr - the trigger for the action
+ * @param {Function} [callback] - the callback function for the action
+ * @return {undefined}
+ */
+MouseControls.prototype.remove = function remove (triggerStr, callback) {
+    var wildcard = triggerStr.includes('*');
+    var ref = triggerFromString(triggerStr);
+        var type = ref[0];
+        var key = ref[1];
+        var button = ref[2];
+    var actionList = this.actionList.filter(function (a) {
+        return !((a.type === type || (wildcard && type === '')) &&
+            (a.key === key || (wildcard && key === 0)) &&
+            (a.button === button || (wildcard && button === 0)) &&
+            (a.callback === callback || callback === undefined));
+    });
+    this.actionList = actionList;
+};
+/**
+ * Set mouse action preset
+ * @param  {String} name - one of "default", "pymol", "coot"
+ * @return {undefined}
+ */
+MouseControls.prototype.preset = function preset (name) {
+        var this$1 = this;
+
+    this.clear();
+    var list = MouseActionPresets[name] || [];
+    list.forEach(function (action) { return this$1.add(action[0], action[1]); });
+};
+/**
+ * Remove all mouse actions
+ * @return {undefined}
+ */
+MouseControls.prototype.clear = function clear () {
+    this.actionList.length = 0;
+};
+
+/**
+ * @file Key Actions
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+/**
+ * Key actions provided as static methods
+ */
+var KeyActions = function KeyActions () {};
+
+KeyActions.autoView = function autoView (stage) {
+    stage.autoView(1000);
+};
+/**
+ * Toggle stage animations
+ */
+KeyActions.toggleAnimations = function toggleAnimations (stage) {
+    stage.animationControls.toggle();
+};
+/**
+ * Toggle stage rocking
+ */
+KeyActions.toggleRock = function toggleRock (stage) {
+    stage.toggleRock();
+};
+/**
+ * Toggle stage spinning
+ */
+KeyActions.toggleSpin = function toggleSpin (stage) {
+    stage.toggleSpin();
+};
+/**
+ * Toggle anti-aliasing
+ */
+KeyActions.toggleAntialiasing = function toggleAntialiasing (stage) {
+    var p = stage.getParameters();
+    stage.setParameters({ sampleLevel: p.sampleLevel === -1 ? 0 : -1 });
+};
+var KeyActionPresets = {
+    default: [
+        ['i', KeyActions.toggleSpin],
+        ['k', KeyActions.toggleRock],
+        ['p', KeyActions.toggleAnimations],
+        ['a', KeyActions.toggleAntialiasing],
+        ['r', KeyActions.autoView]
+    ]
+};
+
+/**
+ * @file Key Controls
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+/**
+ * Mouse controls
+ */
+var KeyControls = function KeyControls(stage, params) {
+    if ( params === void 0 ) params = {};
+
+    this.stage = stage;
+    this.actionList = [];
+    this.disabled = params.disabled || false;
+    this.preset(params.preset || 'default');
+};
+KeyControls.prototype.run = function run (key) {
+        var this$1 = this;
+
+    if (this.disabled)
+        { return; }
+    this.actionList.forEach(function (a) {
+        if (a.key === key) {
+            a.callback(this$1.stage);
+        }
+    });
+};
+/**
+ * Add a key action triggered by pressing the given character.
+ * The {@link KeyActions} class provides a number of static methods for
+ * use as callback functions.
+ *
+ * @example
+ * // call KeyActions.toggleRock when "k" is pressed
+ * stage.keyControls.remove( "k", KeyActions.toggleRock );
+ *
+ * @param {Char} char - the key/character
+ * @param {Function} callback - the callback function for the action
+ * @return {undefined}
+ */
+KeyControls.prototype.add = function add (char, callback) {
+    this.actionList.push({ key: char, callback: callback });
+};
+/**
+ * Remove a key action. When the callback function
+ * is given, only actions that call that function are removed.
+ *
+ * @example
+ * // remove all actions triggered by pressing "k"
+ * stage.keyControls.remove( "k" );
+ *
+ * @example
+ * // remove action `toggleRock` triggered by pressing "k"
+ * stage.keyControls.remove( "k", toggleRock );
+ *
+ * @param {Char} char - the key/character
+ * @param {Function} [callback] - the callback function for the action
+ * @return {undefined}
+ */
+KeyControls.prototype.remove = function remove (char, callback) {
+    var actionList = this.actionList.filter(function (a) {
+        return !((a.key === char) &&
+            (a.callback === callback || callback === undefined));
+    });
+    this.actionList = actionList;
+};
+/**
+ * Set key action preset
+ * @param  {String} name - one of "default"
+ * @return {undefined}
+ */
+KeyControls.prototype.preset = function preset (name) {
+        var this$1 = this;
+
+    this.clear();
+    var list = KeyActionPresets[name] || [];
+    list.forEach(function (action) { return this$1.add(action[0], action[1]); });
+};
+/**
+ * Remove all key actions
+ * @return {undefined}
+ */
+KeyControls.prototype.clear = function clear () {
+    this.actionList.length = 0;
+};
+
+/**
+ * @file Picking Behavior
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var PickingBehavior = function PickingBehavior(stage) {
+    this.stage = stage;
+    this.stage = stage;
+    this.mouse = stage.mouseObserver;
+    this.controls = stage.mouseControls;
+    this.mouse.signals.clicked.add(this._onClick, this);
+    this.mouse.signals.hovered.add(this._onHover, this);
+};
+PickingBehavior.prototype._onClick = function _onClick (x, y) {
+    var pickingProxy = this.stage.pickingControls.pick(x, y);
+    this.stage.signals.clicked.dispatch(pickingProxy);
+    this.controls.run('clickPick', pickingProxy);
+};
+PickingBehavior.prototype._onHover = function _onHover (x, y) {
+    var pickingProxy = this.stage.pickingControls.pick(x, y);
+    if (pickingProxy && this.mouse.down.equals(this.mouse.position)) {
+        this.stage.transformComponent = pickingProxy.component;
+        this.stage.transformAtom = pickingProxy.atom;
+    }
+    this.stage.signals.hovered.dispatch(pickingProxy);
+    this.controls.run('hoverPick', pickingProxy);
+};
+PickingBehavior.prototype.dispose = function dispose () {
+    this.mouse.signals.clicked.remove(this._onClick, this);
+    this.mouse.signals.hovered.remove(this._onHover, this);
+};
+
+/**
+ * @file Mouse Behavior
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var MouseBehavior = function MouseBehavior(stage) {
+    this.stage = stage;
+    this.stage = stage;
+    this.mouse = stage.mouseObserver;
+    this.controls = stage.mouseControls;
+    this.mouse.signals.moved.add(this._onMove, this);
+    this.mouse.signals.scrolled.add(this._onScroll, this);
+    this.mouse.signals.dragged.add(this._onDrag, this);
+    this.mouse.signals.clicked.add(this._onClick, this);
+    this.mouse.signals.hovered.add(this._onHover, this);
+    this.mouse.signals.doubleClicked.add(this._onDblclick, this);
+};
+MouseBehavior.prototype._onMove = function _onMove ( /* x, y */) {
+    this.stage.tooltip.style.display = 'none';
+};
+MouseBehavior.prototype._onScroll = function _onScroll (delta) {
+    this.controls.run('scroll', delta);
+};
+MouseBehavior.prototype._onDrag = function _onDrag (dx, dy) {
+    this.controls.run('drag', dx, dy);
+};
+MouseBehavior.prototype._onClick = function _onClick (x, y) {
+    this.controls.run('click', x, y);
+};
+MouseBehavior.prototype._onDblclick = function _onDblclick (x, y) {
+    this.controls.run('doubleClick', x, y);
+};
+MouseBehavior.prototype._onHover = function _onHover (x, y) {
+    this.controls.run('hover', x, y);
+};
+MouseBehavior.prototype.dispose = function dispose () {
+    this.mouse.signals.moved.remove(this._onMove, this);
+    this.mouse.signals.scrolled.remove(this._onScroll, this);
+    this.mouse.signals.dragged.remove(this._onDrag, this);
+    this.mouse.signals.clicked.remove(this._onClick, this);
+    this.mouse.signals.hovered.remove(this._onHover, this);
+};
+
+/**
+ * @file Animation Behavior
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var AnimationBehavior = function AnimationBehavior(stage) {
+    this.stage = stage;
+    this.viewer = stage.viewer;
+    this.animationControls = stage.animationControls;
+    this.viewer.signals.ticked.add(this._onTick, this);
+};
+AnimationBehavior.prototype._onTick = function _onTick (stats) {
+    this.animationControls.run(stats);
+};
+AnimationBehavior.prototype.dispose = function dispose () {
+    this.viewer.signals.ticked.remove(this._onTick, this);
+};
+
+/**
+ * @file Key Behavior
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var passive = SupportsPassiveEventHandler ? { passive: true } : false;
+var KeyBehavior = function KeyBehavior(stage) {
+    this.stage = stage;
+    this.stage = stage;
+    this.controls = stage.keyControls;
+    this.domElement = stage.viewer.renderer.domElement;
+    // ensure the domElement is focusable
+    this.domElement.setAttribute('tabIndex', '-1');
+    this.domElement.style.outline = 'none';
+    this._focusDomElement = this._focusDomElement.bind(this);
+    this._onKeydown = this._onKeydown.bind(this);
+    this._onKeyup = this._onKeyup.bind(this);
+    this._onKeypress = this._onKeypress.bind(this);
+    this.domElement.addEventListener('mousedown', this._focusDomElement);
+    this.domElement.addEventListener('touchstart', this._focusDomElement, passive); // TODO
+    this.domElement.addEventListener('keydown', this._onKeydown);
+    this.domElement.addEventListener('keyup', this._onKeyup);
+    this.domElement.addEventListener('keypress', this._onKeypress);
+};
+/**
+ * handle key down
+ * @param  {Event} event - key event
+ * @return {undefined}
+ */
+KeyBehavior.prototype._onKeydown = function _onKeydown ( /* event */) {
+    // console.log( "down", event.keyCode, String.fromCharCode( event.keyCode ) );
+};
+/**
+ * handle key up
+ * @param  {Event} event - key event
+ * @return {undefined}
+ */
+KeyBehavior.prototype._onKeyup = function _onKeyup ( /* event */) {
+    // console.log( "up", event.keyCode, String.fromCharCode( event.keyCode ) );
+};
+/**
+ * handle key press
+ * @param  {Event} event - key event
+ * @return {undefined}
+ */
+KeyBehavior.prototype._onKeypress = function _onKeypress (event) {
+    // console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
+    var pressedKey;
+    if ("key" in KeyboardEvent.prototype) {
+        pressedKey = event.key;
+        // some mobile browsers don't support this attribute
+    }
+    else {
+        pressedKey = String.fromCharCode(event.which || event.keyCode);
+    }
+    this.controls.run(pressedKey);
+};
+KeyBehavior.prototype._focusDomElement = function _focusDomElement () {
+    this.domElement.focus();
+};
+KeyBehavior.prototype.dispose = function dispose () {
+    this.domElement.removeEventListener('mousedown', this._focusDomElement);
+    this.domElement.removeEventListener('touchstart', this._focusDomElement, passive); // TODO
+    this.domElement.removeEventListener('keydown', this._onKeypress);
+    this.domElement.removeEventListener('keyup', this._onKeypress);
+    this.domElement.removeEventListener('keypress', this._onKeypress);
+};
+
+/**
  * @file Surface Component
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -28957,7 +30887,7 @@ var Stage = function Stage(idOrElement, params) {
         fontFamily: 'sans-serif'
     });
     this.viewer.container.appendChild(this.tooltip);
-    this.mouseObserver = new MouseObserver(this.viewer.renderer.domElement);
+    this.mouseObserver = new MouseObserver(this.viewer.renderer.domElement, this);
     this.viewerControls = new ViewerControls(this);
     this.trackballControls = new TrackballControls(this);
     this.pickingControls = new PickingControls(this);
@@ -31093,318 +33023,6 @@ var VolumeColormaker = /*@__PURE__*/(function (Colormaker$$1) {
 ColormakerRegistry$1.add('volume', VolumeColormaker);
 
 /**
- * @file Structure Representation
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Structure representation
- * @interface
- */
-var StructureRepresentation = /*@__PURE__*/(function (Representation$$1) {
-    function StructureRepresentation(structure, viewer, params) {
-        var p = params || {};
-        Representation$$1.call(this, structure, viewer, p);
-        this.type = 'structure';
-        this.parameters = Object.assign({
-            radiusType: {
-                type: 'select', options: RadiusFactory.types
-            },
-            radiusData: {
-                type: 'hidden'
-            },
-            radiusSize: {
-                type: 'number', precision: 3, max: 10.0, min: 0.001
-            },
-            radiusScale: {
-                type: 'number', precision: 3, max: 10.0, min: 0.001
-            },
-            assembly: null,
-            defaultAssembly: {
-                type: 'hidden'
-            }
-        }, this.parameters);
-        /**
-         * @type {Selection}
-         * @private
-         */
-        this.selection = new Selection(p.sele);
-        /**
-         * @type {Array}
-         * @private
-         */
-        this.dataList = [];
-        /**
-         * @type {Structure}
-         */
-        this.structure = structure;
-        /**
-         * @type {StructureView}
-         */
-        this.structureView = this.structure.getView(this.selection);
-        if (structure.biomolDict) {
-            var biomolOptions = {
-                'default': 'default',
-                '': (structure.unitcell ? 'AU' : 'FULL')
-            };
-            Object.keys(structure.biomolDict).forEach(function (k) {
-                biomolOptions[k] = k;
-            });
-            this.parameters.assembly = {
-                type: 'select',
-                options: biomolOptions,
-                rebuild: true
-            };
-        }
-        else {
-            this.parameters.assembly = null;
-        }
-    }
-
-    if ( Representation$$1 ) StructureRepresentation.__proto__ = Representation$$1;
-    StructureRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
-    StructureRepresentation.prototype.constructor = StructureRepresentation;
-
-    var prototypeAccessors = { defaultScale: { configurable: true } };
-    prototypeAccessors.defaultScale.get = function () {
-        return {
-            'vdw': 1.0,
-            'covalent': 1.0,
-            'bfactor': 0.01,
-            'sstruc': 1.0
-        };
-    };
-    StructureRepresentation.prototype.init = function init (params) {
-        var this$1 = this;
-
-        var p = params || {};
-        p.colorScheme = defaults(p.colorScheme, 'element');
-        this.setRadius(p.radius, p);
-        this.radiusType = defaults(p.radiusType, 'vdw');
-        this.radiusData = defaults(p.radiusData, {});
-        this.radiusSize = defaults(p.radiusSize, 1.0);
-        this.radiusScale = defaults(p.radiusScale, 1.0);
-        this.assembly = defaults(p.assembly, 'default');
-        this.defaultAssembly = defaults(p.defaultAssembly, '');
-        if (p.quality === 'auto') {
-            p.quality = this.getQuality();
-        }
-        Representation$$1.prototype.init.call(this, p);
-        this.selection.signals.stringChanged.add(function ( /* sele */) {
-            this$1.build();
-        });
-        this.build();
-    };
-    StructureRepresentation.prototype.setRadius = function setRadius (value, p) {
-        var types = Object.keys(RadiusFactoryTypes);
-        if (typeof value === 'string' && types.includes(value.toLowerCase())) {
-            p.radiusType = value;
-        }
-        else if (value !== undefined) {
-            p.radiusType = 'size';
-            p.radiusSize = value;
-        }
-        return this;
-    };
-    StructureRepresentation.prototype.getAssembly = function getAssembly () {
-        var name = this.assembly === 'default' ? this.defaultAssembly : this.assembly;
-        return this.structure.biomolDict[name];
-    };
-    StructureRepresentation.prototype.getQuality = function getQuality () {
-        var atomCount;
-        var s = this.structureView;
-        var assembly = this.getAssembly();
-        if (assembly) {
-            atomCount = assembly.getAtomCount(s);
-        }
-        else {
-            atomCount = s.atomCount;
-        }
-        if (Mobile) {
-            atomCount *= 4;
-        }
-        var backboneOnly = s.atomStore.count / s.residueStore.count < 2;
-        if (backboneOnly) {
-            atomCount *= 10;
-        }
-        if (atomCount < 15000) {
-            return 'high';
-        }
-        else if (atomCount < 80000) {
-            return 'medium';
-        }
-        else {
-            return 'low';
-        }
-    };
-    StructureRepresentation.prototype.create = function create () {
-        var this$1 = this;
-
-        if (this.structureView.atomCount === 0)
-            { return; }
-        if (!this.structureView.hasCoords()) {
-            this.needsBuild = true;
-            return;
-        }
-        else {
-            this.needsBuild = false;
-        }
-        var assembly = this.getAssembly();
-        if (assembly) {
-            assembly.partList.forEach(function (part, i) {
-                var sview = part.getView(this$1.structureView);
-                if (sview.atomCount === 0)
-                    { return; }
-                var data = this$1.createData(sview, i);
-                if (data) {
-                    data.sview = sview;
-                    data.instanceList = part.getInstanceList();
-                    this$1.dataList.push(data);
-                }
-            });
-        }
-        else {
-            var data = this.createData(this.structureView, 0);
-            if (data) {
-                data.sview = this.structureView;
-                this.dataList.push(data);
-            }
-        }
-    };
-    StructureRepresentation.prototype.update = function update (what) {
-        var this$1 = this;
-
-        if (this.lazy && !this.visible) {
-            Object.assign(this.lazyProps.what, what);
-            return;
-        }
-        if (this.needsBuild) {
-            this.build();
-            return;
-        }
-        this.dataList.forEach(function (data) {
-            if (data.bufferList.length > 0) {
-                this$1.updateData(what, data);
-            }
-        }, this);
-    };
-    StructureRepresentation.prototype.updateData = function updateData (what, data) {
-        this.build();
-    };
-    StructureRepresentation.prototype.getColorParams = function getColorParams () {
-        return Object.assign(Object.assign({}, Representation$$1.prototype.getColorParams.call(this)), { structure: this.structure });
-    };
-    StructureRepresentation.prototype.getRadiusParams = function getRadiusParams (param) {
-        return {
-            type: this.radiusType,
-            scale: this.radiusScale,
-            size: this.radiusSize,
-            data: this.radiusData
-        };
-    };
-    StructureRepresentation.prototype.getAtomParams = function getAtomParams (what, params) {
-        return Object.assign({
-            what: what,
-            colorParams: this.getColorParams(),
-            radiusParams: this.getRadiusParams()
-        }, params);
-    };
-    StructureRepresentation.prototype.getBondParams = function getBondParams (what, params) {
-        return Object.assign({
-            what: what,
-            colorParams: this.getColorParams(),
-            radiusParams: this.getRadiusParams()
-        }, params);
-    };
-    StructureRepresentation.prototype.getAtomRadius = function getAtomRadius (atom) {
-        if (this.structureView.atomSet.isSet(atom.index)) {
-            var radiusFactory = new RadiusFactory(this.getRadiusParams());
-            return radiusFactory.atomRadius(atom);
-        }
-        return 0;
-    };
-    /**
-     * Set representation parameters
-     * @alias StructureRepresentation#setSelection
-     * @param {String} string - selection string, see {@tutorial selection-language}
-     * @param {Boolean} [silent] - don't trigger a change event in the selection
-     * @return {StructureRepresentation} this object
-     */
-    StructureRepresentation.prototype.setSelection = function setSelection (string, silent) {
-        this.selection.setString(string, silent);
-        return this;
-    };
-    /**
-     * Set representation parameters
-     * @alias StructureRepresentation#setParameters
-     * @param {StructureRepresentationParameters} params - structure parameter object
-     * @param {Object} [what] - buffer data attributes to be updated,
-     *                        note that this needs to be implemented in the
-     *                        derived classes. Generally it allows more
-     *                        fine-grained control over updating than
-     *                        forcing a rebuild.
-     * @param {Boolean} what.position - update position data
-     * @param {Boolean} what.color - update color data
-     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
-     * @return {StructureRepresentation} this object
-     */
-    StructureRepresentation.prototype.setParameters = function setParameters (params, what, rebuild) {
-        if ( what === void 0 ) what = {};
-        if ( rebuild === void 0 ) rebuild = false;
-
-        var p = params || {};
-        this.setRadius(p.radius, p);
-        if (p.radiusType !== undefined || p.radiusData !== undefined || p.radiusSize !== undefined || p.radiusScale !== undefined) {
-            what.radius = true;
-            if (!ExtensionFragDepth || this.disableImpostor) {
-                rebuild = true;
-            }
-        }
-        if (p.defaultAssembly !== undefined &&
-            p.defaultAssembly !== this.defaultAssembly &&
-            ((this.assembly === 'default' && p.assembly === undefined) ||
-                p.assembly === 'default')) {
-            rebuild = true;
-        }
-        Representation$$1.prototype.setParameters.call(this, p, what, rebuild);
-        return this;
-    };
-    StructureRepresentation.prototype.getParameters = function getParameters () {
-        var params = Object.assign(Representation$$1.prototype.getParameters.call(this), {
-            sele: this.selection ? this.selection.string : undefined,
-            defaultAssembly: this.defaultAssembly
-        });
-        return params;
-    };
-    StructureRepresentation.prototype.attach = function attach (callback) {
-        var viewer = this.viewer;
-        var bufferList = this.bufferList;
-        this.dataList.forEach(function (data) {
-            data.bufferList.forEach(function (buffer) {
-                bufferList.push(buffer);
-                viewer.add(buffer, data.instanceList);
-            });
-        });
-        this.setVisibility(this.visible);
-        callback();
-    };
-    StructureRepresentation.prototype.clear = function clear () {
-        this.dataList.length = 0;
-        Representation$$1.prototype.clear.call(this);
-    };
-    StructureRepresentation.prototype.dispose = function dispose () {
-        this.structureView.dispose();
-        delete this.structure;
-        delete this.structureView;
-        Representation$$1.prototype.dispose.call(this);
-    };
-
-    Object.defineProperties( StructureRepresentation.prototype, prototypeAccessors );
-
-    return StructureRepresentation;
-}(Representation));
-
-/**
  * @file Measurement Representation
  * @author Fred Ludlow <fred.ludlow@gmail.com>
  * @private
@@ -32186,72 +33804,6 @@ var TextBuffer = /*@__PURE__*/(function (MappedQuadBuffer$$1) {
 }(MappedQuadBuffer));
 BufferRegistry.add('text', TextBuffer);
 
-ShaderRegistry.add('shader/WideLine.vert', "// heavily based on code by WestLangley from https://github.com/WestLangley/three.js/blob/af28b2fb706ac109771ecad0a7447fad90ab3210/examples/js/lines/LineMaterial.js\r\n\r\nuniform float clipNear;\r\nuniform vec3 clipCenter;\r\nuniform float linewidth;\r\nuniform vec2 resolution;\r\nuniform mat4 projectionMatrixInverse;\r\n\r\nattribute vec2 mapping;\r\nattribute vec3 position1;\r\nattribute vec3 position2;\r\n\r\n#ifdef PICKING\r\n#include unpack_color\r\nattribute float primitiveId;\r\nvarying vec3 vPickingColor;\r\n#else\r\nattribute vec3 color2;\r\nvarying vec3 vColor;\r\nvarying vec3 vColor2;\r\nvarying float flag;\r\nvarying vec3 vViewPosition;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\nvoid trimSegment( const in vec4 start, inout vec4 end ) {\r\n// trim end segment so it terminates between the camera plane and the near plane\r\n// conservative estimate of the near plane\r\nfloat a = projectionMatrix[ 2 ][ 2 ]; // 3nd entry in 3th column\r\nfloat b = projectionMatrix[ 3 ][ 2 ]; // 3nd entry in 4th column\r\nfloat nearEstimate = - 0.5 * b / a;\r\nfloat alpha = ( nearEstimate - start.z ) / ( end.z - start.z );\r\nend.xyz = mix( start.xyz, end.xyz, alpha );\r\n}\r\n\r\nvoid main() {\r\n\r\nfloat aspect = resolution.x / resolution.y;\r\n\r\n#ifdef PICKING\r\nvPickingColor = unpackColor( primitiveId );\r\n#else\r\nflag = mapping.y;\r\nvColor = color;\r\nvColor2 = color2;\r\n#endif\r\n\r\n// camera space\r\nvec4 start = modelViewMatrix * vec4( position1, 1.0 );\r\nvec4 end = modelViewMatrix * vec4( position2, 1.0 );\r\n\r\n// special case for perspective projection, and segments that terminate either in, or behind, the camera plane\r\n// clearly the gpu firmware has a way of addressing this issue when projecting into ndc space\r\n// but we need to perform ndc-space calculations in the shader, so we must address this issue directly\r\n// perhaps there is a more elegant solution -- WestLangley\r\nbool perspective = ( projectionMatrix[ 2 ][ 3 ] == -1.0 ); // 4th entry in the 3rd column\r\nif ( perspective ) {\r\nif ( start.z < 0.0 && end.z >= 0.0 ) {\r\ntrimSegment( start, end );\r\n} else if ( end.z < 0.0 && start.z >= 0.0 ) {\r\ntrimSegment( end, start );\r\n}\r\n}\r\n\r\n// clip space\r\nvec4 clipStart = projectionMatrix * start;\r\nvec4 clipEnd = projectionMatrix * end;\r\n\r\n// ndc space\r\nvec2 ndcStart = clipStart.xy / clipStart.w;\r\nvec2 ndcEnd = clipEnd.xy / clipEnd.w;\r\n\r\n// direction\r\nvec2 dir = ndcEnd - ndcStart;\r\n\r\n// account for clip-space aspect ratio\r\ndir.x *= aspect;\r\ndir = normalize( dir );\r\n\r\n// perpendicular to dir\r\nvec2 offset = vec2( dir.y, - dir.x );\r\n\r\n// undo aspect ratio adjustment\r\ndir.x /= aspect;\r\noffset.x /= aspect;\r\n\r\n// sign flip\r\nif ( mapping.x < 0.0 ) offset *= - 1.0;\r\n\r\n// not used\r\n// // endcaps\r\n// if ( mapping.y < 0.0 ) {\r\n// offset += -dir;\r\n// } else if ( mapping.y > 0.0 ) {\r\n// offset += dir;\r\n// }\r\n\r\n// adjust for linewidth\r\noffset *= linewidth;\r\n\r\n// adjust for clip-space to screen-space conversion\r\noffset /= resolution.y;\r\n\r\n// select end\r\nvec4 clip = ( mapping.y < 0.5 ) ? clipStart : clipEnd;\r\n\r\n// back to clip space\r\noffset *= clip.w;\r\nclip.xy += offset;\r\ngl_Position = clip;\r\n\r\n#ifndef PICKING\r\nvViewPosition = ( projectionMatrixInverse * clip ).xyz;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n\r\n}");
-
-ShaderRegistry.add('shader/WideLine.frag', "uniform vec3 diffuse;\r\nuniform float opacity;\r\nuniform float clipNear;\r\nuniform float clipRadius;\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\n#ifdef PICKING\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\n#else\r\n#include common\r\n#include fog_pars_fragment\r\nvarying vec3 vViewPosition;\r\nvarying vec3 vColor;\r\nvarying vec3 vColor2;\r\nvarying float flag;\r\n#endif\r\n\r\nvoid main() {\r\n\r\n#include nearclip_fragment\r\n#include radiusclip_fragment\r\n\r\n#if defined( PICKING )\r\n\r\nif( opacity < 0.3 )\r\ndiscard;\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n\r\n#else\r\n\r\nvec3 outgoingLight = vec3( 0.0 );\r\nvec4 diffuseColor = vec4( diffuse, 1.0 );\r\n\r\nif ( flag < 0.0 ) {\r\ndiffuseColor.rgb *= vColor;\r\n} else {\r\ndiffuseColor.rgb *= vColor2;\r\n}\r\n\r\n#include alphatest_fragment\r\n\r\noutgoingLight = diffuseColor.rgb;\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a * opacity );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#endif\r\n\r\n}");
-
-/**
- * @file Wide Line Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var WideLineBufferDefaultParameters = Object.assign({
-    linewidth: 2
-}, BufferDefaultParameters);
-var WideLineBufferParameterTypes = Object.assign({
-    linewidth: { uniform: true }
-}, BufferParameterTypes);
-/**
- * Wide Line buffer. Draws lines with a fixed width in pixels.
- *
- * @example
- * var lineBuffer = new WideLineBuffer({
- *   position1: new Float32Array([ 0, 0, 0 ]),
- *   position2: new Float32Array([ 1, 1, 1 ]),
- *   color: new Float32Array([ 1, 0, 0 ]),
- *   color2: new Float32Array([ 0, 1, 0 ])
- * });
- */
-var WideLineBuffer = /*@__PURE__*/(function (MappedQuadBuffer$$1) {
-    function WideLineBuffer(data, params) {
-        if ( params === void 0 ) params = {};
-
-        MappedQuadBuffer$$1.call(this, data, params);
-        this.parameterTypes = WideLineBufferParameterTypes;
-        this.vertexShader = 'WideLine.vert';
-        this.fragmentShader = 'WideLine.frag';
-        if (!data.color2 && data.color)
-            { data.color2 = data.color; }
-        this.addUniforms({
-            'linewidth': { value: this.parameters.linewidth },
-            'resolution': { value: new Vector2() },
-            'projectionMatrixInverse': { value: new Matrix4() }
-        });
-        this.addAttributes({
-            'position1': { type: 'v3', value: null },
-            'position2': { type: 'v3', value: null },
-            'color2': { type: 'c', value: null }
-        });
-        this.setAttributes(data);
-        this.makeMapping();
-    }
-
-    if ( MappedQuadBuffer$$1 ) WideLineBuffer.__proto__ = MappedQuadBuffer$$1;
-    WideLineBuffer.prototype = Object.create( MappedQuadBuffer$$1 && MappedQuadBuffer$$1.prototype );
-    WideLineBuffer.prototype.constructor = WideLineBuffer;
-
-    var prototypeAccessors = { defaultParameters: { configurable: true } };
-    prototypeAccessors.defaultParameters.get = function () { return WideLineBufferDefaultParameters; };
-    WideLineBuffer.prototype.setParameters = function setParameters (params) {
-        MappedQuadBuffer$$1.prototype.setParameters.call(this, params);
-    };
-
-    Object.defineProperties( WideLineBuffer.prototype, prototypeAccessors );
-
-    return WideLineBuffer;
-}(MappedQuadBuffer));
-BufferRegistry.add('wideline', WideLineBuffer);
-
 /**
  * @file Angle Representation
  * @author Fred Ludlow <fred.ludlow@gmail.com>
@@ -32572,279 +34124,6 @@ function getAngleData(position, params) {
 RepresentationRegistry.add('angle', AngleRepresentation);
 
 /**
- * @file Cylinder Geometry Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var scale$2 = new Vector3();
-var eye = new Vector3();
-var target = new Vector3();
-var up = new Vector3(0, 1, 0);
-var CylinderGeometryBufferDefaultParameters = Object.assign({
-    radialSegments: 1,
-    openEnded: true
-}, BufferDefaultParameters);
-function getData$1(data, params) {
-    if ( params === void 0 ) params = {};
-
-    var geo = getGeo(params);
-    var n = data.position1.length;
-    var geoLength = geo.attributes.position.array.length / 3;
-    var count = n / 3;
-    var primitiveId = new Float32Array(count * 2 * geoLength);
-    serialBlockArray(count, geoLength, 0, primitiveId);
-    serialBlockArray(count, geoLength, count * geoLength, primitiveId);
-    var position = new Float32Array(n * 2);
-    var color = new Float32Array(n * 2);
-    return {
-        position: position, color: color, primitiveId: primitiveId, picking: data.picking
-    };
-}
-function getGeo(params) {
-    if ( params === void 0 ) params = {};
-
-    var radialSegments = defaults(params.radialSegments, 10);
-    var openEnded = defaults(params.openEnded, true);
-    var matrix = new Matrix4().makeRotationX(Math.PI / 2);
-    var geo = new CylinderBufferGeometry(1, // radiusTop,
-    1, // radiusBottom,
-    1, // height,
-    radialSegments, // radialSegments,
-    1, // heightSegments,
-    openEnded // openEnded
-    );
-    geo.applyMatrix4(matrix);
-    return geo;
-}
-/**
- * Cylinder geometry buffer.
- *
- * @example
- * var cylinderGeometryBuffer = new CylinderGeometryBuffer({
- *   position1: new Float32Array([ 0, 0, 0 ]),
- *   position2: new Float32Array([ 1, 1, 1 ]),
- *   color: new Float32Array([ 1, 0, 0 ]),
- *   color2: new Float32Array([ 0, 1, 0 ]),
- *   radius: new Float32Array([ 1 ])
- * });
- */
-var CylinderGeometryBuffer = /*@__PURE__*/(function (GeometryBuffer$$1) {
-    function CylinderGeometryBuffer(data, params) {
-        if ( params === void 0 ) params = {};
-
-        GeometryBuffer$$1.call(this, getData$1(data, params), params, getGeo(params));
-        this.updateNormals = true;
-        var n = data.position1.length;
-        var m = data.radius.length;
-        this.__center = new Float32Array(n);
-        this._position = new Float32Array(n * 2);
-        this._color = new Float32Array(n * 2);
-        this._from = new Float32Array(n * 2);
-        this._to = new Float32Array(n * 2);
-        this._radius = new Float32Array(m * 2);
-        this.setAttributes(data, true);
-    }
-
-    if ( GeometryBuffer$$1 ) CylinderGeometryBuffer.__proto__ = GeometryBuffer$$1;
-    CylinderGeometryBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
-    CylinderGeometryBuffer.prototype.constructor = CylinderGeometryBuffer;
-
-    var prototypeAccessors = { defaultParameters: { configurable: true } };
-    prototypeAccessors.defaultParameters.get = function () { return CylinderGeometryBufferDefaultParameters; };
-    CylinderGeometryBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
-        eye.fromArray(this._from, i3);
-        target.fromArray(this._to, i3);
-        matrix.lookAt(eye, target, up);
-        var r = this._radius[i];
-        scale$2.set(r, r, eye.distanceTo(target));
-        matrix.scale(scale$2);
-    };
-    CylinderGeometryBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
-        if ( data === void 0 ) data = {};
-
-        var meshData = {};
-        if (data.position1 && data.position2) {
-            calculateCenterArray(data.position1, data.position2, this.__center);
-            calculateCenterArray(data.position1, this.__center, this._position);
-            calculateCenterArray(this.__center, data.position2, this._position, data.position1.length);
-            this._from.set(data.position1);
-            this._from.set(this.__center, data.position1.length);
-            this._to.set(this.__center);
-            this._to.set(data.position2, this.__center.length);
-            meshData.position = this._position;
-        }
-        if (data.color && data.color2) {
-            this._color.set(data.color);
-            this._color.set(data.color2, data.color.length);
-            meshData.color = this._color;
-        }
-        if (data.radius) {
-            this._radius.set(data.radius);
-            this._radius.set(data.radius, data.radius.length);
-            meshData.radius = this._radius;
-        }
-        GeometryBuffer$$1.prototype.setAttributes.call(this, meshData, initNormals);
-    };
-
-    Object.defineProperties( CylinderGeometryBuffer.prototype, prototypeAccessors );
-
-    return CylinderGeometryBuffer;
-}(GeometryBuffer));
-
-ShaderRegistry.add('shader/CylinderImpostor.vert', "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\r\n//\r\n// All Rights Reserved\r\n//\r\n// Permission to use, copy, modify, distribute, and distribute modified\r\n// versions of this software and its built-in documentation for any\r\n// purpose and without fee is hereby granted, provided that the above\r\n// copyright notice appears in all copies and that both the copyright\r\n// notice and this permission notice appear in supporting documentation,\r\n// and that the name of Schrodinger, LLC not be used in advertising or\r\n// publicity pertaining to distribution of the software without specific,\r\n// written prior permission.\r\n//\r\n// SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\r\n// INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\r\n// NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\r\n// CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\r\n// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\r\n// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\r\n// USE OR PERFORMANCE OF THIS SOFTWARE.\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n// - shift\r\n\r\nattribute vec3 mapping;\r\nattribute vec3 position1;\r\nattribute vec3 position2;\r\nattribute float radius;\r\n\r\nvarying vec3 axis;\r\nvarying vec4 base_radius;\r\nvarying vec4 end_b;\r\nvarying vec3 U;\r\nvarying vec3 V;\r\nvarying vec4 w;\r\n\r\n#ifdef PICKING\r\n#include unpack_color\r\nattribute float primitiveId;\r\nvarying vec3 vPickingColor;\r\n#else\r\nattribute vec3 color2;\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#endif\r\n\r\nuniform mat4 modelViewMatrixInverse;\r\nuniform float ortho;\r\n\r\n#include matrix_scale\r\n\r\nvoid main(){\r\n\r\n#ifdef PICKING\r\nvPickingColor = unpackColor( primitiveId );\r\n#else\r\nvColor1 = color;\r\nvColor2 = color2;\r\n#endif\r\n\r\n// vRadius = radius;\r\nbase_radius.w = radius * matrixScale( modelViewMatrix );\r\n\r\nvec3 center = position;\r\nvec3 dir = normalize( position2 - position1 );\r\nfloat ext = length( position2 - position1 ) / 2.0;\r\n\r\n// using cameraPosition fails on some machines, not sure why\r\n// vec3 cam_dir = normalize( cameraPosition - mix( center, vec3( 0.0 ), ortho ) );\r\nvec3 cam_dir;\r\nif( ortho == 0.0 ){\r\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center;\r\n}else{\r\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 1, 0 ) ).xyz;\r\n}\r\ncam_dir = normalize( cam_dir );\r\n\r\nvec3 ldir;\r\n\r\nfloat b = dot( cam_dir, dir );\r\nend_b.w = b;\r\n// direction vector looks away, so flip\r\nif( b < 0.0 )\r\nldir = -ext * dir;\r\n// direction vector already looks in my direction\r\nelse\r\nldir = ext * dir;\r\n\r\nvec3 left = normalize( cross( cam_dir, ldir ) );\r\nleft = radius * left;\r\nvec3 up = radius * normalize( cross( left, ldir ) );\r\n\r\n// transform to modelview coordinates\r\naxis = normalize( normalMatrix * ldir );\r\nU = normalize( normalMatrix * up );\r\nV = normalize( normalMatrix * left );\r\n\r\nvec4 base4 = modelViewMatrix * vec4( center - ldir, 1.0 );\r\nbase_radius.xyz = base4.xyz / base4.w;\r\n\r\nvec4 top_position = modelViewMatrix * vec4( center + ldir, 1.0 );\r\nvec4 end4 = top_position;\r\nend_b.xyz = end4.xyz / end4.w;\r\n\r\nw = modelViewMatrix * vec4(\r\ncenter + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0\r\n);\r\n\r\ngl_Position = projectionMatrix * w;\r\n\r\n// avoid clipping (1.0 seems to induce flickering with some drivers)\r\ngl_Position.z = 0.99;\r\n\r\n}");
-
-ShaderRegistry.add('shader/CylinderImpostor.frag', "#define STANDARD\r\n#define IMPOSTOR\r\n\r\n// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\r\n//\r\n// All Rights Reserved\r\n//\r\n// Permission to use, copy, modify, distribute, and distribute modified\r\n// versions of this software and its built-in documentation for any\r\n// purpose and without fee is hereby granted, provided that the above\r\n// copyright notice appears in all copies and that both the copyright\r\n// notice and this permission notice appear in supporting documentation,\r\n// and that the name of Schrodinger, LLC not be used in advertising or\r\n// publicity pertaining to distribution of the software without specific,\r\n// written prior permission.\r\n//\r\n// SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\r\n// INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\r\n// NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\r\n// CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\r\n// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\r\n// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\r\n// USE OR PERFORMANCE OF THIS SOFTWARE.\r\n\r\n// Contributions by Alexander Rose\r\n// - ported to WebGL\r\n// - dual color\r\n// - picking color\r\n// - custom clipping\r\n// - three.js lighting\r\n\r\nuniform vec3 diffuse;\r\nuniform vec3 emissive;\r\nuniform vec3 interiorColor;\r\nuniform float interiorDarkening;\r\nuniform float roughness;\r\nuniform float metalness;\r\nuniform float opacity;\r\nuniform float clipNear;\r\nuniform mat4 projectionMatrix;\r\nuniform float ortho;\r\n\r\nvarying vec3 axis;\r\nvarying vec4 base_radius;\r\nvarying vec4 end_b;\r\nvarying vec3 U;\r\nvarying vec3 V;\r\nvarying vec4 w;\r\n\r\n#ifdef PICKING\r\nuniform float objectId;\r\nvarying vec3 vPickingColor;\r\n#else\r\nvarying vec3 vColor1;\r\nvarying vec3 vColor2;\r\n#include common\r\n#include fog_pars_fragment\r\n#include bsdfs\r\n#include lights_pars_begin\r\n#include lights_physical_pars_fragment\r\n#endif\r\n\r\nbool interior = false;\r\n\r\nfloat distSq3( vec3 v3a, vec3 v3b ){\r\nreturn (\r\n( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +\r\n( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +\r\n( v3a.z - v3b.z ) * ( v3a.z - v3b.z )\r\n);\r\n}\r\n\r\n// Calculate depth based on the given camera position.\r\nfloat calcDepth( in vec3 cameraPos ){\r\nvec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\r\nreturn 0.5 + 0.5 * clipZW.x / clipZW.y;\r\n}\r\n\r\nfloat calcClip( vec3 cameraPos ){\r\nreturn dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, clipNear - 0.5 ) );\r\n}\r\n\r\nvoid main(){\r\n\r\nvec3 point = w.xyz / w.w;\r\n\r\n// unpacking\r\nvec3 base = base_radius.xyz;\r\nfloat vRadius = base_radius.w;\r\nvec3 end = end_b.xyz;\r\nfloat b = end_b.w;\r\n\r\nvec3 end_cyl = end;\r\nvec3 surface_point = point;\r\n\r\nvec3 ray_target = surface_point;\r\nvec3 ray_origin = vec3(0.0);\r\nvec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\r\nmat3 basis = mat3( U, V, axis );\r\n\r\nvec3 diff = ray_target - 0.5 * (base + end_cyl);\r\nvec3 P = diff * basis;\r\n\r\n// angle (cos) between cylinder cylinder_axis and ray direction\r\nfloat dz = dot( axis, ray_direction );\r\n\r\nfloat radius2 = vRadius*vRadius;\r\n\r\n// calculate distance to the cylinder from ray origin\r\nvec3 D = vec3(dot(U, ray_direction),\r\ndot(V, ray_direction),\r\ndz);\r\nfloat a0 = P.x*P.x + P.y*P.y - radius2;\r\nfloat a1 = P.x*D.x + P.y*D.y;\r\nfloat a2 = D.x*D.x + D.y*D.y;\r\n\r\n// calculate a dicriminant of the above quadratic equation\r\nfloat d = a1*a1 - a0*a2;\r\nif (d < 0.0)\r\n// outside of the cylinder\r\ndiscard;\r\n\r\nfloat dist = (-a1 + sqrt(d)) / a2;\r\n\r\n// point of intersection on cylinder surface\r\nvec3 new_point = ray_target + dist * ray_direction;\r\n\r\nvec3 tmp_point = new_point - base;\r\nvec3 _normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\r\n\r\nray_origin = mix( ray_origin, surface_point, ortho );\r\n\r\n// test caps\r\nfloat front_cap_test = dot( tmp_point, axis );\r\nfloat end_cap_test = dot((new_point - end_cyl), axis);\r\n\r\n// to calculate caps, simply check the angle between\r\n// the point of intersection - cylinder end vector\r\n// and a cap plane normal (which is the cylinder cylinder_axis)\r\n// if the angle < 0, the point is outside of cylinder\r\n// test front cap\r\n\r\n#ifndef CAP\r\nvec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\nvec3 tmp_point2 = new_point2 - base;\r\n#endif\r\n\r\n// flat\r\nif (front_cap_test < 0.0)\r\n{\r\n// ray-plane intersection\r\nfloat dNV = dot(-axis, ray_direction);\r\nif (dNV < 0.0)\r\ndiscard;\r\nfloat near = dot(-axis, (base)) / dNV;\r\nvec3 front_point = ray_direction * near + ray_origin;\r\n// within the cap radius?\r\nif (dot(front_point - base, front_point-base) > radius2)\r\ndiscard;\r\n\r\n#ifdef CAP\r\nnew_point = front_point;\r\n_normal = axis;\r\n#else\r\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\ndNV = dot(-axis, ray_direction);\r\nnear = dot(axis, end_cyl) / dNV;\r\nnew_point2 = ray_direction * near + ray_origin;\r\nif (dot(new_point2 - end_cyl, new_point2-base) < radius2)\r\ndiscard;\r\ninterior = true;\r\n#endif\r\n}\r\n\r\n// test end cap\r\n\r\n\r\n// flat\r\nif( end_cap_test > 0.0 )\r\n{\r\n// ray-plane intersection\r\nfloat dNV = dot(axis, ray_direction);\r\nif (dNV < 0.0)\r\ndiscard;\r\nfloat near = dot(axis, end_cyl) / dNV;\r\nvec3 end_point = ray_direction * near + ray_origin;\r\n// within the cap radius?\r\nif( dot(end_point - end_cyl, end_point-base) > radius2 )\r\ndiscard;\r\n\r\n#ifdef CAP\r\nnew_point = end_point;\r\n_normal = axis;\r\n#else\r\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\r\ndNV = dot(-axis, ray_direction);\r\nnear = dot(-axis, (base)) / dNV;\r\nnew_point2 = ray_direction * near + ray_origin;\r\nif (dot(new_point2 - base, new_point2-base) < radius2)\r\ndiscard;\r\ninterior = true;\r\n#endif\r\n}\r\n\r\ngl_FragDepthEXT = calcDepth( new_point );\r\n\r\n#ifdef NEAR_CLIP\r\nif( calcClip( new_point ) > 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\nif( calcClip( new_point ) > 0.0 )\r\ndiscard;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( clipNear - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\r\n}\r\n}else if( gl_FragDepthEXT <= 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n}\r\n#else\r\nif( gl_FragDepthEXT <= 0.0 ){\r\ndist = (-a1 - sqrt(d)) / a2;\r\nnew_point = ray_target + dist * ray_direction;\r\ninterior = true;\r\ngl_FragDepthEXT = calcDepth( new_point );\r\nif( gl_FragDepthEXT >= 0.0 ){\r\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\r\n}\r\n}\r\n#endif\r\n\r\n// this is a workaround necessary for Mac\r\n// otherwise the modified fragment won't clip properly\r\nif (gl_FragDepthEXT < 0.0)\r\ndiscard;\r\nif (gl_FragDepthEXT > 1.0)\r\ndiscard;\r\n\r\n#ifdef PICKING\r\n\r\nif( opacity < 0.3 )\r\ndiscard;\r\ngl_FragColor = vec4( vPickingColor, objectId );\r\n\r\n#else\r\n\r\nvec3 vViewPosition = -new_point;\r\nvec3 vNormal = _normal;\r\nvec3 vColor;\r\n\r\nif( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\r\nif( b < 0.0 ){\r\nvColor = vColor1;\r\n}else{\r\nvColor = vColor2;\r\n}\r\n}else{\r\nif( b > 0.0 ){\r\nvColor = vColor1;\r\n}else{\r\nvColor = vColor2;\r\n}\r\n}\r\n\r\nvec4 diffuseColor = vec4( diffuse, opacity );\r\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\r\nvec3 totalEmissiveLight = emissive;\r\n\r\n#include color_fragment\r\n#include roughnessmap_fragment\r\n#include metalnessmap_fragment\r\n\r\n// @fredludlow: Previous comment from @arose says don't use normal_fragment_begin\r\n// though not clear why, but sticking with it. The r118 version of this chunk also\r\n// defines geometryNormal, so adding that here\r\n// #include normal_fragment_begin\r\nvec3 normal = normalize( vNormal );\r\nvec3 geometryNormal = normal;\r\n\r\n#include lights_physical_fragment\r\n#include lights_fragment_begin\r\n#include lights_fragment_end\r\n\r\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\r\n\r\nif( interior ){\r\n#ifdef USE_INTERIOR_COLOR\r\noutgoingLight.xyz = interiorColor;\r\n#else\r\n#ifdef DIFFUSE_INTERIOR\r\noutgoingLight.xyz = vColor;\r\n#endif\r\n#endif\r\noutgoingLight.xyz *= 1.0 - interiorDarkening;\r\n}\r\n\r\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\r\n\r\n#include premultiplied_alpha_fragment\r\n#include tonemapping_fragment\r\n#include encodings_fragment\r\n#include fog_fragment\r\n\r\n#endif\r\n\r\n}");
-
-/**
- * @file Mapped Aligned Box Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var mapping$1 = new Float32Array([
-    -1.0, 1.0, -1.0,
-    -1.0, -1.0, -1.0,
-    1.0, 1.0, -1.0,
-    1.0, 1.0, 1.0,
-    1.0, -1.0, -1.0,
-    1.0, -1.0, 1.0
-]);
-var mappingIndices$1 = new Uint16Array([
-    0, 1, 2,
-    1, 4, 2,
-    2, 4, 3,
-    4, 5, 3
-]);
-/**
- * Mapped Aligned box buffer. Draws boxes where one side is always screen-space aligned.
- * Used to render cylinder imposters.
- * @interface
- */
-var MappedAlignedBoxBuffer = /*@__PURE__*/(function (MappedBuffer$$1) {
-    function MappedAlignedBoxBuffer(data, params) {
-        if ( params === void 0 ) params = {};
-
-        MappedBuffer$$1.call(this, 'v3', data, params);
-    }
-
-    if ( MappedBuffer$$1 ) MappedAlignedBoxBuffer.__proto__ = MappedBuffer$$1;
-    MappedAlignedBoxBuffer.prototype = Object.create( MappedBuffer$$1 && MappedBuffer$$1.prototype );
-    MappedAlignedBoxBuffer.prototype.constructor = MappedAlignedBoxBuffer;
-
-    var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
-    prototypeAccessors.mapping.get = function () { return mapping$1; };
-    prototypeAccessors.mappingIndices.get = function () { return mappingIndices$1; };
-    prototypeAccessors.mappingIndicesSize.get = function () { return 12; };
-    prototypeAccessors.mappingSize.get = function () { return 6; };
-    prototypeAccessors.mappingItemSize.get = function () { return 3; };
-
-    Object.defineProperties( MappedAlignedBoxBuffer.prototype, prototypeAccessors );
-
-    return MappedAlignedBoxBuffer;
-}(MappedBuffer));
-
-/**
- * @file Cylinder Impostor Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var CylinderImpostorBufferDefaultParameters = Object.assign({
-    openEnded: false
-}, BufferDefaultParameters);
-var CylinderImpostorBufferParameterTypes = Object.assign({
-    openEnded: { updateShader: true }
-}, BufferParameterTypes);
-/**
- * Cylinder impostor buffer.
- *
- * @example
- * var cylinderimpostorBuffer = new CylinderImpostorBuffer({
- *     position1: new Float32Array([ 0, 0, 0 ]),
- *     position2: new Float32Array([ 1, 1, 1 ]),
- *     color: new Float32Array([ 1, 0, 0 ]),
- *     color2: new Float32Array([ 0, 1, 0 ]),
- *     radius: new Float32Array([ 1 ])
- * });
- */
-var CylinderImpostorBuffer = /*@__PURE__*/(function (MappedAlignedBoxBuffer$$1) {
-    function CylinderImpostorBuffer(data, params) {
-        if ( params === void 0 ) params = {};
-
-        MappedAlignedBoxBuffer$$1.call(this, data, params);
-        this.parameterTypes = CylinderImpostorBufferParameterTypes;
-        this.isImpostor = true;
-        this.vertexShader = 'CylinderImpostor.vert';
-        this.fragmentShader = 'CylinderImpostor.frag';
-        this.addUniforms({
-            'modelViewMatrixInverse': { value: new Matrix4() },
-            'ortho': { value: 0.0 }
-        });
-        this.addAttributes({
-            'position1': { type: 'v3', value: null },
-            'position2': { type: 'v3', value: null },
-            'color2': { type: 'c', value: null },
-            'radius': { type: 'f', value: null }
-        });
-        this.setAttributes(data);
-        this.makeMapping();
-    }
-
-    if ( MappedAlignedBoxBuffer$$1 ) CylinderImpostorBuffer.__proto__ = MappedAlignedBoxBuffer$$1;
-    CylinderImpostorBuffer.prototype = Object.create( MappedAlignedBoxBuffer$$1 && MappedAlignedBoxBuffer$$1.prototype );
-    CylinderImpostorBuffer.prototype.constructor = CylinderImpostorBuffer;
-
-    var prototypeAccessors = { defaultParameters: { configurable: true } };
-    prototypeAccessors.defaultParameters.get = function () { return CylinderImpostorBufferDefaultParameters; };
-    CylinderImpostorBuffer.prototype.getDefines = function getDefines (type) {
-        var defines = MappedAlignedBoxBuffer$$1.prototype.getDefines.call(this, type);
-        if (!this.parameters.openEnded) {
-            defines.CAP = 1;
-        }
-        return defines;
-    };
-
-    Object.defineProperties( CylinderImpostorBuffer.prototype, prototypeAccessors );
-
-    return CylinderImpostorBuffer;
-}(MappedAlignedBoxBuffer));
-
-/**
- * @file Cylinder Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var CylinderBufferDefaultParameters = Object.assign({
-    disableImpostor: false
-}, CylinderGeometryBufferDefaultParameters, CylinderImpostorBufferDefaultParameters);
-/**
- * Cylinder buffer. Depending on the value {@link ExtensionFragDepth} and
- * `params.disableImpostor` the constructor returns either a
- * {@link CylinderGeometryBuffer} or a {@link CylinderImpostorBuffer}
- * @implements {Buffer}
- *
- * @example
- * var cylinderBuffer = new CylinderBuffer({
- *   position1: new Float32Array([ 0, 0, 0 ]),
- *   position2: new Float32Array([ 1, 1, 1 ]),
- *   color: new Float32Array([ 1, 0, 0 ]),
- *   color2: new Float32Array([ 0, 1, 0 ]),
- *   radius: new Float32Array([ 1 ])
- * });
- */
-var CylinderBuffer = function CylinderBuffer(data, params) {
-    if ( params === void 0 ) params = {};
-
-    if (!data.color2 && data.color)
-        { data.color2 = data.color; }
-    if (!ExtensionFragDepth || (params && params.disableImpostor)) {
-        return new CylinderGeometryBuffer(data, params);
-    }
-    else {
-        return new CylinderImpostorBuffer(data, params);
-    }
-};
-BufferRegistry.add('cylinder', CylinderBuffer);
-
-/**
  * @file Axes Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -33074,228 +34353,6 @@ var AxesRepresentation = /*@__PURE__*/(function (StructureRepresentation$$1) {
 RepresentationRegistry.add('axes', AxesRepresentation);
 
 /**
- * @file Ball And Stick Representation
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Ball And Stick representation parameter object. Extends {@link RepresentationParameters} and
- * {@link StructureRepresentationParameters}.
- *
- * @typedef {Object} BallAndStickRepresentationParameters - ball and stick representation parameters
- *
- * @property {Integer} sphereDetail - sphere quality (icosahedron subdivisions)
- * @property {Integer} radialSegments - cylinder quality (number of segments)
- * @property {Boolean} openEnded - capped or not
- * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
- * @property {Float} aspectRatio - size difference between atom and bond radii
- * @property {Boolean} lineOnly - render only bonds, and only as lines
- * @property {Integer} linewidth - width of lines
- * @property {Boolean} cylinderOnly - render only bonds (no atoms)
- * @property {String} multipleBond - one off "off", "symmetric", "offset"
- * @property {Float} bondSpacing - spacing for multiple bond rendering
- * @property {Float} bondScale - scale/radius for multiple bond rendering
- */
-/**
- * Ball And Stick representation. Show atoms as spheres and bonds as cylinders.
- *
- * __Name:__ _ball+stick_
- *
- * @example
- * stage.loadFile( "rcsb://1crn" ).then( function( o ){
- *     o.addRepresentation( "ball+stick" );
- *     o.autoView();
- * } );
- */
-var BallAndStickRepresentation = /*@__PURE__*/(function (StructureRepresentation$$1) {
-    function BallAndStickRepresentation(structure, viewer, params) {
-        StructureRepresentation$$1.call(this, structure, viewer, params);
-        this.type = 'ball+stick';
-        this.parameters = Object.assign({
-            sphereDetail: true,
-            radialSegments: true,
-            openEnded: true,
-            disableImpostor: true,
-            aspectRatio: {
-                type: 'number', precision: 1, max: 10.0, min: 1.0
-            },
-            lineOnly: {
-                type: 'boolean', rebuild: true
-            },
-            cylinderOnly: {
-                type: 'boolean', rebuild: true
-            },
-            multipleBond: {
-                type: 'select',
-                rebuild: true,
-                options: {
-                    'off': 'off',
-                    'symmetric': 'symmetric',
-                    'offset': 'offset'
-                }
-            },
-            bondScale: {
-                type: 'number', precision: 2, max: 1.0, min: 0.01
-            },
-            bondSpacing: {
-                type: 'number', precision: 2, max: 2.0, min: 0.5
-            },
-            linewidth: {
-                type: 'integer', max: 50, min: 1, buffer: true
-            }
-        }, this.parameters);
-        this.init(params);
-    }
-
-    if ( StructureRepresentation$$1 ) BallAndStickRepresentation.__proto__ = StructureRepresentation$$1;
-    BallAndStickRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
-    BallAndStickRepresentation.prototype.constructor = BallAndStickRepresentation;
-    BallAndStickRepresentation.prototype.init = function init (params) {
-        var p = params || {};
-        p.radiusType = defaults(p.radiusType, 'size');
-        p.radiusSize = defaults(p.radiusSize, 0.15);
-        p.useInteriorColor = defaults(p.useInteriorColor, true);
-        this.aspectRatio = defaults(p.aspectRatio, 2.0);
-        this.lineOnly = defaults(p.lineOnly, false);
-        this.cylinderOnly = defaults(p.cylinderOnly, false);
-        this.multipleBond = defaults(p.multipleBond, 'off');
-        this.bondSpacing = defaults(p.bondSpacing, 1.0);
-        this.bondScale = defaults(p.bondScale, 0.4);
-        this.linewidth = defaults(p.linewidth, 2);
-        StructureRepresentation$$1.prototype.init.call(this, p);
-    };
-    BallAndStickRepresentation.prototype.getAtomRadius = function getAtomRadius (atom) {
-        return this.aspectRatio * StructureRepresentation$$1.prototype.getAtomRadius.call(this, atom);
-    };
-    BallAndStickRepresentation.prototype.getAtomParams = function getAtomParams (what, params) {
-        var p = StructureRepresentation$$1.prototype.getAtomParams.call(this, what, params);
-        p.radiusParams.scale *= this.aspectRatio;
-        return p;
-    };
-    BallAndStickRepresentation.prototype.getAtomData = function getAtomData (sview, what, params) {
-        return sview.getAtomData(this.getAtomParams(what, params));
-    };
-    BallAndStickRepresentation.prototype.getBondParams = function getBondParams (what, params) {
-        params = Object.assign({
-            multipleBond: this.multipleBond,
-            bondSpacing: this.bondSpacing,
-            bondScale: this.bondScale
-        }, params);
-        return StructureRepresentation$$1.prototype.getBondParams.call(this, what, params);
-    };
-    BallAndStickRepresentation.prototype.getBondData = function getBondData (sview, what, params) {
-        return sview.getBondData(this.getBondParams(what, params));
-    };
-    BallAndStickRepresentation.prototype.createData = function createData (sview) {
-        var bufferList = [];
-        if (this.lineOnly) {
-            this.lineBuffer = new WideLineBuffer(this.getBondData(sview, { position: true, color: true, picking: true }), this.getBufferParams({ linewidth: this.linewidth }));
-            bufferList.push(this.lineBuffer);
-        }
-        else {
-            var cylinderBuffer = new CylinderBuffer(this.getBondData(sview), this.getBufferParams({
-                openEnded: this.openEnded,
-                radialSegments: this.radialSegments,
-                disableImpostor: this.disableImpostor,
-                dullInterior: true
-            }));
-            bufferList.push(cylinderBuffer);
-            if (!this.cylinderOnly) {
-                var sphereBuffer = new SphereBuffer(this.getAtomData(sview), this.getBufferParams({
-                    sphereDetail: this.sphereDetail,
-                    disableImpostor: this.disableImpostor,
-                    dullInterior: true
-                }));
-                bufferList.push(sphereBuffer);
-            }
-        }
-        return {
-            bufferList: bufferList
-        };
-    };
-    BallAndStickRepresentation.prototype.updateData = function updateData (what, data) {
-        if (this.multipleBond !== 'off' && what && what.radius) {
-            what.position = true;
-        }
-        var bondData = this.getBondData(data.sview, what);
-        if (this.lineOnly) {
-            var lineData = {};
-            if (!what || what.position) {
-                Object.assign(lineData, {
-                    position1: bondData.position1,
-                    position2: bondData.position2
-                });
-            }
-            if (!what || what.color) {
-                Object.assign(lineData, {
-                    color: bondData.color,
-                    color2: bondData.color2
-                });
-            }
-            data.bufferList[0].setAttributes(lineData);
-        }
-        else {
-            var cylinderData = {};
-            if (!what || what.position) {
-                Object.assign(cylinderData, {
-                    position1: bondData.position1,
-                    position2: bondData.position2
-                });
-            }
-            if (!what || what.color) {
-                Object.assign(cylinderData, {
-                    color: bondData.color,
-                    color2: bondData.color2
-                });
-            }
-            if (!what || what.radius) {
-                Object.assign(cylinderData, {
-                    radius: bondData.radius
-                });
-            }
-            data.bufferList[0].setAttributes(cylinderData);
-            if (!this.cylinderOnly) {
-                var atomData = this.getAtomData(data.sview, what);
-                var sphereData = {};
-                if (!what || what.position) {
-                    Object.assign(sphereData, {
-                        position: atomData.position
-                    });
-                }
-                if (!what || what.color) {
-                    Object.assign(sphereData, {
-                        color: atomData.color
-                    });
-                }
-                if (!what || what.radius) {
-                    Object.assign(sphereData, {
-                        radius: atomData.radius
-                    });
-                }
-                data.bufferList[1].setAttributes(sphereData);
-            }
-        }
-    };
-    BallAndStickRepresentation.prototype.setParameters = function setParameters (params) {
-        if ( params === void 0 ) params = {};
-
-        var rebuild = false;
-        var what = {};
-        if (params.aspectRatio || params.bondSpacing || params.bondScale) {
-            Object.assign(what, { radius: true });
-            if (!ExtensionFragDepth || this.disableImpostor) {
-                rebuild = true;
-            }
-        }
-        StructureRepresentation$$1.prototype.setParameters.call(this, params, what, rebuild);
-        return this;
-    };
-
-    return BallAndStickRepresentation;
-}(StructureRepresentation));
-RepresentationRegistry.add('ball+stick', BallAndStickRepresentation);
-
-/**
  * @file Backbone Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -33394,986 +34451,6 @@ var BaseRepresentation = /*@__PURE__*/(function (BallAndStickRepresentation$$1) 
     return BaseRepresentation;
 }(BallAndStickRepresentation));
 RepresentationRegistry.add('base', BaseRepresentation);
-
-/**
- * @file Spline
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var Interpolator = function Interpolator(m, tension) {
-    this.m = m;
-    this.tension = tension;
-    this.dt = 1.0 / this.m;
-    this.delta = 0.0001;
-    this.vec1 = new Vector3();
-    this.vec2 = new Vector3();
-    this.vDir = new Vector3();
-    this.vTan = new Vector3();
-    this.vNorm = new Vector3();
-    this.vBin = new Vector3();
-    this.m2 = Math.ceil(this.m / 2);
-};
-Interpolator.prototype.interpolateToArr = function interpolateToArr (v0, v1, v2, v3, t, arr, offset) {
-    arr[offset + 0] = spline(v0.x, v1.x, v2.x, v3.x, t, this.tension);
-    arr[offset + 1] = spline(v0.y, v1.y, v2.y, v3.y, t, this.tension);
-    arr[offset + 2] = spline(v0.z, v1.z, v2.z, v3.z, t, this.tension);
-};
-Interpolator.prototype.interpolateToVec = function interpolateToVec (v0, v1, v2, v3, t, vec) {
-    vec.x = spline(v0.x, v1.x, v2.x, v3.x, t, this.tension);
-    vec.y = spline(v0.y, v1.y, v2.y, v3.y, t, this.tension);
-    vec.z = spline(v0.z, v1.z, v2.z, v3.z, t, this.tension);
-};
-Interpolator.prototype.interpolatePosition = function interpolatePosition (v0, v1, v2, v3, pos, offset) {
-    for (var j = 0; j < this.m; ++j) {
-        var l = offset + j * 3;
-        var d = this.dt * j;
-        this.interpolateToArr(v0, v1, v2, v3, d, pos, l);
-    }
-};
-Interpolator.prototype.interpolateTangent = function interpolateTangent (v0, v1, v2, v3, tan, offset) {
-    for (var j = 0; j < this.m; ++j) {
-        var d = this.dt * j;
-        var d1 = d - this.delta;
-        var d2 = d + this.delta;
-        var l = offset + j * 3;
-        // capping as a precaution
-        if (d1 < 0)
-            { d1 = 0; }
-        if (d2 > 1)
-            { d2 = 1; }
-        //
-        this.interpolateToVec(v0, v1, v2, v3, d1, this.vec1);
-        this.interpolateToVec(v0, v1, v2, v3, d2, this.vec2);
-        //
-        this.vec2.sub(this.vec1).normalize();
-        this.vec2.toArray(tan, l);
-    }
-};
-Interpolator.prototype.vectorSubdivide = function vectorSubdivide (interpolationFn, iterator, array, offset, isCyclic) {
-    var v0;
-    var v1 = iterator.next();
-    var v2 = iterator.next();
-    var v3 = iterator.next();
-    //
-    var n = iterator.size;
-    var n1 = n - 1;
-    var k = offset || 0;
-    for (var i = 0; i < n1; ++i) {
-        v0 = v1;
-        v1 = v2;
-        v2 = v3;
-        v3 = iterator.next();
-        interpolationFn.apply(this, [v0, v1, v2, v3, array, k]);
-        k += 3 * this.m;
-    }
-    if (isCyclic) {
-        v0 = iterator.get(n - 2);
-        v1 = iterator.get(n - 1);
-        v2 = iterator.get(0);
-        v3 = iterator.get(1);
-        interpolationFn.apply(this, [v0, v1, v2, v3, array, k]);
-        k += 3 * this.m;
-    }
-};
-//
-Interpolator.prototype.getPosition = function getPosition (iterator, array, offset, isCyclic) {
-    iterator.reset();
-    this.vectorSubdivide(this.interpolatePosition, iterator, array, offset, isCyclic);
-    var n1 = iterator.size - 1;
-    var k = n1 * this.m * 3;
-    if (isCyclic)
-        { k += this.m * 3; }
-    var v = iterator.get(isCyclic ? 0 : n1);
-    array[k] = v.x;
-    array[k + 1] = v.y;
-    array[k + 2] = v.z;
-};
-Interpolator.prototype.getTangent = function getTangent (iterator, array, offset, isCyclic) {
-    iterator.reset();
-    this.vectorSubdivide(this.interpolateTangent, iterator, array, offset, isCyclic);
-    var n1 = iterator.size - 1;
-    var k = n1 * this.m * 3;
-    if (isCyclic)
-        { k += this.m * 3; }
-    copyArray(array, array, k - 3, k, 3);
-};
-Interpolator.prototype.interpolateNormalDir = function interpolateNormalDir (u0, u1, u2, u3, v0, v1, v2, v3, tan, norm, bin, offset, shift) {
-    for (var j = 0; j < this.m; ++j) {
-        var l = offset + j * 3;
-        if (shift)
-            { l += this.m2 * 3; }
-        var d = this.dt * j;
-        this.interpolateToVec(u0, u1, u2, u3, d, this.vec1);
-        this.interpolateToVec(v0, v1, v2, v3, d, this.vec2);
-        this.vDir.subVectors(this.vec2, this.vec1).normalize();
-        this.vTan.fromArray(tan, l);
-        this.vBin.crossVectors(this.vDir, this.vTan).normalize();
-        this.vBin.toArray(bin, l);
-        this.vNorm.crossVectors(this.vTan, this.vBin).normalize();
-        this.vNorm.toArray(norm, l);
-    }
-};
-Interpolator.prototype.interpolateNormal = function interpolateNormal (vDir, tan, norm, bin, offset) {
-    for (var j = 0; j < this.m; ++j) {
-        var l = offset + j * 3;
-        vDir.copy(this.vNorm);
-        this.vTan.fromArray(tan, l);
-        this.vBin.crossVectors(vDir, this.vTan).normalize();
-        this.vBin.toArray(bin, l);
-        this.vNorm.crossVectors(this.vTan, this.vBin).normalize();
-        this.vNorm.toArray(norm, l);
-    }
-};
-Interpolator.prototype.getNormal = function getNormal (size, tan, norm, bin, offset, isCyclic) {
-    this.vNorm.set(0, 0, 1);
-    var n = size;
-    var n1 = n - 1;
-    var k = offset || 0;
-    for (var i = 0; i < n1; ++i) {
-        this.interpolateNormal(this.vDir, tan, norm, bin, k);
-        k += 3 * this.m;
-    }
-    if (isCyclic) {
-        this.interpolateNormal(this.vDir, tan, norm, bin, k);
-        k += 3 * this.m;
-    }
-    this.vBin.toArray(bin, k);
-    this.vNorm.toArray(norm, k);
-};
-Interpolator.prototype.getNormalDir = function getNormalDir (iterDir1, iterDir2, tan, norm, bin, offset, isCyclic, shift) {
-    iterDir1.reset();
-    iterDir2.reset();
-    //
-    var vSub1 = new Vector3();
-    var vSub2 = new Vector3();
-    var vSub3 = new Vector3();
-    var vSub4 = new Vector3();
-    //
-    var d1v1 = new Vector3();
-    var d1v2 = new Vector3().copy(iterDir1.next());
-    var d1v3 = new Vector3().copy(iterDir1.next());
-    var d1v4 = new Vector3().copy(iterDir1.next());
-    var d2v1 = new Vector3();
-    var d2v2 = new Vector3().copy(iterDir2.next());
-    var d2v3 = new Vector3().copy(iterDir2.next());
-    var d2v4 = new Vector3().copy(iterDir2.next());
-    //
-    this.vNorm.set(0, 0, 1);
-    var n = iterDir1.size;
-    var n1 = n - 1;
-    var k = offset || 0;
-    for (var i = 0; i < n1; ++i) {
-        d1v1.copy(d1v2);
-        d1v2.copy(d1v3);
-        d1v3.copy(d1v4);
-        d1v4.copy(iterDir1.next());
-        d2v1.copy(d2v2);
-        d2v2.copy(d2v3);
-        d2v3.copy(d2v4);
-        d2v4.copy(iterDir2.next());
-        //
-        if (i === 0) {
-            vSub1.subVectors(d2v1, d1v1);
-            vSub2.subVectors(d2v2, d1v2);
-            if (vSub1.dot(vSub2) < 0) {
-                vSub2.multiplyScalar(-1);
-                d2v2.addVectors(d1v2, vSub2);
-            }
-            vSub3.subVectors(d2v3, d1v3);
-            if (vSub2.dot(vSub3) < 0) {
-                vSub3.multiplyScalar(-1);
-                d2v3.addVectors(d1v3, vSub3);
-            }
-        }
-        else {
-            vSub3.copy(vSub4);
-        }
-        vSub4.subVectors(d2v4, d1v4);
-        if (vSub3.dot(vSub4) < 0) {
-            vSub4.multiplyScalar(-1);
-            d2v4.addVectors(d1v4, vSub4);
-        }
-        this.interpolateNormalDir(d1v1, d1v2, d1v3, d1v4, d2v1, d2v2, d2v3, d2v4, tan, norm, bin, k, shift);
-        k += 3 * this.m;
-    }
-    if (isCyclic) {
-        d1v1.copy(iterDir1.get(n - 2));
-        d1v2.copy(iterDir1.get(n - 1));
-        d1v3.copy(iterDir1.get(0));
-        d1v4.copy(iterDir1.get(1));
-        d2v1.copy(iterDir2.get(n - 2));
-        d2v2.copy(iterDir2.get(n - 1));
-        d2v3.copy(iterDir2.get(0));
-        d2v4.copy(iterDir2.get(1));
-        //
-        vSub3.copy(vSub4);
-        vSub4.subVectors(d2v4, d1v4);
-        if (vSub3.dot(vSub4) < 0) {
-            vSub4.multiplyScalar(-1);
-            d2v4.addVectors(d1v4, vSub4);
-        }
-        this.interpolateNormalDir(d1v1, d1v2, d1v3, d1v4, d2v1, d2v2, d2v3, d2v4, tan, norm, bin, k, shift);
-        k += 3 * this.m;
-    }
-    if (shift) {
-        // FIXME shift requires data from one this.more preceeding residue
-        this.vBin.fromArray(bin, this.m2 * 3);
-        this.vNorm.fromArray(norm, this.m2 * 3);
-        for (var j = 0; j < this.m2; ++j) {
-            this.vBin.toArray(bin, j * 3);
-            this.vNorm.toArray(norm, j * 3);
-        }
-    }
-    else {
-        this.vBin.toArray(bin, k);
-        this.vNorm.toArray(norm, k);
-    }
-};
-//
-Interpolator.prototype.interpolateColor = function interpolateColor (item1, item2, colFn, col, offset) {
-    var j, l;
-    for (j = 0; j < this.m2; ++j) {
-        l = offset + j * 3;
-        colFn.apply(this, [item1, col, l]); // itemColorToArray
-    }
-    for (j = this.m2; j < this.m; ++j) {
-        l = offset + j * 3;
-        colFn.apply(this, [item2, col, l]); // itemColorToArray
-    }
-};
-Interpolator.prototype.getColor = function getColor (iterator, colFn, col, offset, isCyclic) {
-    iterator.reset();
-    iterator.next(); // first element not needed
-    var i0;
-    var i1 = iterator.next();
-    //
-    var n = iterator.size;
-    var n1 = n - 1;
-    var k = offset || 0;
-    for (var i = 0; i < n1; ++i) {
-        i0 = i1;
-        i1 = iterator.next();
-        this.interpolateColor(i0, i1, colFn, col, k);
-        k += 3 * this.m;
-    }
-    if (isCyclic) {
-        i0 = iterator.get(n - 1);
-        i1 = iterator.get(0);
-        this.interpolateColor(i0, i1, colFn, col, k);
-        k += 3 * this.m;
-    }
-    //
-    col[k] = col[k - 3];
-    col[k + 1] = col[k - 2];
-    col[k + 2] = col[k - 1];
-};
-//
-Interpolator.prototype.interpolatePicking = function interpolatePicking (item1, item2, pickFn, pick, offset) {
-    var j;
-    for (j = 0; j < this.m2; ++j) {
-        pick[offset + j] = pickFn.apply(this, [item1]);
-    }
-    for (j = this.m2; j < this.m; ++j) {
-        pick[offset + j] = pickFn.apply(this, [item2]);
-    }
-};
-Interpolator.prototype.getPicking = function getPicking (iterator, pickFn, pick, offset, isCyclic) {
-    iterator.reset();
-    iterator.next(); // first element not needed
-    var i0;
-    var i1 = iterator.next();
-    //
-    var n = iterator.size;
-    var n1 = n - 1;
-    var k = offset || 0;
-    for (var i = 0; i < n1; ++i) {
-        i0 = i1;
-        i1 = iterator.next();
-        this.interpolatePicking(i0, i1, pickFn, pick, k);
-        k += this.m;
-    }
-    if (isCyclic) {
-        i0 = iterator.get(n - 1);
-        i1 = iterator.get(0);
-        this.interpolatePicking(i0, i1, pickFn, pick, k);
-        k += this.m;
-    }
-    //
-    pick[k] = pick[k - 1];
-};
-//
-Interpolator.prototype.interpolateSize = function interpolateSize (item1, item2, sizeFn, size, offset) {
-    var s1 = sizeFn.apply(this, [item1]);
-    var s2 = sizeFn.apply(this, [item2]);
-    for (var j = 0; j < this.m; ++j) {
-        // linear interpolation
-        var t = j / this.m;
-        size[offset + j] = (1 - t) * s1 + t * s2;
-    }
-};
-Interpolator.prototype.getSize = function getSize (iterator, sizeFn, size, offset, isCyclic) {
-    iterator.reset();
-    iterator.next(); // first element not needed
-    var i0;
-    var i1 = iterator.next();
-    //
-    var n = iterator.size;
-    var n1 = n - 1;
-    var k = offset || 0;
-    for (var i = 0; i < n1; ++i) {
-        i0 = i1;
-        i1 = iterator.next();
-        this.interpolateSize(i0, i1, sizeFn, size, k);
-        k += this.m;
-    }
-    if (isCyclic) {
-        i0 = iterator.get(n - 1);
-        i1 = iterator.get(0);
-        this.interpolateSize(i0, i1, sizeFn, size, k);
-        k += this.m;
-    }
-    //
-    size[k] = size[k - 1];
-};
-var Spline = function Spline(polymer, params) {
-    this.polymer = polymer;
-    this.size = polymer.residueCount;
-    var p = params || {};
-    this.directional = p.directional || false;
-    this.positionIterator = p.positionIterator || false;
-    this.subdiv = p.subdiv || 1;
-    this.smoothSheet = p.smoothSheet || false;
-    if (!p.tension) {
-        this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
-    }
-    else {
-        this.tension = p.tension;
-    }
-    this.interpolator = new Interpolator(this.subdiv, this.tension);
-};
-Spline.prototype.getAtomIterator = function getAtomIterator (type, smooth) {
-    var polymer = this.polymer;
-    var structure = polymer.structure;
-    var n = polymer.residueCount;
-    var i = 0;
-    var j = -1;
-    var cache = [
-        structure.getAtomProxy(),
-        structure.getAtomProxy(),
-        structure.getAtomProxy(),
-        structure.getAtomProxy()
-    ];
-    var cache2 = [
-        new Vector3(),
-        new Vector3(),
-        new Vector3(),
-        new Vector3()
-    ];
-    function next() {
-        var atomProxy = get(j);
-        j += 1;
-        return atomProxy;
-    }
-    var apPrev = structure.getAtomProxy();
-    var apNext = structure.getAtomProxy();
-    function get(idx) {
-        var atomProxy = cache[i % 4];
-        atomProxy.index = polymer.getAtomIndexByType(idx, type);
-        if (smooth && idx > 0 && idx < n && atomProxy.sstruc === 'e') {
-            var vec = cache2[i % 4];
-            apPrev.index = polymer.getAtomIndexByType(idx + 1, type);
-            apNext.index = polymer.getAtomIndexByType(idx - 1, type);
-            vec.addVectors(apPrev, apNext)
-                .add(atomProxy).add(atomProxy)
-                .multiplyScalar(0.25);
-            i += 1;
-            return vec;
-        }
-        i += 1;
-        return atomProxy;
-    }
-    function reset() {
-        i = 0;
-        j = -1;
-    }
-    return {
-        size: n,
-        next: next,
-        get: get,
-        reset: reset
-    };
-};
-Spline.prototype.getSubdividedColor = function getSubdividedColor (params) {
-    var m = this.subdiv;
-    var polymer = this.polymer;
-    var n = polymer.residueCount;
-    var n1 = n - 1;
-    var nCol = n1 * m * 3 + 3;
-    if (polymer.isCyclic)
-        { nCol += m * 3; }
-    var col = new Float32Array(nCol);
-    var iterator = this.getAtomIterator('trace');
-    var p = params || {};
-    p.structure = polymer.structure;
-    var colormaker = ColormakerRegistry$1.getScheme(p);
-    function colFn(item, array, offset) {
-        colormaker.atomColorToArray(item, array, offset);
-    }
-    this.interpolator.getColor(iterator, colFn, col, 0, polymer.isCyclic);
-    return {
-        'color': col
-    };
-};
-Spline.prototype.getSubdividedPicking = function getSubdividedPicking () {
-    var m = this.subdiv;
-    var polymer = this.polymer;
-    var n = polymer.residueCount;
-    var n1 = n - 1;
-    var nCol = n1 * m + 1;
-    if (polymer.isCyclic)
-        { nCol += m; }
-    var structure = polymer.structure;
-    var iterator = this.getAtomIterator('trace');
-    var pick = new Float32Array(nCol);
-    function pickFn(item) {
-        return item.index;
-    }
-    this.interpolator.getPicking(iterator, pickFn, pick, 0, polymer.isCyclic);
-    return {
-        'picking': new AtomPicker(pick, structure)
-    };
-};
-Spline.prototype.getSubdividedPosition = function getSubdividedPosition () {
-    var pos = this.getPosition();
-    return {
-        'position': pos
-    };
-};
-Spline.prototype.getSubdividedOrientation = function getSubdividedOrientation () {
-    var tan = this.getTangent();
-    var normals = this.getNormals(tan);
-    return {
-        'tangent': tan,
-        'normal': normals.normal,
-        'binormal': normals.binormal
-    };
-};
-Spline.prototype.getSubdividedSize = function getSubdividedSize (params) {
-    var m = this.subdiv;
-    var polymer = this.polymer;
-    var n = polymer.residueCount;
-    var n1 = n - 1;
-    var nSize = n1 * m + 1;
-    if (polymer.isCyclic)
-        { nSize += m; }
-    var size = new Float32Array(nSize);
-    var iterator = this.getAtomIterator('trace');
-    var radiusFactory = new RadiusFactory(params);
-    function sizeFn(item) {
-        return radiusFactory.atomRadius(item);
-    }
-    this.interpolator.getSize(iterator, sizeFn, size, 0, polymer.isCyclic);
-    return {
-        'size': size
-    };
-};
-Spline.prototype.getPosition = function getPosition () {
-    var m = this.subdiv;
-    var polymer = this.polymer;
-    var n = polymer.residueCount;
-    var n1 = n - 1;
-    var nPos = n1 * m * 3 + 3;
-    if (polymer.isCyclic)
-        { nPos += m * 3; }
-    var pos = new Float32Array(nPos);
-    var iterator = this.positionIterator || this.getAtomIterator('trace', this.smoothSheet);
-    this.interpolator.getPosition(iterator, pos, 0, polymer.isCyclic);
-    return pos;
-};
-Spline.prototype.getTangent = function getTangent () {
-    var m = this.subdiv;
-    var polymer = this.polymer;
-    var n = this.size;
-    var n1 = n - 1;
-    var nTan = n1 * m * 3 + 3;
-    if (polymer.isCyclic)
-        { nTan += m * 3; }
-    var tan = new Float32Array(nTan);
-    var iterator = this.positionIterator || this.getAtomIterator('trace', this.smoothSheet);
-    this.interpolator.getTangent(iterator, tan, 0, polymer.isCyclic);
-    return tan;
-};
-Spline.prototype.getNormals = function getNormals (tan) {
-    var m = this.subdiv;
-    var polymer = this.polymer;
-    var isProtein = polymer.isProtein();
-    var n = this.size;
-    var n1 = n - 1;
-    var nNorm = n1 * m * 3 + 3;
-    if (polymer.isCyclic)
-        { nNorm += m * 3; }
-    var norm = new Float32Array(nNorm);
-    var bin = new Float32Array(nNorm);
-    if (this.directional && !this.polymer.isCg()) {
-        var iterDir1 = this.getAtomIterator('direction1');
-        var iterDir2 = this.getAtomIterator('direction2');
-        this.interpolator.getNormalDir(iterDir1, iterDir2, tan, norm, bin, 0, polymer.isCyclic, isProtein);
-    }
-    else {
-        this.interpolator.getNormal(n, tan, norm, bin, 0, polymer.isCyclic);
-    }
-    return {
-        'normal': norm,
-        'binormal': bin
-    };
-};
-
-/**
- * @file Tube Mesh Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var vTangent = new Vector3();
-var vMeshNormal = new Vector3();
-var TubeMeshBufferDefaultParameters = Object.assign({
-    radialSegments: 4,
-    capped: false,
-    aspectRatio: 1.0
-}, BufferDefaultParameters);
-function getData$2(data, params) {
-    if ( params === void 0 ) params = {};
-
-    var radialSegments = defaults(params.radialSegments, 4);
-    var capped = defaults(params.capped, false);
-    var capVertices = capped ? radialSegments : 0;
-    var capTriangles = capped ? radialSegments - 2 : 0;
-    var n = data.position.length / 3;
-    var n1 = n - 1;
-    var x = n * radialSegments * 3 + 2 * capVertices * 3;
-    var xi = n1 * 2 * radialSegments * 3 + 2 * capTriangles * 3;
-    return {
-        position: new Float32Array(x),
-        color: new Float32Array(x),
-        index: getUintArray(xi, x / 3),
-        normal: new Float32Array(x),
-        picking: data.picking
-    };
-}
-/**
- * Tube mesh buffer. Draws a tube.
- */
-var TubeMeshBuffer = /*@__PURE__*/(function (MeshBuffer$$1) {
-    function TubeMeshBuffer(data, params) {
-        if ( params === void 0 ) params = {};
-
-        MeshBuffer$$1.call(this, getData$2(data, params), params);
-        this.capVertices = this.parameters.capped ? this.parameters.radialSegments : 0;
-        this.capTriangles = this.parameters.capped ? this.parameters.radialSegments - 2 : 0;
-        this.size2 = data.position.length / 3;
-        data.primitiveId = serialArray(this.size2);
-        this.setAttributes(data);
-        this.makeIndex();
-    }
-
-    if ( MeshBuffer$$1 ) TubeMeshBuffer.__proto__ = MeshBuffer$$1;
-    TubeMeshBuffer.prototype = Object.create( MeshBuffer$$1 && MeshBuffer$$1.prototype );
-    TubeMeshBuffer.prototype.constructor = TubeMeshBuffer;
-
-    var prototypeAccessors = { defaultParameters: { configurable: true } };
-    prototypeAccessors.defaultParameters.get = function () { return TubeMeshBufferDefaultParameters; };
-    TubeMeshBuffer.prototype.setAttributes = function setAttributes (data) {
-        if ( data === void 0 ) data = {};
-
-        var aspectRatio = this.parameters.aspectRatio;
-        var n = this.size2;
-        var n1 = n - 1;
-        var radialSegments = this.parameters.radialSegments;
-        var attributes = this.geometry.attributes;
-        var position, normal, binormal, tangent, color, size, primitiveId;
-        var meshPosition, meshColor, meshNormal, meshPrimitiveId;
-        if (data.position) {
-            position = data.position;
-            normal = data.normal;
-            binormal = data.binormal;
-            tangent = data.tangent;
-            size = data.size;
-            meshPosition = attributes.position.array;
-            meshNormal = attributes.normal.array;
-            attributes.position.needsUpdate = true;
-            attributes.normal.needsUpdate = true;
-        }
-        if (data.color) {
-            color = data.color;
-            meshColor = attributes.color.array;
-            attributes.color.needsUpdate = true;
-        }
-        if (data.primitiveId) {
-            primitiveId = data.primitiveId;
-            meshPrimitiveId = attributes.primitiveId.array;
-            attributes.primitiveId.needsUpdate = true;
-        }
-        var k, l;
-        var radius = 0;
-        var normX = 0;
-        var normY = 0;
-        var normZ = 0;
-        var biX = 0;
-        var biY = 0;
-        var biZ = 0;
-        var posX = 0;
-        var posY = 0;
-        var posZ = 0;
-        var cxArr = [];
-        var cyArr = [];
-        var cx1Arr = [];
-        var cy1Arr = [];
-        var cx2Arr = [];
-        var cy2Arr = [];
-        if (position) {
-            for (var j = 0; j < radialSegments; ++j) {
-                var v = (j / radialSegments) * 2 * Math.PI;
-                cxArr[j] = aspectRatio * Math.cos(v);
-                cyArr[j] = Math.sin(v);
-                cx1Arr[j] = aspectRatio * Math.cos(v - 0.01);
-                cy1Arr[j] = Math.sin(v - 0.01);
-                cx2Arr[j] = aspectRatio * Math.cos(v + 0.01);
-                cy2Arr[j] = Math.sin(v + 0.01);
-            }
-        }
-        for (var i = 0; i < n; ++i) {
-            k = i * 3;
-            l = k * radialSegments;
-            if (position && tangent && normal && binormal && size) {
-                vTangent.set(tangent[k], tangent[k + 1], tangent[k + 2]);
-                normX = normal[k];
-                normY = normal[k + 1];
-                normZ = normal[k + 2];
-                biX = binormal[k];
-                biY = binormal[k + 1];
-                biZ = binormal[k + 2];
-                posX = position[k];
-                posY = position[k + 1];
-                posZ = position[k + 2];
-                radius = size[i];
-            }
-            for (var j$1 = 0; j$1 < radialSegments; ++j$1) {
-                var s = l + j$1 * 3;
-                if (position) {
-                    var cx = -radius * cxArr[j$1]; // TODO: Hack: Negating it so it faces outside.
-                    var cy = radius * cyArr[j$1];
-                    var cx1 = -radius * cx1Arr[j$1];
-                    var cy1 = radius * cy1Arr[j$1];
-                    var cx2 = -radius * cx2Arr[j$1];
-                    var cy2 = radius * cy2Arr[j$1];
-                    meshPosition[s] = posX + cx * normX + cy * biX;
-                    meshPosition[s + 1] = posY + cx * normY + cy * biY;
-                    meshPosition[s + 2] = posZ + cx * normZ + cy * biZ;
-                    // TODO half of these are symmetric
-                    vMeshNormal.set(
-                    // ellipse tangent approximated as vector from/to adjacent points
-                    (cx2 * normX + cy2 * biX) - (cx1 * normX + cy1 * biX), (cx2 * normY + cy2 * biY) - (cx1 * normY + cy1 * biY), (cx2 * normZ + cy2 * biZ) - (cx1 * normZ + cy1 * biZ)).cross(vTangent);
-                    meshNormal[s] = vMeshNormal.x;
-                    meshNormal[s + 1] = vMeshNormal.y;
-                    meshNormal[s + 2] = vMeshNormal.z;
-                }
-                if (color) {
-                    meshColor[s] = color[k];
-                    meshColor[s + 1] = color[k + 1];
-                    meshColor[s + 2] = color[k + 2];
-                }
-                if (primitiveId) {
-                    meshPrimitiveId[i * radialSegments + j$1] = primitiveId[i];
-                }
-            }
-        }
-        // front cap
-        k = 0;
-        l = n * 3 * radialSegments;
-        for (var j$2 = 0; j$2 < radialSegments; ++j$2) {
-            var s$1 = k + j$2 * 3;
-            var t = l + j$2 * 3;
-            if (position && tangent) {
-                meshPosition[t] = meshPosition[s$1];
-                meshPosition[t + 1] = meshPosition[s$1 + 1];
-                meshPosition[t + 2] = meshPosition[s$1 + 2];
-                meshNormal[t] = tangent[k];
-                meshNormal[t + 1] = tangent[k + 1];
-                meshNormal[t + 2] = tangent[k + 2];
-            }
-            if (color) {
-                meshColor[t] = meshColor[s$1];
-                meshColor[t + 1] = meshColor[s$1 + 1];
-                meshColor[t + 2] = meshColor[s$1 + 2];
-            }
-            if (primitiveId) {
-                meshPrimitiveId[n * radialSegments + j$2] = meshPrimitiveId[0 + j$2];
-            }
-        }
-        // back cap
-        k = (n - 1) * 3 * radialSegments;
-        l = (n + 1) * 3 * radialSegments;
-        for (var j$3 = 0; j$3 < radialSegments; ++j$3) {
-            var s$2 = k + j$3 * 3;
-            var t$1 = l + j$3 * 3;
-            if (position && tangent) {
-                meshPosition[t$1] = meshPosition[s$2];
-                meshPosition[t$1 + 1] = meshPosition[s$2 + 1];
-                meshPosition[t$1 + 2] = meshPosition[s$2 + 2];
-                meshNormal[t$1] = tangent[n1 * 3];
-                meshNormal[t$1 + 1] = tangent[n1 * 3 + 1];
-                meshNormal[t$1 + 2] = tangent[n1 * 3 + 2];
-            }
-            if (color) {
-                meshColor[t$1] = meshColor[s$2];
-                meshColor[t$1 + 1] = meshColor[s$2 + 1];
-                meshColor[t$1 + 2] = meshColor[s$2 + 2];
-            }
-            if (primitiveId) {
-                meshPrimitiveId[(n + 1) * radialSegments + j$3] = meshPrimitiveId[(n - 1) * radialSegments + j$3];
-            }
-        }
-    };
-    TubeMeshBuffer.prototype.makeIndex = function makeIndex () {
-        var index = this.geometry.getIndex();
-        if (!index) {
-            Log.error('Index is null');
-            return;
-        }
-        var meshIndex = index.array;
-        var n = this.size2;
-        var n1 = n - 1;
-        var capTriangles = this.capTriangles;
-        var radialSegments = this.parameters.radialSegments;
-        var radialSegments1 = this.parameters.radialSegments + 1;
-        var k, l;
-        for (var i = 0; i < n1; ++i) {
-            var k$1 = i * radialSegments * 3 * 2;
-            var irs = i * radialSegments;
-            var irs1 = (i + 1) * radialSegments;
-            for (var j = 0; j < radialSegments; ++j) {
-                l = k$1 + j * 3 * 2;
-                // meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
-                meshIndex[l] = irs + j;
-                meshIndex[l + 1] = irs + ((j + 1) % radialSegments);
-                // meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
-                meshIndex[l + 2] = irs1 + j;
-                // meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
-                meshIndex[l + 3] = irs1 + j;
-                meshIndex[l + 4] = irs + ((j + 1) % radialSegments);
-                meshIndex[l + 5] = irs1 + ((j + 1) % radialSegments);
-            }
-        }
-        // capping
-        var strip = [0];
-        for (var j$1 = 1; j$1 < radialSegments1 / 2; ++j$1) {
-            strip.push(j$1);
-            if (radialSegments - j$1 !== j$1) {
-                strip.push(radialSegments - j$1);
-            }
-        }
-        // front cap
-        l = n1 * radialSegments * 3 * 2;
-        k = n * radialSegments;
-        for (var j$2 = 0; j$2 < strip.length - 2; ++j$2) {
-            if (j$2 % 2 === 0) {
-                meshIndex[l + j$2 * 3 + 0] = k + strip[j$2 + 0];
-                meshIndex[l + j$2 * 3 + 1] = k + strip[j$2 + 1];
-                meshIndex[l + j$2 * 3 + 2] = k + strip[j$2 + 2];
-            }
-            else {
-                meshIndex[l + j$2 * 3 + 0] = k + strip[j$2 + 2];
-                meshIndex[l + j$2 * 3 + 1] = k + strip[j$2 + 1];
-                meshIndex[l + j$2 * 3 + 2] = k + strip[j$2 + 0];
-            }
-        }
-        // back cap
-        l = n1 * radialSegments * 3 * 2 + 3 * capTriangles;
-        k = n * radialSegments + radialSegments;
-        for (var j$3 = 0; j$3 < strip.length - 2; ++j$3) {
-            if (j$3 % 2 === 0) {
-                meshIndex[l + j$3 * 3 + 0] = k + strip[j$3 + 0];
-                meshIndex[l + j$3 * 3 + 1] = k + strip[j$3 + 1];
-                meshIndex[l + j$3 * 3 + 2] = k + strip[j$3 + 2];
-            }
-            else {
-                meshIndex[l + j$3 * 3 + 0] = k + strip[j$3 + 2];
-                meshIndex[l + j$3 * 3 + 1] = k + strip[j$3 + 1];
-                meshIndex[l + j$3 * 3 + 2] = k + strip[j$3 + 0];
-            }
-        }
-    };
-
-    Object.defineProperties( TubeMeshBuffer.prototype, prototypeAccessors );
-
-    return TubeMeshBuffer;
-}(MeshBuffer));
-
-/**
- * @file Cartoon Representation
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Cartoon representation. Show a thick ribbon that
- * smoothly connecting backbone atoms in polymers.
- *
- * __Name:__ _cartoon_
- *
- * @example
- * stage.loadFile( "rcsb://1crn" ).then( function( o ){
- *     o.addRepresentation( "cartoon" );
- *     o.autoView();
- * } );
- */
-var CartoonRepresentation = /*@__PURE__*/(function (StructureRepresentation$$1) {
-    function CartoonRepresentation(structure, viewer, params) {
-        StructureRepresentation$$1.call(this, structure, viewer, params);
-        this.type = 'cartoon';
-        this.parameters = Object.assign({
-            aspectRatio: {
-                type: 'number', precision: 1, max: 10.0, min: 1.0, rebuild: true
-            },
-            subdiv: {
-                type: 'integer', max: 50, min: 1, rebuild: true
-            },
-            radialSegments: {
-                type: 'integer', max: 50, min: 1, rebuild: true
-            },
-            tension: {
-                type: 'number', precision: 1, max: 1.0, min: 0.1
-            },
-            capped: {
-                type: 'boolean', rebuild: true
-            },
-            smoothSheet: {
-                type: 'boolean', rebuild: true
-            }
-        }, this.parameters);
-        this.init(params);
-    }
-
-    if ( StructureRepresentation$$1 ) CartoonRepresentation.__proto__ = StructureRepresentation$$1;
-    CartoonRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
-    CartoonRepresentation.prototype.constructor = CartoonRepresentation;
-    CartoonRepresentation.prototype.init = function init (params) {
-        var p = params || {};
-        p.colorScheme = defaults(p.colorScheme, 'chainname');
-        p.colorScale = defaults(p.colorScale, 'RdYlBu');
-        p.radiusType = defaults(p.radiusType, 'sstruc');
-        p.radiusScale = defaults(p.radiusScale, 0.7);
-        p.useInteriorColor = defaults(p.useInteriorColor, true);
-        this.aspectRatio = defaults(p.aspectRatio, 5.0);
-        this.tension = defaults(p.tension, NaN);
-        this.capped = defaults(p.capped, true);
-        this.smoothSheet = defaults(p.smoothSheet, false);
-        if (p.quality === 'low') {
-            this.subdiv = 3;
-            this.radialSegments = 6;
-        }
-        else if (p.quality === 'medium') {
-            this.subdiv = 6;
-        }
-        else if (p.quality === 'high') {
-            this.subdiv = 12;
-        }
-        else {
-            this.subdiv = defaults(p.subdiv, 6);
-        }
-        StructureRepresentation$$1.prototype.init.call(this, p);
-    };
-    CartoonRepresentation.prototype.getSplineParams = function getSplineParams (params) {
-        return Object.assign({
-            subdiv: this.subdiv,
-            tension: this.tension,
-            directional: this.aspectRatio !== 1.0,
-            smoothSheet: this.smoothSheet
-        }, params);
-    };
-    CartoonRepresentation.prototype.getSpline = function getSpline (polymer) {
-        return new Spline(polymer, this.getSplineParams());
-    };
-    CartoonRepresentation.prototype.getAspectRatio = function getAspectRatio (polymer) {
-        return polymer.isCg() ? 1.0 : this.aspectRatio;
-    };
-    CartoonRepresentation.prototype.getAtomRadius = function getAtomRadius (atom) {
-        return atom.isTrace() ? StructureRepresentation$$1.prototype.getAtomRadius.call(this, atom) : 0;
-    };
-    CartoonRepresentation.prototype.createData = function createData (sview) {
-        var this$1 = this;
-
-        var bufferList = [];
-        var polymerList = [];
-        this.structure.eachPolymer(function (polymer) {
-            if (polymer.residueCount < 4)
-                { return; }
-            polymerList.push(polymer);
-            var spline = this$1.getSpline(polymer);
-            var aspectRatio = this$1.getAspectRatio(polymer);
-            var subPos = spline.getSubdividedPosition();
-            var subOri = spline.getSubdividedOrientation();
-            var subCol = spline.getSubdividedColor(this$1.getColorParams());
-            var subPick = spline.getSubdividedPicking();
-            var subSize = spline.getSubdividedSize(this$1.getRadiusParams());
-            bufferList.push(new TubeMeshBuffer(Object.assign({}, subPos, subOri, subCol, subPick, subSize), this$1.getBufferParams({
-                radialSegments: this$1.radialSegments,
-                aspectRatio: aspectRatio,
-                capped: this$1.capped
-            })));
-        }, sview.getSelection());
-        return {
-            bufferList: bufferList,
-            polymerList: polymerList
-        };
-    };
-    CartoonRepresentation.prototype.updateData = function updateData (what, data) {
-        if (Debug)
-            { Log.time(this.type + ' repr update'); }
-        what = what || {};
-        for (var i = 0, il = data.polymerList.length; i < il; ++i) {
-            var bufferData = {};
-            var polymer = data.polymerList[i];
-            var spline = this.getSpline(polymer);
-            var aspectRatio = this.getAspectRatio(polymer);
-            Object.assign(data.bufferList[i], { aspectRatio: aspectRatio });
-            if (what.position || what.radius) {
-                var subPos = spline.getSubdividedPosition();
-                var subOri = spline.getSubdividedOrientation();
-                var subSize = spline.getSubdividedSize(this.getRadiusParams(aspectRatio));
-                bufferData.position = subPos.position;
-                bufferData.normal = subOri.normal;
-                bufferData.binormal = subOri.binormal;
-                bufferData.tangent = subOri.tangent;
-                bufferData.size = subSize.size;
-            }
-            if (what.color) {
-                var subCol = spline.getSubdividedColor(this.getColorParams());
-                bufferData.color = subCol.color;
-            }
-            if (what.picking) {
-                var subPick = spline.getSubdividedPicking();
-                bufferData.picking = subPick.picking;
-            }
-            data.bufferList[i].setAttributes(bufferData);
-        }
-        if (Debug)
-            { Log.timeEnd(this.type + ' repr update'); }
-    };
-    CartoonRepresentation.prototype.setParameters = function setParameters (params) {
-        var rebuild = false;
-        var what = {};
-        if (params && params.aspectRatio) {
-            what.radius = true;
-        }
-        if (params && params.tension) {
-            what.position = true;
-        }
-        StructureRepresentation$$1.prototype.setParameters.call(this, params, what, rebuild);
-        return this;
-    };
-
-    return CartoonRepresentation;
-}(StructureRepresentation));
-RepresentationRegistry.add('cartoon', CartoonRepresentation);
 
 /**
  * @file Contact Representation
@@ -51146,6 +51223,33 @@ var version$1 = "0.0.1";
  */
 var Version = version$1;
 
+var CustomComponent = /*@__PURE__*/(function (Component$$1) {
+    function CustomComponent(stage, object, params) {
+        if ( params === void 0 ) params = {};
+
+        Component$$1.call(this, stage, object, params);
+        this.stage = stage;
+        this.object = object;
+    }
+
+    if ( Component$$1 ) CustomComponent.__proto__ = Component$$1;
+    CustomComponent.prototype = Object.create( Component$$1 && Component$$1.prototype );
+    CustomComponent.prototype.constructor = CustomComponent;
+
+    var prototypeAccessors = { type: { configurable: true } };
+    prototypeAccessors.type.get = function () {
+        return "custom";
+    };
+    CustomComponent.prototype.addRepresentation = function addRepresentation (type, object) {
+        var reprComp = this._addRepresentation(type, object, null);
+        return reprComp;
+    };
+
+    Object.defineProperties( CustomComponent.prototype, prototypeAccessors );
+
+    return CustomComponent;
+}(Component));
+
 /**
  * @file ngl
  * @private
@@ -51155,5 +51259,5 @@ if (!window.Promise) {
     window.Promise = _Promise;
 }
 
-export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Component, ShapeComponent, StructureComponent, SurfaceComponent, VolumeComponent, Assembly, TrajectoryPlayer, Superposition, Frames, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, MeshBuffer, OctahedronBuffer, PointBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, WideLineBuffer as WidelineBuffer, Shape, Structure, Kdtree$1 as Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, PickingProxy, Debug, setDebug, MeasurementDefaultParams, setMeasurementDefaultParams, ScriptExtensions, ColormakerRegistry$1 as ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry$1 as ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, UIStageParameters };
+export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Component, ShapeComponent, StructureComponent, SurfaceComponent, VolumeComponent, Assembly, TrajectoryPlayer, Superposition, Frames, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, MeshBuffer, OctahedronBuffer, PointBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, WideLineBuffer as WidelineBuffer, Shape, Structure, Kdtree$1 as Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, PickingProxy, CustomComponent, Debug, setDebug, MeasurementDefaultParams, setMeasurementDefaultParams, ScriptExtensions, ColormakerRegistry$1 as ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry$1 as ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, UIStageParameters };
 //# sourceMappingURL=ngl.esm.js.map

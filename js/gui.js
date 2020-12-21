@@ -1153,6 +1153,10 @@ NGL.SidebarWidget = function (stage) {
         widget = new NGL.ShapeComponentWidget(component, stage)
         break
 
+      case 'custom':
+        widget = new NGL.CustomComponentWidget(component, stage);
+        break;
+
       default:
         console.warn('NGL.SidebarWidget: component type unknown', component)
         return
@@ -1838,6 +1842,93 @@ NGL.ShapeComponentWidget = function (component, stage) {
     .addMenuEntry('Representation', repr)
     .addMenuEntry(
       'File', new UI.Text(component.shape.path)
+        .setMaxWidth('100px')
+        .setWordWrap('break-word'))
+    .addMenuEntry('Position', position)
+    .addMenuEntry('Rotation', rotation)
+    .addMenuEntry('Scale', scale)
+
+  // Fill container
+
+  container
+    .addStatic(componentPanel)
+    .add(reprContainer)
+
+  return container
+}
+
+NGL.CustomComponentWidget = function (component, stage) {
+  var signals = component.signals
+  var container = new UI.CollapsibleIconPanel('minus-square', 'plus-square')
+
+  var reprContainer = new UI.Panel()
+
+  signals.representationAdded.add(function (repr) {
+    reprContainer.add(
+      new NGL.RepresentationElementWidget(repr, stage)
+    )
+  })
+
+  // Add representation
+
+  var repr = new UI.Select()
+    .setColor('#444')
+    .setOptions((function () {
+      var reprOptions = {
+        '': '[ add ]',
+        'buffer': 'buffer'
+      }
+      return reprOptions
+    })())
+    .onChange(function () {
+      component.addRepresentation(repr.getValue())
+      repr.setValue('')
+      componentPanel.setMenuDisplay('none')
+    })
+
+  // Position
+
+  var position = new UI.Vector3()
+    .onChange(function () {
+      component.setPosition(position.getValue())
+    })
+
+    // Rotation
+
+  var q = new NGL.Quaternion()
+  var e = new NGL.Euler()
+  var rotation = new UI.Vector3()
+    .setRange(-6.28, 6.28)
+    .onChange(function () {
+      e.setFromVector3(rotation.getValue())
+      q.setFromEuler(e)
+      component.setRotation(q)
+    })
+
+  // Scale
+
+  var scale = new UI.Number(1)
+    .setRange(0.01, 100)
+    .onChange(function () {
+      component.setScale(scale.getValue())
+    })
+
+  // Matrix
+
+  signals.matrixChanged.add(function () {
+    position.setValue(component.position)
+    rotation.setValue(e.setFromQuaternion(component.quaternion))
+    scale.setValue(component.scale.x)
+  })
+
+  // Component panel
+
+  var componentPanel = new UI.ComponentPanel(component)
+    .setDisplay('inline-block')
+    .setMargin('0px')
+    .addMenuEntry('Representation', repr)
+    .addMenuEntry(
+      'File', new UI.Text(component.name)
         .setMaxWidth('100px')
         .setWordWrap('break-word'))
     .addMenuEntry('Position', position)
