@@ -10,6 +10,10 @@ import Stage from '../stage/stage'
 import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
 
+// Added by Lucas Melo
+import ModificationTest from './TEST'
+export let modificationTest: ModificationTest = new ModificationTest();
+
 export type ScrollCallback = (stage: Stage, delta: number) => void
 export type DragCallback = (stage: Stage, dx: number, dy: number) => void
 export type PickCallback = (stage: Stage, pickingProxy: PickingProxy) => void
@@ -202,6 +206,9 @@ class MouseActions {
       tt.style.bottom = (window.innerHeight - mp.y + 3) + 'px'
       tt.style.left = (mp.x + 3) + 'px'
       tt.style.display = 'block'
+
+      modificationTest.hover();
+
     } else {
       tt.style.display = 'none'
     }
