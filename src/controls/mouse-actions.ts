@@ -11,8 +11,8 @@ import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
 
 // Added by Lucas Melo
-import ModificationTest from './TEST'
-export let modificationTest: ModificationTest = new ModificationTest();
+import TestModification from './TEST'
+export let testModification: TestModification = new TestModification();
 
 export type ScrollCallback = (stage: Stage, delta: number) => void
 export type DragCallback = (stage: Stage, dx: number, dy: number) => void
@@ -206,9 +206,6 @@ class MouseActions {
       tt.style.bottom = (window.innerHeight - mp.y + 3) + 'px'
       tt.style.left = (mp.x + 3) + 'px'
       tt.style.display = 'block'
-
-      modificationTest.hover();
-
     } else {
       tt.style.display = 'none'
     }
@@ -246,8 +243,10 @@ export const MouseActionPresets = {
     [ 'clickPick-right', MouseActions.measurePick ],
     [ 'clickPick-ctrl-left', MouseActions.measurePick ],
     [ 'clickPick-middle', MouseActions.movePick ],
-    [ 'clickPick-left', MouseActions.movePick ],
-    [ 'hoverPick', MouseActions.tooltipPick ]
+    //[ 'clickPick-left', MouseActions.movePick ],
+    [ 'clickPick-left', testModification.clickPick_left ],
+    [ 'hoverPick', MouseActions.tooltipPick ],
+    [ 'hoverPick', testModification.hover ]
   ] as MouseActionPreset,
   pymol: [
     [ 'drag-left', MouseActions.rotateDrag ],
