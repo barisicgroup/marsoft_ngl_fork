@@ -61,18 +61,28 @@
         })
       }
 
-      /*stage.mouseObserver.signals.clicked.add(function () {
-        // 1 is left button
-        if (stage.mouseObserver.buttons !== 1) { return; }
-        
+      //stage.mouseObserver.signals.clicked.add(function () {
+      stage.signals.clicked.add(function (pickingProxy) {
+        if (stage.mouseObserver.buttons !== NGL.LeftMouseButton || pickingProxy !== undefined) { return; }
+
         const worldPos = stage.mouseObserver.getWorldPosition();
 
-        var shape = new NGL.Shape("shapeFromScratch");
-        shape.addCylinder([worldPos.x, worldPos.y, worldPos.z], [worldPos.x, worldPos.y, worldPos.z - 5], [1, .1, 0], 1.5);
-        var shapeComp = stage.addComponentFromObject(shape);
-        shapeComp.addRepresentation("buffer");
-        //shapeComp.autoView();
-      });*/
+        let shapeRepres1 = new NGL.Shape("Cylindrical Bone");
+        shapeRepres1.addCylinder([worldPos.x, worldPos.y, worldPos.z], [worldPos.x, worldPos.y, worldPos.z - 5], [1, .1, 0], 1.5);
+
+        let shapeRepres2 = new NGL.Shape("Spherical Bally Ball", { disableImpostor: true });
+        shapeRepres2.addSphere([worldPos.x, worldPos.y, worldPos.z], [1, .1, 0], 2.5);
+        shapeRepres2.addSphere([worldPos.x, worldPos.y, worldPos.z - 5], [1, .1, 0], 2.5);
+
+        let newComp = new NGL.CustomComponent(stage, null);
+        newComp.setName("From Scratch");
+        stage.addComponent(newComp);
+
+        newComp.addRepresentation("Cylinder Repres", shapeRepres1);
+        newComp.addRepresentation("Sphere Repres", shapeRepres2);
+
+
+      });
     })
 
   </script>

@@ -210,6 +210,9 @@ export { UIStageParameters } from './ui/parameters'
 
 import Version from './version'
 
+// MARILIA codes
+import CustomComponent from "./marilia_custom_classes/CustomComponent"
+
 if (!(window as any).Promise) {
   (window as any).Promise = _Promise
 }
@@ -267,5 +270,7 @@ export {
 
   MouseActions,
   KeyActions,
-  PickingProxy
+  PickingProxy,
+
+  CustomComponent
 }
