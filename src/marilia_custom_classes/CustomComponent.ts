@@ -11,8 +11,7 @@ class CustomComponent extends Component {
     }
 
     addRepresentation(type: string, object: any) {
-        const reprComp = this._addRepresentation(type, object, null);
-        return reprComp;
+        return this._addRepresentation(type, object, null);
     }
 
 }
