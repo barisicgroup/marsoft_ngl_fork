@@ -57,7 +57,7 @@ class TestModification {
                 let id: number = structure.atomMap.add('Steve', 'Johnson');
                 console.log("ID of newly added atom/element pair: " + id);
 
-                TestModification.addSmiley(stage, component, pickingProxy.atom.index, id);
+                TestModification.addSomething(stage, component, pickingProxy.atom.index, id);
 
                 /*structure.atomStore._fields.forEach((field: StoreField) => {
                     let fieldName: string = field[0];
@@ -84,7 +84,7 @@ class TestModification {
                         //basRepr.update(what);
                     }
 
-                    // Update everything (TODO for now)
+                    // Update everything (TODO: ...for now)
                     repr.update({position: true, color: true, radius: true, picking: true, index: true});
                 });
             }
@@ -97,7 +97,7 @@ class TestModification {
         }
     }
 
-    private static addSmiley(stage: Stage, component: StructureComponent, atomIndex: number, atomTypeId: number) {
+    private static addSomething(stage: Stage, component: StructureComponent, atomIndex: number, atomTypeId: number) {
         let structure = component.structure;
 
         let atomStore: AtomStore = structure.atomStore;
