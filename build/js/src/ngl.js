@@ -165,8 +165,9 @@ export { UIStageParameters } from './ui/parameters';
 import Version from './version';
 // MARILIA codes
 import CustomComponent from "./marilia_custom_classes/CustomComponent";
+import DnaOrigamiNanostructure from "./marilia_custom_classes/DnaOrigamiNanostructure";
 if (!window.Promise) {
     window.Promise = _Promise;
 }
-export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Component, ShapeComponent, StructureComponent, SurfaceComponent, VolumeComponent, Assembly, TrajectoryPlayer, Superposition, Frames, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, MeshBuffer, OctahedronBuffer, PointBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, WidelineBuffer, Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, PickingProxy, CustomComponent };
+export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Component, ShapeComponent, StructureComponent, SurfaceComponent, VolumeComponent, Assembly, TrajectoryPlayer, Superposition, Frames, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, MeshBuffer, OctahedronBuffer, PointBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, WidelineBuffer, Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, PickingProxy, CustomComponent, DnaOrigamiNanostructure };
 //# sourceMappingURL=ngl.js.map

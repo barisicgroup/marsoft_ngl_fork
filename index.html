@@ -65,21 +65,29 @@
       stage.signals.clicked.add(function (pickingProxy) {
         if (stage.mouseObserver.buttons !== NGL.LeftMouseButton || pickingProxy !== undefined) { return; }
 
-        const worldPos = stage.mouseObserver.getWorldPosition();
+        /*const worldPos = stage.mouseObserver.getWorldPosition();
 
         let shapeRepres1 = new NGL.Shape("Cylindrical Bone");
         shapeRepres1.addCylinder([worldPos.x, worldPos.y, worldPos.z], [worldPos.x, worldPos.y, worldPos.z - 5], [1, .1, 0], 1.5);
 
         let shapeRepres2 = new NGL.Shape("Spherical Bally Ball", { disableImpostor: true });
         shapeRepres2.addSphere([worldPos.x, worldPos.y, worldPos.z], [1, .1, 0], 2.5);
-        shapeRepres2.addSphere([worldPos.x, worldPos.y, worldPos.z - 5], [1, .1, 0], 2.5);
+        shapeRepres2.addSphere([worldPos.x, worldPos.y, worldPos.z - 5], [1, .1, 0], 2.5);*/
 
-        let newComp = new NGL.CustomComponent(stage, null);
+        let positionsArray = [];
+        positionsArray.push(new NGL.Vector3(0, 0, 0));
+        positionsArray.push(new NGL.Vector3(10, 0, 0));
+        positionsArray.push(new NGL.Vector3(10, 10, 0));
+        positionsArray.push(new NGL.Vector3(10, 5, -10));
+        positionsArray.push(new NGL.Vector3(0, 5, -10));
+
+        let newStructure = new NGL.DnaOrigamiNanostructure("DNA Origami Nanostructure", positionsArray);
+
+        let newComp = new NGL.CustomComponent(stage, newStructure);
         newComp.setName("From Scratch");
         stage.addComponent(newComp);
 
-        newComp.addRepresentation("Cylinder Repres", shapeRepres1);
-        newComp.addRepresentation("Sphere Repres", shapeRepres2);
+        newComp.addRepresentation("multiscale");
 
 
       });

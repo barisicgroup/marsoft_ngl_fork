@@ -25109,6 +25109,120 @@ var SliceRepresentation = /*@__PURE__*/(function (Representation$$1) {
     return SliceRepresentation;
 }(Representation));
 
+var DnaOrigamiNanostructure$$1 = /*@__PURE__*/(function (Structure$$1) {
+    function DnaOrigamiNanostructure$$1(name, elementsPosition, path) {
+        if ( path === void 0 ) path = "";
+
+        Structure$$1.call(this, name, path);
+        this._elementsPosition = elementsPosition;
+    }
+
+    if ( Structure$$1 ) DnaOrigamiNanostructure$$1.__proto__ = Structure$$1;
+    DnaOrigamiNanostructure$$1.prototype = Object.create( Structure$$1 && Structure$$1.prototype );
+    DnaOrigamiNanostructure$$1.prototype.constructor = DnaOrigamiNanostructure$$1;
+
+    var prototypeAccessors = { type: { configurable: true },elementsPosition: { configurable: true } };
+    prototypeAccessors.type.get = function () {
+        return "DnaOrigamiNanostructure";
+    };
+    prototypeAccessors.elementsPosition.get = function () {
+        return this._elementsPosition;
+    };
+
+    Object.defineProperties( DnaOrigamiNanostructure$$1.prototype, prototypeAccessors );
+
+    return DnaOrigamiNanostructure$$1;
+}(Structure));
+
+var MultiscaleRepresentation = /*@__PURE__*/(function (Representation$$1) {
+    function MultiscaleRepresentation(structure, viewer, params) {
+        var p = params || {};
+        Representation$$1.call(this, structure, viewer, p);
+        this.type = "multiscale";
+        this.parameters = Object.assign({
+            desiredScale: {
+                type: 'integer', rebuild: true
+            }
+        }, this.parameters);
+        this.structure = structure;
+        this.init(p);
+    }
+
+    if ( Representation$$1 ) MultiscaleRepresentation.__proto__ = Representation$$1;
+    MultiscaleRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
+    MultiscaleRepresentation.prototype.constructor = MultiscaleRepresentation;
+    MultiscaleRepresentation.prototype.init = function init (params) {
+        Representation$$1.prototype.init.call(this, params);
+        this.currentScale = defaults(params.desiredScale, 0);
+        this.build();
+    };
+    MultiscaleRepresentation.prototype.create = function create () {
+        console.log("MultiRepr CREATE: ", this.currentScale, this.structure.elementsPosition, this.parameters);
+        // Multi-scale idea is implemented here
+        switch (this.currentScale) {
+            case 0:
+                this.currentShape = new Shape("Scale level 0", { disableImpostor: true });
+                console.log("LEVEL0");
+                for (var i = 0; i < this.structure.elementsPosition.length; ++i) {
+                    this.currentShape.addSphere(this.structure.elementsPosition[i], [1, .1, 0], 2.5, "Sphere_" + i.toString());
+                }
+                break;
+            case 1:
+                this.currentShape = new Shape("Scale level 1");
+                for (var i$1 = 1; i$1 < this.structure.elementsPosition.length; ++i$1) {
+                    this.currentShape.addCylinder(this.structure.elementsPosition[i$1 - 1], this.structure.elementsPosition[i$1], [1, .1, 0], 2.5, "Cylinder_" + i$1.toString());
+                }
+                break;
+            default:
+                this.currentShape = new Shape("Scale level 2");
+                for (var i$2 = 1; i$2 < this.structure.elementsPosition.length; ++i$2) {
+                    this.currentShape.addArrow(this.structure.elementsPosition[i$2 - 1], this.structure.elementsPosition[i$2], [1, .1, 0], 2.5, "Arrow_" + i$2.toString());
+                }
+                break;
+        }
+        this.bufferList.push.apply(this.bufferList, this.currentShape.getBufferList());
+    };
+    MultiscaleRepresentation.prototype.build = function build (updateWhat) {
+        Representation$$1.prototype.build.call(this, updateWhat);
+        console.log("MultiRepr BUILD: ", updateWhat);
+    };
+    MultiscaleRepresentation.prototype.clear = function clear () {
+        var _a;
+        console.log("MultiRepr CLEAR");
+        (_a = this.currentShape) === null || _a === void 0 ? void 0 : _a.dispose();
+        Representation$$1.prototype.clear.call(this);
+    };
+    MultiscaleRepresentation.prototype.dispose = function dispose () {
+        var _a;
+        console.log("MultiRepr DISPOSE");
+        (_a = this.currentShape) === null || _a === void 0 ? void 0 : _a.dispose();
+        Representation$$1.prototype.dispose.call(this);
+    };
+    MultiscaleRepresentation.prototype.setParameters = function setParameters (params, what, rebuild) {
+        if ( what === void 0 ) what = {};
+        if ( rebuild === void 0 ) rebuild = false;
+
+        if (params.desiredScale !== undefined) {
+            this.currentScale = params.desiredScale;
+        }
+        Representation$$1.prototype.setParameters.call(this, params, what, rebuild);
+        console.log("MultiRepr SET_PARAMETERS", params, what, rebuild);
+        return this;
+    };
+    MultiscaleRepresentation.prototype.attach = function attach (callback) {
+        var this$1 = this;
+
+        this.bufferList.forEach(function (buffer) {
+            this$1.viewer.add(buffer);
+            buffer.setParameters(this$1.getBufferParams());
+        });
+        this.setVisibility(this.visible);
+        callback();
+    };
+
+    return MultiscaleRepresentation;
+}(Representation));
+
 /**
  * @file Representation Utils
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
@@ -25121,7 +25235,16 @@ function makeRepresentation(type, object, viewer, params) {
     if (Debug)
         { Log.time('makeRepresentation ' + type); }
     var ReprClass;
-    if (object instanceof Structure) {
+    if (object instanceof DnaOrigamiNanostructure$$1) {
+        if (type === "multiscale") {
+            ReprClass = MultiscaleRepresentation;
+        }
+        else {
+            logReprUnknown(type);
+            return;
+        }
+    }
+    else if (object instanceof Structure) {
         ReprClass = RepresentationRegistry.get(type);
         if (!ReprClass) {
             logReprUnknown(type);
@@ -29893,23 +30016,15 @@ RepresentationRegistry.add('ball+stick', BallAndStickRepresentation);
 /**
  *
  */
+//import StructureBuilder from "../structure/structure-builder";
 var TestModification = function TestModification( /* Maybe have some input*/) {
     // Maybe do some stuff...
 };
 TestModification.prototype.hover = function hover (stage, pickingProxy) {
 };
 TestModification.prototype.clickPick_left = function clickPick_left (stage, pickingProxy) {
-    if (pickingProxy) {
-        var text = "You've picked";
-        if (pickingProxy.atom) {
-            text += " an atom";
-        }
-        else if (pickingProxy.bond) {
-            text += " a bond";
-        }
-        else {
-            text += "... something";
-        }
+    if (pickingProxy && pickingProxy.atom) {
+        var text = "You've picked an atom!";
         text += "! Here's its component and also the stage:";
         console.log(text);
         console.log(pickingProxy.component);
@@ -29917,13 +30032,23 @@ TestModification.prototype.clickPick_left = function clickPick_left (stage, pick
         if (pickingProxy.component instanceof StructureComponent) {
             var component = pickingProxy.component;
             var structure = component.object;
-            var atomStore = structure.atomStore; // Atom data is stored here!
-            var bondStore = structure.bondStore; // Bond data is stored here!
-            console.log("And now the AtomStore and BondStore:");
-            console.log(atomStore);
-            console.log(bondStore);
+            //let atomStore: AtomStore = structure.atomStore; // Atom data is stored here!
+            //let bondStore: BondStore = structure.bondStore; // Bond data is stored here!
+            //console.log("And now the AtomStore and BondStore:");
+            //console.log(atomStore);
+            //console.log(bondStore);
             console.assert(stage === component.stage);
             console.assert(stage.viewer === component.viewer);
+            //let sb: StructureBuilder = new StructureBuilder(structure);
+            //sb.addAtom(0, '', '', '', 0, false);
+            var id = structure.atomMap.add('Steve', 'Johnson');
+            console.log("ID of newly added atom/element pair: " + id);
+            TestModification.addSomething(stage, component, pickingProxy.atom.index, id);
+            /*structure.atomStore._fields.forEach((field: StoreField) => {
+                let fieldName: string = field[0];
+                console.log(fieldName);
+                console.log(structure.atomStore[fieldName]);
+            }) ;*/
             console.log("And now some representations of this component");
             component.reprList.forEach(function (value) {
                 var reprName = value.parameters.name;
@@ -29935,10 +30060,64 @@ TestModification.prototype.clickPick_left = function clickPick_left (stage, pick
                 else if (reprName === 'ball+stick') {
                     console.assert(repr instanceof BallAndStickRepresentation);
                     console.log(repr);
+                    //let basRepr: BallAndStickRepresentation = <BallAndStickRepresentation> repr;
+                    //const what: BondDataFields | AtomDataFields = { color: true };
+                    //basRepr.update(what);
                 }
+                // Update everything (TODO: ...for now)
+                repr.update({ position: true, color: true, radius: true, picking: true, index: true });
             });
         }
     }
+    else if (pickingProxy) {
+        if (pickingProxy.bond) {
+            console.log("You've picked a bond!");
+        }
+        else {
+            console.log("You've picked... something!");
+        }
+    }
+};
+TestModification.addSomething = function addSomething (stage, component, atomIndex, atomTypeId) {
+    var structure = component.structure;
+    var atomStore = structure.atomStore;
+    var bondStore = structure.bondStore;
+    var x = atomStore.x[atomIndex];
+    var y = atomStore.y[atomIndex];
+    var z = atomStore.z[atomIndex];
+    //let offset = new Vector3(x, y, z);
+    //let componentTransformation: Matrix4 = component.matrix;
+    //let camPos: Vector3 = stage.viewer.camera.position;
+    var camMat = stage.viewer.camera.matrix;
+    console.log("Camera matrix:");
+    console.log(camMat);
+    var atomCount = atomStore.count;
+    var bondCount = bondStore.count;
+    {
+        atomStore.growIfFull();
+        atomStore.x[atomCount] = x;
+        atomStore.y[atomCount] = y;
+        atomStore.z[atomCount] = z + 10;
+        atomStore.altloc[atomCount] = 0;
+        atomStore.atomTypeId[atomCount] = atomTypeId;
+        atomStore.bfactor[atomCount] = Math.random() * 40; // TODO: No idea what a good dummy value would be here...
+        if (atomStore.formalCharge)
+            { atomStore.formalCharge[atomCount] = 0; }
+        if (atomStore.partialCharge)
+            { atomStore.partialCharge[atomCount] = 0; }
+        atomStore.residueIndex[atomCount] = 1000; // TODO: No idea what a good dummy value would be here...
+        atomStore.serial[atomCount] = atomCount + 1;
+        atomStore.occupancy[atomCount] = 1;
+        bondStore.growIfFull();
+        bondStore.atomIndex1[bondCount] = atomIndex;
+        bondStore.atomIndex2[bondCount] = atomCount;
+        bondStore.bondOrder[bondCount] = 1; // TODO: No idea what a good dummy value would be here...
+    }
+    ++atomStore.count;
+    ++bondStore.count;
+    console.log("AtomStore and BondStore");
+    console.log(atomStore);
+    console.log(bondStore);
 };
 
 /**
@@ -51224,12 +51403,12 @@ var version$1 = "0.0.1";
 var Version = version$1;
 
 var CustomComponent = /*@__PURE__*/(function (Component$$1) {
-    function CustomComponent(stage, object, params) {
+    function CustomComponent(stage, nanostructure, params) {
         if ( params === void 0 ) params = {};
 
-        Component$$1.call(this, stage, object, params);
+        Component$$1.call(this, stage, nanostructure, params);
         this.stage = stage;
-        this.object = object;
+        this.nanostructure = nanostructure;
     }
 
     if ( Component$$1 ) CustomComponent.__proto__ = Component$$1;
@@ -51240,9 +51419,8 @@ var CustomComponent = /*@__PURE__*/(function (Component$$1) {
     prototypeAccessors.type.get = function () {
         return "custom";
     };
-    CustomComponent.prototype.addRepresentation = function addRepresentation (type, object) {
-        var reprComp = this._addRepresentation(type, object, null);
-        return reprComp;
+    CustomComponent.prototype.addRepresentation = function addRepresentation (type, params) {
+        return this._addRepresentation(type, this.nanostructure, params);
     };
 
     Object.defineProperties( CustomComponent.prototype, prototypeAccessors );
@@ -51259,5 +51437,5 @@ if (!window.Promise) {
     window.Promise = _Promise;
 }
 
-export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Component, ShapeComponent, StructureComponent, SurfaceComponent, VolumeComponent, Assembly, TrajectoryPlayer, Superposition, Frames, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, MeshBuffer, OctahedronBuffer, PointBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, WideLineBuffer as WidelineBuffer, Shape, Structure, Kdtree$1 as Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, PickingProxy, CustomComponent, Debug, setDebug, MeasurementDefaultParams, setMeasurementDefaultParams, ScriptExtensions, ColormakerRegistry$1 as ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry$1 as ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, UIStageParameters };
+export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Component, ShapeComponent, StructureComponent, SurfaceComponent, VolumeComponent, Assembly, TrajectoryPlayer, Superposition, Frames, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, MeshBuffer, OctahedronBuffer, PointBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, WideLineBuffer as WidelineBuffer, Shape, Structure, Kdtree$1 as Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, PickingProxy, CustomComponent, DnaOrigamiNanostructure$$1 as DnaOrigamiNanostructure, Debug, setDebug, MeasurementDefaultParams, setMeasurementDefaultParams, ScriptExtensions, ColormakerRegistry$1 as ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry$1 as ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, UIStageParameters };
 //# sourceMappingURL=ngl.esm.js.map

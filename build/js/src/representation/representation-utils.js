@@ -12,6 +12,8 @@ import BufferRepresentation from './buffer-representation';
 import SurfaceRepresentation from './surface-representation';
 import DotRepresentation from './dot-representation';
 import SliceRepresentation from './slice-representation';
+import DnaOrigamiNanostructure from '../marilia_custom_classes/DnaOrigamiNanostructure';
+import MultiscaleRepresentation from '../marilia_custom_classes/MultiscaleRepresentation';
 function logReprUnknown(type) {
     Log.error(`makeRepresentation: representation type ${type} unknown`);
 }
@@ -19,7 +21,16 @@ export function makeRepresentation(type, object, viewer, params) {
     if (Debug)
         Log.time('makeRepresentation ' + type);
     var ReprClass;
-    if (object instanceof Structure) {
+    if (object instanceof DnaOrigamiNanostructure) {
+        if (type === "multiscale") {
+            ReprClass = MultiscaleRepresentation;
+        }
+        else {
+            logReprUnknown(type);
+            return;
+        }
+    }
+    else if (object instanceof Structure) {
         ReprClass = RepresentationRegistry.get(type);
         if (!ReprClass) {
             logReprUnknown(type);

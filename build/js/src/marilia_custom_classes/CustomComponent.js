@@ -1,16 +1,15 @@
 import Component from '../component/component';
 class CustomComponent extends Component {
-    constructor(stage, object, params = {}) {
-        super(stage, object, params);
+    constructor(stage, nanostructure, params = {}) {
+        super(stage, nanostructure, params);
         this.stage = stage;
-        this.object = object;
+        this.nanostructure = nanostructure;
     }
     get type() {
         return "custom";
     }
-    addRepresentation(type, object) {
-        const reprComp = this._addRepresentation(type, object, null);
-        return reprComp;
+    addRepresentation(type, params) {
+        return this._addRepresentation(type, this.nanostructure, params);
     }
 }
 export default CustomComponent;
