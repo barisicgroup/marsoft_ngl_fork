@@ -212,6 +212,7 @@ import Version from './version'
 
 // MARILIA codes
 import CustomComponent from "./marilia_custom_classes/CustomComponent"
+import DnaOrigamiNanostructure from "./marilia_custom_classes/DnaOrigamiNanostructure"
 
 if (!(window as any).Promise) {
   (window as any).Promise = _Promise
@@ -272,5 +273,6 @@ export {
   KeyActions,
   PickingProxy,
 
-  CustomComponent
+  CustomComponent,
+  DnaOrigamiNanostructure
 }
