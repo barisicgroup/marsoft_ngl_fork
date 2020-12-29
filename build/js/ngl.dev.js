@@ -79363,7 +79363,7 @@
           this.type = "multiscale";
           this.parameters = Object.assign({
               desiredScale: {
-                  type: 'integer', rebuild: true
+                  type: 'range', step: 1, max: 2, min: 0,
               }
           }, this.parameters);
           this.structure = structure;
