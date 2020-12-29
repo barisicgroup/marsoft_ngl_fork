@@ -12,21 +12,21 @@ class MultiscaleRepresentation extends Representation {
     structure: DnaOrigamiNanostructure;
     currentScale: number;
     currentShape: Shape;
+    readonly numOfScales: number;
 
     constructor(structure: DnaOrigamiNanostructure, viewer: Viewer, params: Partial<MultiscaleRepresentationParameters>) {
         const p = params || {}
-
         super(structure, viewer, p);
 
         this.type = "multiscale";
+        this.structure = structure;
+        this.numOfScales = 3;
 
         this.parameters = Object.assign({
             desiredScale: {
-                type: 'integer', rebuild: true
+                type: 'range', step: 1, max: this.numOfScales - 1, min: 0, rebuild: true
             }
         }, this.parameters);
-
-        this.structure = structure;
 
         this.init(p);
     }
@@ -38,13 +38,12 @@ class MultiscaleRepresentation extends Representation {
     }
 
     create() {
-        console.log("MultiRepr CREATE: ", this.currentScale, this.structure.elementsPosition, this.parameters);
+        //console.log("MultiRepr CREATE: ", this.currentScale, this.structure.elementsPosition, this.parameters);
 
         // Multi-scale idea is implemented here
         switch (this.currentScale) {
             case 0:
                 this.currentShape = new Shape("Scale level 0", { disableImpostor: true });
-                console.log("LEVEL0");
                 for (let i: number = 0; i < this.structure.elementsPosition.length; ++i) {
                     this.currentShape.addSphere(this.structure.elementsPosition[i], [1, .1, 0], 2.5, "Sphere_" + i.toString());
                 }
@@ -71,19 +70,30 @@ class MultiscaleRepresentation extends Representation {
     build(updateWhat?: { [k: string]: boolean }) {
         super.build(updateWhat);
 
-        console.log("MultiRepr BUILD: ", updateWhat);
+        //console.log("MultiRepr BUILD: ", updateWhat);
     }
 
     clear() {
-        console.log("MultiRepr CLEAR");
+        //console.log("MultiRepr CLEAR");
         this.currentShape?.dispose();
         super.clear();
     }
 
     dispose() {
-        console.log("MultiRepr DISPOSE");
+        //console.log("MultiRepr DISPOSE");
         this.currentShape?.dispose();
         super.dispose();
+    }
+
+    getParameters() {
+        const params = Object.assign(
+            super.getParameters(),
+            {
+                desiredScale: this.currentScale
+            }
+        )
+
+        return params
     }
 
     setParameters(params: Partial<MultiscaleRepresentationParameters>, what: { [propName: string]: any } = {}, rebuild = false) {
@@ -92,8 +102,7 @@ class MultiscaleRepresentation extends Representation {
         }
 
         super.setParameters(params, what, rebuild);
-
-        console.log("MultiRepr SET_PARAMETERS", params, what, rebuild);
+        //console.log("MultiRepr SET_PARAMETERS", params, what, rebuild);
 
         return this;
     }
