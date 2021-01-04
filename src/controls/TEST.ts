@@ -143,6 +143,9 @@ class TestModification {
         ++atomStore.count;
         ++bondStore.count;
 
+        //structure.atomSet.
+        // Atoms are not shown because structure.atomSet is not updated. TODO: fix
+
         console.log("AtomStore and BondStore")
         console.log(atomStore);
         console.log(bondStore);
