@@ -13,8 +13,7 @@ import CartoonRepresentation from "../representation/cartoon-representation";
 import BallAndStickRepresentation from "../representation/ballandstick-representation";
 import Representation from "../representation/representation";
 //import {StoreField} from "../store/store";
-//import {Vector3, Matrix4} from "three";
-import {Matrix4} from "three";
+import {Matrix4, Vector3} from "three";
 //import {AtomDataFields, BondDataFields} from "../structure/structure-data";
 //import StructureBuilder from "../structure/structure-builder";
 
@@ -22,7 +21,7 @@ class TestModification {
     // Initialize member variables
 
     constructor(/* Maybe have some input*/) {
-        // Maybe do some stuff...
+
     }
 
     public hover(stage: Stage, pickingProxy: PickingProxy) {
@@ -34,7 +33,7 @@ class TestModification {
     public clickPick_left(stage: Stage, pickingProxy: PickingProxy) {
         if (pickingProxy && pickingProxy.atom) {
             let text: string = "You've picked an atom!";
-            text += "! Here's its component and also the stage:";
+            text += " Here's its component and also the stage:";
             console.log(text);
             console.log(pickingProxy.component);
             console.log(stage);
@@ -79,8 +78,6 @@ class TestModification {
 
                         let basRepr: BallAndStickRepresentation = <BallAndStickRepresentation> repr;
 
-
-
                         //const what: BondDataFields | AtomDataFields = { color: true };
                         //basRepr.update(what);
                         //basRepr.create();
@@ -97,6 +94,8 @@ class TestModification {
             } else {
                 console.log("You've picked... something!");
             }
+        } else {
+            console.log("click!");
         }
     }
 
@@ -105,6 +104,9 @@ class TestModification {
 
         let atomStore: AtomStore = structure.atomStore;
         let bondStore: BondStore = structure.bondStore;
+
+        let pos: Vector3 = stage.mouseObserver.getWorldPosition();
+        console.log(pos);
 
         let x: number = atomStore.x[atomIndex];
         let y: number = atomStore.y[atomIndex];
@@ -126,17 +128,17 @@ class TestModification {
             atomStore.z[atomCount] = z + 10;
             atomStore.altloc[atomCount] = 0;
             atomStore.atomTypeId[atomCount] = atomTypeId;
-            atomStore.bfactor[atomCount] = Math.random() * 40; // TODO: No idea what a good dummy value would be here...
+            atomStore.bfactor[atomCount] = Math.random() * 40;
             if (atomStore.formalCharge) atomStore.formalCharge[atomCount] = 0;
             if (atomStore.partialCharge) atomStore.partialCharge[atomCount] = 0;
-            atomStore.residueIndex[atomCount] = 1000; // TODO: No idea what a good dummy value would be here...
+            atomStore.residueIndex[atomCount] = atomStore.residueIndex[atomIndex] + 1;
             atomStore.serial[atomCount] = atomCount + 1;
             atomStore.occupancy[atomCount] = 1;
 
             bondStore.growIfFull();
             bondStore.atomIndex1[bondCount] = atomIndex;
             bondStore.atomIndex2[bondCount] = atomCount;
-            bondStore.bondOrder[bondCount] = 1; // TODO: No idea what a good dummy value would be here...
+            bondStore.bondOrder[bondCount] = 1;
         }
         ++atomStore.count;
         ++bondStore.count;
