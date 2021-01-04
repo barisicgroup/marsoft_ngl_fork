@@ -15,6 +15,7 @@ import Representation from "../representation/representation";
 //import {StoreField} from "../store/store";
 //import {Vector3, Matrix4} from "three";
 import {Matrix4} from "three";
+//import {AtomDataFields, BondDataFields} from "../structure/structure-data";
 //import StructureBuilder from "../structure/structure-builder";
 
 class TestModification {
@@ -76,16 +77,18 @@ class TestModification {
                         console.assert(repr instanceof BallAndStickRepresentation);
                         console.log(repr);
 
-                        //let basRepr: BallAndStickRepresentation = <BallAndStickRepresentation> repr;
+                        let basRepr: BallAndStickRepresentation = <BallAndStickRepresentation> repr;
 
 
 
                         //const what: BondDataFields | AtomDataFields = { color: true };
                         //basRepr.update(what);
+                        //basRepr.create();
+                        basRepr.build();
                     }
 
                     // Update everything (TODO: ...for now)
-                    repr.update({position: true, color: true, radius: true, picking: true, index: true});
+                    //repr.update({position: true, color: true, radius: true, picking: true, index: true});
                 });
             }
         } else if (pickingProxy) {
