@@ -17,11 +17,39 @@ import {Matrix4, Vector3} from "three";
 //import {AtomDataFields, BondDataFields} from "../structure/structure-data";
 //import StructureBuilder from "../structure/structure-builder";
 
-class TestModification {
+export enum TestModificationMode {
+    NONE,
+    BOND_FROM_ATOM,
+    BOND_BETWEEN_ATOMS,
+    REMOVE_BOND,
+    REMOVE_ATOM
+}
+
+export class TestModification {
     // Initialize member variables
 
     constructor(/* Maybe have some input*/) {
 
+    }
+
+    private _mode: TestModificationMode = TestModificationMode.NONE;
+    get mode(): TestModificationMode {
+        return this._mode;
+    }
+    set mode(mode: TestModificationMode) {
+        this._mode = mode;
+    }
+    public setModeToBondFromAtom() {
+        this.mode = TestModificationMode.BOND_FROM_ATOM;
+    }
+    public setModeToBondBetweenAtoms() {
+        this.mode = TestModificationMode.BOND_BETWEEN_ATOMS;
+    }
+    public setModeToRemoveAtom() {
+        this.mode = TestModificationMode.REMOVE_ATOM;
+    }
+    public setModeToRemoveBond() {
+        this.mode = TestModificationMode.REMOVE_BOND;
     }
 
     public hover(stage: Stage, pickingProxy: PickingProxy) {
@@ -31,6 +59,20 @@ class TestModification {
     }
 
     public clickPick_left(stage: Stage, pickingProxy: PickingProxy) {
+        switch (this.mode) {
+            case TestModificationMode.BOND_FROM_ATOM:
+                this.clickPick_left_bondFromAtom(stage, pickingProxy);
+                break;
+            case TestModificationMode.BOND_BETWEEN_ATOMS:
+            case TestModificationMode.REMOVE_ATOM:
+            case TestModificationMode.REMOVE_BOND:
+            default:
+                // Do nothing (TODO: for now...)
+                break;
+        }
+    }
+
+    public clickPick_left_bondFromAtom(stage: Stage, pickingProxy: PickingProxy) {
         if (pickingProxy && pickingProxy.atom) {
             let text: string = "You've picked an atom!";
             text += " Here's its component and also the stage:";

@@ -47,6 +47,9 @@ import Volume from '../surface/volume'
 import Shape from '../geometry/shape'
 import Script from '../script'
 
+// Added by Lucas Melo
+import TestModification from '../marilia_custom_classes/TEST'
+
 function matchName (name: string|RegExp, object: { name: string }) {
   if (name instanceof RegExp) {
     return object.name.match(name) !== null
@@ -158,6 +161,11 @@ export interface StageLoadFileParams extends LoaderParameters {
  * var stage = new Stage( "elementId", { backgroundColor: "white" } );
  */
 class Stage {
+  /**
+   * Marilia stuff
+   */
+  testModification: TestModification = new TestModification();
+
   signals: StageSignals = {
     parametersChanged: new Signal(),
     fullscreenChanged: new Signal(),

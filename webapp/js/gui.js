@@ -1299,37 +1299,41 @@ NGL.SidebarWidget = function (stage) {
   let strRemoveAtom = "Remove atom";
 
   var textModification = new UI.Text("Modification menu");
-  var buttonCreateBond1 = new UI.Button(strCreateBond1);
-  var buttonCreateBond2 = new UI.Button(strCreateBond2);
-  var buttonRemoveBond = new UI.Button(strRemoveBond);
-  var buttonRemoveAtom = new UI.Button(strRemoveAtom);
+  var buttonCreateBond1 = new UI.Button(strCreateBond1).setClass("Unselected");
+  var buttonCreateBond2 = new UI.Button(strCreateBond2).setClass("Unselected");
+  var buttonRemoveBond = new UI.Button(strRemoveBond).setClass("Unselected");
+  var buttonRemoveAtom = new UI.Button(strRemoveAtom).setClass("Unselected");
 
   buttonCreateBond1.onClick(function() {
-    buttonCreateBond1.setLabel(strCreateBond1 + " x")
-    buttonCreateBond2.setLabel(strCreateBond2)
-    buttonRemoveBond.setLabel(strRemoveBond)
-    buttonRemoveAtom.setLabel(strRemoveAtom)
+    buttonCreateBond1.setClass("Selected");
+    buttonCreateBond2.setClass("Unselected");
+    buttonRemoveBond.setClass("Unselected");
+    buttonRemoveAtom.setClass("Unselected");
+    stage.testModification.setModeToBondFromAtom();
   });
 
   buttonCreateBond2.onClick(function() {
-    buttonCreateBond1.setLabel(strCreateBond1)
-    buttonCreateBond2.setLabel(strCreateBond2 + " x")
-    buttonRemoveBond.setLabel(strRemoveBond)
-    buttonRemoveAtom.setLabel(strRemoveAtom)
+    buttonCreateBond1.setClass("Unselected");
+    buttonCreateBond2.setClass("Selected");
+    buttonRemoveBond.setClass("Unselected");
+    buttonRemoveAtom.setClass("Unselected");
+    stage.testModification.setModeToBondBetweenAtoms();
   });
 
   buttonRemoveBond.onClick(function() {
-    buttonCreateBond1.setLabel(strCreateBond1)
-    buttonCreateBond2.setLabel(strCreateBond2)
-    buttonRemoveBond.setLabel(strRemoveBond + " x")
-    buttonRemoveAtom.setLabel(strRemoveAtom)
+    buttonCreateBond1.setClass("Unselected");
+    buttonCreateBond2.setClass("Unselected");
+    buttonRemoveBond.setClass("Selected");
+    buttonRemoveAtom.setClass("Unselected");
+    stage.testModification.setModeToRemoveBond();
   });
 
   buttonRemoveAtom.onClick(function() {
-    buttonCreateBond1.setLabel(strCreateBond1)
-    buttonCreateBond2.setLabel(strCreateBond2)
-    buttonRemoveBond.setLabel(strRemoveBond)
-    buttonRemoveAtom.setLabel(strRemoveAtom + " x")
+    buttonCreateBond1.setClass("Unselected");
+    buttonCreateBond2.setClass("Unselected");
+    buttonRemoveBond.setClass("Unselected");
+    buttonRemoveAtom.setClass("Selected");
+    stage.testModification.setModeToRemoveAtom();
   });
 
   panelMariliaCreation.add(

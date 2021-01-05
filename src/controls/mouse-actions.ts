@@ -10,10 +10,6 @@ import Stage from '../stage/stage'
 import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
 
-// Added by Lucas Melo
-import TestModification from '../marilia_custom_classes/TEST'
-export let testModification: TestModification = new TestModification();
-
 export type ScrollCallback = (stage: Stage, delta: number) => void
 export type DragCallback = (stage: Stage, dx: number, dy: number) => void
 export type PickCallback = (stage: Stage, pickingProxy: PickingProxy) => void
@@ -220,6 +216,16 @@ class MouseActions {
       stage.measureClear()
     }
   }
+
+  /**
+   * Marilia stuff
+   */
+  static clickPick_left(stage: Stage, pickingProxy: PickingProxy) {
+    stage.testModification.clickPick_left(stage, pickingProxy);
+  }
+  static hover(stage: Stage, pickingProxy: PickingProxy) {
+    stage.testModification.hover(stage, pickingProxy);
+  }
 }
 
 type MouseActionPreset = [ string, MouseActionCallback ][]
@@ -244,9 +250,9 @@ export const MouseActionPresets = {
     [ 'clickPick-ctrl-left', MouseActions.measurePick ],
     [ 'clickPick-middle', MouseActions.movePick ],
     //[ 'clickPick-left', MouseActions.movePick ],
-    [ 'clickPick-left', testModification.clickPick_left ],
+    [ 'clickPick-left', MouseActions.clickPick_left ],
     [ 'hoverPick', MouseActions.tooltipPick ],
-    [ 'hoverPick', testModification.hover ]
+    [ 'hoverPick', MouseActions.hover ]
   ] as MouseActionPreset,
   pymol: [
     [ 'drag-left', MouseActions.rotateDrag ],

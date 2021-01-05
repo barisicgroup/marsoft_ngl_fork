@@ -450,6 +450,15 @@ input[type=range]:focus:after {
         display: block;
     }
 
+    #sidebar .MariliaContent .Unselected {
+
+    }
+
+    #sidebar .MariliaContent .Selected {
+        font-weight: bold;
+        background: #88bb88;
+    }
+
 #toolbar {
     position: absolute;
     left: 0px;
