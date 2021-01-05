@@ -397,7 +397,8 @@ input[type=range]:focus:after {
                 margin: 0px !important;
             }
 
-#sidebar {
+/*.sidebar {*/
+.sidebar {
     position: absolute;
     right: 0px;
     top: 32px;
@@ -406,29 +407,29 @@ input[type=range]:focus:after {
     overflow: hidden;
 }
 
-    #sidebar .Panel {
+    .sidebar .Panel {
         margin-bottom: 10px;
     }
 
-    #sidebar .Panel.collapsed {
+    .sidebar .Panel.collapsed {
         margin-bottom: 0px;
     }
 
-    #sidebar .CollapsibleContent {
+    .sidebar .CollapsibleContent {
         margin-top: 10px;
     }
 
-    #sidebar > .Panel {
+    .sidebar > .Panel {
         padding: 10px;
         border-top: 1px solid;
     }
 
-    #sidebar > .Content > .Panel {
+    .sidebar > .Content > .Panel {
         padding: 10px;
         border-top: 1px solid;
     }
 
-    #sidebar .Content {
+    .sidebar .Content {
         top: 40px;
         bottom: 0px;
         position: absolute;

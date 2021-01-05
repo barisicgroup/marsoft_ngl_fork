@@ -224,7 +224,8 @@ NGL.StageWidget = function (stage) {
   var menubar = new NGL.MenubarWidget(stage, preferences).setId('menubar')
   document.body.appendChild(menubar.dom)
 
-  var sidebar = new NGL.SidebarWidget(stage).setId('sidebar')
+  //var sidebar = new NGL.SidebarWidget(stage).setId('sidebar')
+  var sidebar = new NGL.SidebarWidget(stage).setClass('sidebar')
   document.body.appendChild(sidebar.dom)
 
   //
