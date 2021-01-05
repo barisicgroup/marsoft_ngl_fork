@@ -224,8 +224,7 @@ NGL.StageWidget = function (stage) {
   var menubar = new NGL.MenubarWidget(stage, preferences).setId('menubar')
   document.body.appendChild(menubar.dom)
 
-  //var sidebar = new NGL.SidebarWidget(stage).setId('sidebar')
-  var sidebar = new NGL.SidebarWidget(stage).setClass('sidebar')
+  var sidebar = new NGL.SidebarWidget(stage).setId('sidebar')
   document.body.appendChild(sidebar.dom)
 
   //
@@ -1286,9 +1285,76 @@ NGL.SidebarWidget = function (stage) {
       settingsMenu
     )
 
+  // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv MARILIA vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+  var panelMarilia = new UI.Panel().setClass('MariliaContent');
+  var panelMariliaCreation = new UI.Panel();
+  var panelMariliaModification = new UI.Panel();
+
+  var textCreation = new UI.Text("Creation menu");
+  // TODO
+
+  let strCreateBond1 = "Create bond from atom";
+  let strCreateBond2 = "Create bond between atoms";
+  let strRemoveBond = "Remove bond";
+  let strRemoveAtom = "Remove atom";
+
+  var textModification = new UI.Text("Modification menu");
+  var buttonCreateBond1 = new UI.Button(strCreateBond1);
+  var buttonCreateBond2 = new UI.Button(strCreateBond2);
+  var buttonRemoveBond = new UI.Button(strRemoveBond);
+  var buttonRemoveAtom = new UI.Button(strRemoveAtom);
+
+  buttonCreateBond1.onClick(function() {
+    buttonCreateBond1.setLabel(strCreateBond1 + " x")
+    buttonCreateBond2.setLabel(strCreateBond2)
+    buttonRemoveBond.setLabel(strRemoveBond)
+    buttonRemoveAtom.setLabel(strRemoveAtom)
+  });
+
+  buttonCreateBond2.onClick(function() {
+    buttonCreateBond1.setLabel(strCreateBond1)
+    buttonCreateBond2.setLabel(strCreateBond2 + " x")
+    buttonRemoveBond.setLabel(strRemoveBond)
+    buttonRemoveAtom.setLabel(strRemoveAtom)
+  });
+
+  buttonRemoveBond.onClick(function() {
+    buttonCreateBond1.setLabel(strCreateBond1)
+    buttonCreateBond2.setLabel(strCreateBond2)
+    buttonRemoveBond.setLabel(strRemoveBond + " x")
+    buttonRemoveAtom.setLabel(strRemoveAtom)
+  });
+
+  buttonRemoveAtom.onClick(function() {
+    buttonCreateBond1.setLabel(strCreateBond1)
+    buttonCreateBond2.setLabel(strCreateBond2)
+    buttonRemoveBond.setLabel(strRemoveBond)
+    buttonRemoveAtom.setLabel(strRemoveAtom + " x")
+  });
+
+  panelMariliaCreation.add(
+      textCreation
+  );
+
+  panelMariliaModification.add(
+      textModification,
+      buttonCreateBond1,
+      buttonCreateBond2,
+      buttonRemoveBond,
+      buttonRemoveAtom
+  );
+
+  panelMarilia.add(
+      new UI.Text("MARILIA MENU"),
+      panelMariliaCreation,
+      panelMariliaModification
+  );
+  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ MARILIA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
   container.add(
     actions,
-    widgetContainer
+    widgetContainer,
+    panelMarilia
   )
 
   return container

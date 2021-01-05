@@ -31,7 +31,7 @@ input.Number, input.File {
 .OverlayPanel,
 #menubar,
 #menubar .menu .options,
-.sidebar,
+#sidebar,
 #toolbar
 {
     background-color: #1C1F26;
@@ -42,8 +42,8 @@ input.Number, input.File {
 
 .OverlayPanel,
 #menubar .menu .options hr,
-.sidebar > .Panel,
-.sidebar > .Content > .Panel {
+#sidebar > .Panel,
+#sidebar > .Content > .Panel {
     border-color: #444444;
 }
 
