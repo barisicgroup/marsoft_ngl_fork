@@ -11,7 +11,7 @@ import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
 
 // Added by Lucas Melo
-import TestModification from './TEST'
+import TestModification from '../marilia_custom_classes/TEST'
 export let testModification: TestModification = new TestModification();
 
 export type ScrollCallback = (stage: Stage, delta: number) => void

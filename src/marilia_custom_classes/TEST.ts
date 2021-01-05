@@ -3,7 +3,7 @@
  */
 
 import Stage from "../stage/stage";
-import PickingProxy from "./picking-proxy";
+import PickingProxy from "../controls/picking-proxy";
 import StructureComponent from "../component/structure-component";
 import Structure from "../structure/structure";
 import AtomStore from "../store/atom-store";
