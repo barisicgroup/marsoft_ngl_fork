@@ -60,45 +60,6 @@
           if (traj) o.addTrajectory(traj)
         })
       }
-
-      let newComponentPositions = [];
-      let lastClickTime = new Date();
-      const doubleClickDelay = 0.5;
-
-      //stage.mouseObserver.signals.dragged.add(function (deltaX, deltaY) {
-      /*stage.mouseControls.add("drag-left", function (stage, deltaX, deltaY) {
-        console.log(stage.mouseObserver.getWorldPosition(), deltaX, deltaY);
-      });*/
-
-      /*stage.mouseObserver.signals.mouseDown.add(function (x, y) {
-        console.log("d", x, y);
-      });
-
-      stage.mouseObserver.signals.mouseUp.add(function (x, y) {
-        console.log("u", x, y);
-      });*/
-
-
-      stage.signals.clicked.add(function (pickingProxy) {
-        if (pickingProxy !== undefined) { return; }
-
-        let currTime = new Date();
-
-        if ((currTime.getTime() - lastClickTime.getTime()) / 1000.0 <= doubleClickDelay) {
-          let newStructure = new NGL.DnaOrigamiNanostructure("DNA Origami Nanostructure", newComponentPositions);
-
-          let newComp = new NGL.CustomComponent(stage, newStructure);
-          newComp.setName("From Scratch");
-          stage.addComponent(newComp);
-
-          newComp.addRepresentation("multiscale");
-          newComponentPositions = [];
-        }
-        else {
-          newComponentPositions.push(stage.mouseObserver.getWorldPosition());
-        }
-        lastClickTime = currTime;
-      });
     })
 
   </script>

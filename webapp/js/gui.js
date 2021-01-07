@@ -421,6 +421,7 @@ NGL.MenubarWidget = function (stage, preferences) {
     container.add(new NGL.MenubarExamplesWidget(stage))
   }
   container.add(new NGL.MenubarHelpWidget(stage, preferences))
+  container.add(new NGL.ModelingWidget(stage))
 
   container.add(
     new UI.Panel().setClass('menu').setFloat('right').add(
@@ -767,6 +768,42 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
   var optionsPanel = UI.MenubarHelper.createOptionsPanel(menuConfig)
 
   return UI.MenubarHelper.createMenuContainer('Help', optionsPanel)
+}
+
+// Modeling menu bar widget
+NGL.ModelingWidget = function (stage) {
+  // event handlers
+
+  function onModelingModeClick (state) {
+    stage.modelingControls.isEnabled = state;
+  }
+
+  function onDebugOffClick () {
+    NGL.setDebug(false)
+    stage.viewer.updateHelper()
+    stage.viewer.requestRender()
+  }
+
+  function onFreezeClick (state) {
+    stage.viewerControls.isFreezed = state;
+  }
+
+  // configure menu contents
+
+  var createOption = UI.MenubarHelper.createOption
+  var createDivider = UI.MenubarHelper.createDivider
+
+  var menuConfig = [
+    createOption('Modeling mode on', () => onModelingModeClick(true)),
+    createOption('Modeling mode off', () => onModelingModeClick(false)),
+    createDivider(),
+    createOption('Freeze on', () => onFreezeClick(true)),
+    createOption('Freeze off', () => onFreezeClick(false))
+  ]
+
+  var optionsPanel = UI.MenubarHelper.createOptionsPanel(menuConfig)
+
+  return UI.MenubarHelper.createMenuContainer('Modeling', optionsPanel)
 }
 
 // Overview

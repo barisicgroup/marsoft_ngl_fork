@@ -49,6 +49,7 @@ import Script from '../script'
 
 // Added by Lucas Melo
 import TestModification from '../marilia_custom_classes/TEST'
+import ModelingControls from '../marilia_custom_classes/ModelingControls'
 
 function matchName (name: string|RegExp, object: { name: string }) {
   if (name instanceof RegExp) {
@@ -208,6 +209,8 @@ class Stage {
   spinAnimation: Animation
   rockAnimation: Animation
 
+  modelingControls : ModelingControls
+
   constructor (idOrElement: string|HTMLElement, params: Partial<StageParameters> = {}) {
     this.viewer = new Viewer(idOrElement)
     if (!this.viewer.renderer) return
@@ -232,6 +235,7 @@ class Stage {
     this.animationControls = new AnimationControls(this)
     this.mouseControls = new MouseControls(this)
     this.keyControls = new KeyControls(this)
+    this.modelingControls = new ModelingControls(this);
 
     this.pickingBehavior = new PickingBehavior(this)
     this.mouseBehavior = new MouseBehavior(this)
