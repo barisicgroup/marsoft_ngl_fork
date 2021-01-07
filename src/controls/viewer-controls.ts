@@ -40,6 +40,7 @@ class ViewerControls {
   }
 
   viewer: Viewer
+  isFreezed: boolean
 
   /**
    * @param  {Stage} stage - the stage object
@@ -124,6 +125,7 @@ class ViewerControls {
    * @return {undefined}
    */
   orient (orientation?: Matrix4) {
+    if(this.isFreezed) { return; }
     ensureMatrix4(orientation).decompose(tmpP, tmpQ, tmpS)
 
     const v = this.viewer
@@ -140,6 +142,7 @@ class ViewerControls {
    * @return {undefined}
    */
   translate (vector: Vector3|number[]) {
+    if(this.isFreezed) { return; }
     this.viewer.translationGroup.position
       .add(ensureVector3(vector))
     this.changed()
@@ -151,6 +154,7 @@ class ViewerControls {
    * @return {undefined}
    */
   center (position: Vector3|number[]) {
+    if(this.isFreezed) { return; }
     this.viewer.translationGroup.position
       .copy(ensureVector3(position)).negate()
     this.changed()
@@ -162,6 +166,7 @@ class ViewerControls {
    * @return {undefined}
    */
   zoom (delta: number) {
+    if(this.isFreezed) { return; }
     this.distance(this.getCameraDistance() * (1 - delta))
   }
 
@@ -178,6 +183,7 @@ class ViewerControls {
    * @return {undefined}
    */
   distance (distance: number) {
+    if(this.isFreezed) { return; }
     // Math.abs because distance used to be "z", normally negative.
     // Math.max to prevent us from getting _too_ close.
     this.viewer.cameraDistance = Math.max(Math.abs(distance), 0.2)
@@ -192,6 +198,7 @@ class ViewerControls {
    * @return {undefined}
    */
   spin (axis: Vector3|number[], angle: number) {
+    if(this.isFreezed) { return; }
     tmpRotateMatrix.getInverse(this.viewer.rotationGroup.matrix)
     tmpRotateVector
       .copy(ensureVector3(axis)).applyMatrix4(tmpRotateMatrix)
@@ -206,6 +213,7 @@ class ViewerControls {
    * @return {undefined}
    */
   rotate (quaternion: Quaternion|number[]) {
+    if(this.isFreezed) { return; }
     this.viewer.rotationGroup
       .setRotationFromQuaternion(ensureQuaternion(quaternion))
     this.changed()
@@ -217,6 +225,7 @@ class ViewerControls {
    * @return {undefined}
    */
   align (basis: Matrix4|number[]) {
+    if(this.isFreezed) { return; }
     tmpAlignMatrix.getInverse(ensureMatrix4(basis))
 
     this.viewer.rotationGroup.setRotationFromMatrix(tmpAlignMatrix)
@@ -229,6 +238,7 @@ class ViewerControls {
    * @return {undefined}
    */
   applyMatrix (matrix: Matrix4|number[]) {
+    if(this.isFreezed) { return; }
     this.viewer.rotationGroup.applyMatrix4(ensureMatrix4(matrix))
     this.changed()
   }

@@ -612,6 +612,10 @@ NGL.MenubarViewWidget = function (stage, preferences) {
     stage.toggleRock()
   }
 
+  function onToggleFreezeClick() {
+    stage.viewerControls.isFreezed = !stage.viewerControls.isFreezed;
+  }
+
   function onGetOrientationClick () {
     window.prompt(
       'Get orientation',
@@ -657,6 +661,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
     createDivider(),
     createOption('Toggle spin', onToggleSpinClick),
     createOption('Toggle rock', onToggleRockClick),
+    createOption('Toggle freeze', onToggleFreezeClick),
     createDivider(),
     createOption('Get orientation', onGetOrientationClick),
     createOption('Set orientation', onSetOrientationClick)
