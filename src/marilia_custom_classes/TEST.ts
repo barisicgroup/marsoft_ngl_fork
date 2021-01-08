@@ -14,6 +14,7 @@ import BallAndStickRepresentation from "../representation/ballandstick-represent
 import Representation from "../representation/representation";
 //import {StoreField} from "../store/store";
 import {Matrix4, Vector3} from "three";
+import AtomProxy from "../proxy/atom-proxy";
 //import {AtomDataFields, BondDataFields} from "../structure/structure-data";
 //import StructureBuilder from "../structure/structure-builder";
 
@@ -64,11 +65,36 @@ export class TestModification {
                 this.clickPick_left_bondFromAtom(stage, pickingProxy);
                 break;
             case TestModificationMode.BOND_BETWEEN_ATOMS:
+                this.clickPick_left_bondBetweenAtoms(stage, pickingProxy);
+                break;
             case TestModificationMode.REMOVE_ATOM:
             case TestModificationMode.REMOVE_BOND:
             default:
                 // Do nothing (TODO: for now...)
                 break;
+        }
+    }
+
+    private lastPickedAtom: AtomProxy;
+    private lastPickedAtomComponent: StructureComponent;
+    private atomPicked: boolean = false;
+    public clickPick_left_bondBetweenAtoms(stage: Stage, pickingProxy: PickingProxy) {
+        if (!(pickingProxy.component instanceof StructureComponent)) return;
+        if (pickingProxy && pickingProxy.atom) {
+            if (this.atomPicked && this.lastPickedAtomComponent === pickingProxy.component) {
+                let component: StructureComponent = pickingProxy.component;
+                TestModification.addBondBetweenAtoms(stage, component, this.lastPickedAtom.index, pickingProxy.atom.index);
+                component.reprList.forEach( (value: RepresentationElement) => {
+                    //let reprName: string = value.parameters.name;
+                    let repr: Representation = value.repr;
+                    repr.build();
+                });
+                this.atomPicked = false;
+            } else {
+                this.lastPickedAtom = pickingProxy.atom;
+                this.lastPickedAtomComponent = pickingProxy.component;
+                this.atomPicked = true;
+            }
         }
     }
 
@@ -141,8 +167,26 @@ export class TestModification {
         }
     }
 
+    private static addBondBetweenAtoms(stage: Stage, component: StructureComponent, atomIndex1: number, atomIndex2: number) {
+        let structure: Structure = component.structure;
+
+        //let atomStore: AtomStore = structure.atomStore;
+        let bondStore: BondStore = structure.bondStore;
+
+        let bondCount: number = bondStore.count;
+        {
+            bondStore.growIfFull();
+            bondStore.atomIndex1[bondCount] = atomIndex1;
+            bondStore.atomIndex2[bondCount] = atomIndex2;
+            bondStore.bondOrder[bondCount] = 1;
+        }
+        ++bondStore.count;
+
+        structure.finalizeBonds();
+    }
+
     private static addSomething(stage: Stage, component: StructureComponent, atomIndex: number, atomTypeId: number) {
-        let structure = component.structure;
+        let structure: Structure = component.structure;
 
         let atomStore: AtomStore = structure.atomStore;
         let bondStore: BondStore = structure.bondStore;
@@ -185,14 +229,13 @@ export class TestModification {
         ++atomStore.count;
         ++bondStore.count;
 
-        //structure.atomSet.
-        // Atoms are not shown because structure.atomSet is not updated. TODO: fix
+        structure.finalizeAtoms();
+        structure.finalizeBonds();
 
         console.log("AtomStore and BondStore")
         console.log(atomStore);
         console.log(bondStore);
     }
-
 }
 
 export default TestModification;
