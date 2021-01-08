@@ -40,26 +40,32 @@ class MultiscaleRepresentation extends Representation {
     create() {
         //console.log("MultiRepr CREATE: ", this.currentScale, this.structure.elementsPosition, this.parameters);
 
+        const elementCenterPositions = this.structure.getIndividualElementCenterPositions();
+        const elementRowPositions = this.structure.getIndividualRowPositions();
+
         // Multi-scale idea is implemented here
         switch (this.currentScale) {
             case 0:
-                this.currentShape = new Shape("Scale level 0", { disableImpostor: true });
-                for (let i: number = 0; i < this.structure.elementsPosition.length; ++i) {
-                    this.currentShape.addSphere(this.structure.elementsPosition[i], [1, .1, 0], 2.5, "Sphere_" + i.toString());
+                this.currentShape = new Shape("Scale level 0");
+                for (let i = 0; i < elementCenterPositions.length; ++i) {
+                    this.currentShape.addPoint(elementCenterPositions[i], [1, .1, 0], "Element_" + i.toString());
                 }
                 break;
             case 1:
                 this.currentShape = new Shape("Scale level 1");
-                for (let i: number = 1; i < this.structure.elementsPosition.length; ++i) {
-                    this.currentShape.addCylinder(this.structure.elementsPosition[i - 1], this.structure.elementsPosition[i],
-                        [1, .1, 0], 2.5, "Cylinder_" + i.toString());
+                for (let i = 0; i < elementCenterPositions.length; ++i) {
+                    this.currentShape.addSphere(elementCenterPositions[i], [1, .1, 0], this.structure.elementDiamater * 0.5, "Element_" + i.toString());
                 }
                 break;
             default:
                 this.currentShape = new Shape("Scale level 2");
-                for (let i: number = 1; i < this.structure.elementsPosition.length; ++i) {
-                    this.currentShape.addArrow(this.structure.elementsPosition[i - 1], this.structure.elementsPosition[i],
-                        [1, .1, 0], 2.5, "Arrow_" + i.toString());
+
+                for (let i = 0; i < elementRowPositions.length; ++i) {
+                    this.currentShape.addCylinder(elementRowPositions[i],
+                        elementRowPositions[i].clone()
+                            .add(this.structure.depthVector.clone()
+                                .multiplyScalar(this.structure.elementDiamater * this.structure.depthInElements)),
+                        [1, .1, 0], this.structure.elementDiamater * 0.5, "Element_row_" + i.toString());
                 }
                 break;
         }
