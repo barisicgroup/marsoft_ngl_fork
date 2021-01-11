@@ -1,15 +1,15 @@
 import { Vector3 } from "three";
 import PickingProxy from "../controls/picking-proxy";
-import { Stage } from "../ngl";
+import { Stage, ShapeComponent } from "../ngl";
 import DnaOrigamiNanostructure from "./DnaOrigamiNanostructure"
 import CustomComponent from "./CustomComponent"
 import Shape from "../geometry/shape";
 
 class ModelingControls {
     private _isEnabled: boolean;
-    private newComponentPositions: Vector3[]
-    private pointVisTempShapeComponent: any = undefined
-    private lastNumOfPoints: number = 0
+    private newComponentPositions: Vector3[];
+    private pointVisTempShapeComponent: ShapeComponent;
+    private lastNumOfPoints: number = 0;
 
     public stage: Stage;
 
@@ -22,6 +22,8 @@ class ModelingControls {
         this.stage.signals.clicked.add(this.onMouseClick.bind(this));
 
         this.update = this.update.bind(this);
+        this.resetControls = this.resetControls.bind(this);
+
         this.update();
     }
 
@@ -43,12 +45,22 @@ class ModelingControls {
             }
 
             if (this.newComponentPositions.length > 0) {
-                var shape = new Shape("Temporary shape");
+                const shape = new Shape("[temp-sel-vis]");
+
                 for (let i = 0; i < this.newComponentPositions.length; ++i) {
-                    shape.addSphere(this.newComponentPositions[i], [0, 0, 1], 1, "Selected position");
+                    shape.addPoint(this.newComponentPositions[i], [0, 1, 0], "Selection point");
                 }
-                this.pointVisTempShapeComponent = this.stage.addComponentFromObject(shape);
+
+                for (let i = 0; i < this.newComponentPositions.length - 1; ++i) {
+                    shape.addWideline(this.newComponentPositions[i],
+                        this.newComponentPositions[i + 1],
+                        [0, 0, 1], 2, "");
+                }
+
+                this.pointVisTempShapeComponent = new ShapeComponent(this.stage, shape);
                 this.pointVisTempShapeComponent.addRepresentation("buffer");
+
+                this.stage.addComponent(this.pointVisTempShapeComponent);
             }
 
             this.lastNumOfPoints = this.newComponentPositions.length;
@@ -82,7 +94,7 @@ class ModelingControls {
 
             newComp.addRepresentation("multiscale", undefined);
 
-            this.resetControls();
+            setTimeout(this.resetControls, 500);
         }
     }
 }

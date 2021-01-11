@@ -19,6 +19,8 @@ class CustomComponent extends Component {
         return this._addRepresentation(type, this.nanostructure, params);
     }
 
+    // TODO Add dispose?
+
 }
 
 export default CustomComponent;
