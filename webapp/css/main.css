@@ -399,11 +399,10 @@ input[type=range]:focus:after {
 
 #sidebar {
     position: absolute;
-    right: 0px;
+    right: 0;
     top: 32px;
-    /*bottom: 0px;*/
+    bottom: 0;
     width: 300px;
-    height: 100%;
     overflow: hidden;
 }
 
@@ -431,19 +430,19 @@ input[type=range]:focus:after {
 
     #sidebar .Content {
         top: 40px;
-        /*bottom: 0px;*/
-        /*position: absolute;*/
+        bottom: 0;
+        position: absolute;
         overflow: auto;
         right: 0px;
         width: 100%;
-        height: 50%;
     }
 
     #sidebar .MariliaContent {
-        bottom: 0px;
-        height: 50%;
-        width: 100%;
+        width: 300px;
+        bottom: 0;
+        height: fit-content;
         overflow: auto;
+        position: absolute;
     }
 
     #sidebar .MariliaContent * {
