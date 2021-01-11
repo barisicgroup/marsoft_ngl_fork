@@ -15,6 +15,7 @@ import Representation from "../representation/representation";
 //import {StoreField} from "../store/store";
 import {Matrix4, Vector3} from "three";
 import AtomProxy from "../proxy/atom-proxy";
+import BitArray from "../utils/bitarray";
 //import {AtomDataFields, BondDataFields} from "../structure/structure-data";
 //import StructureBuilder from "../structure/structure-builder";
 
@@ -83,7 +84,10 @@ export class TestModification {
                 value.repr.structure.atomSet.clear(pickingProxy.atom.index);
             } else if (pickingProxy.bond) {
                 //TestModification.removeBond(stage, structure, pickingProxy.bond.index);
-                value.repr.structure.atomSet.clear(pickingProxy.bond.index);
+                let bondSet: BitArray | undefined = value.repr.structure.bondSet;
+                if (bondSet) {
+                    bondSet.clear(pickingProxy.bond.index);
+                }
             }
 
             value.repr.build();
