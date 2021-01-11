@@ -64,21 +64,41 @@ export class TestModification {
                 this.clickPick_left_bondBetweenAtoms(stage, pickingProxy);
                 break;
             case TestModificationMode.REMOVE:
+                this.clickPick_left_remove(stage, pickingProxy);
+                break;
             default:
                 // Do nothing (TODO: for now...)
                 break;
         }
     }
 
+    public clickPick_left_remove(stage: Stage, pickingProxy: PickingProxy) {
+        if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent)) return;
+        let component: StructureComponent = pickingProxy.component;
+
+        component.reprList.forEach( (value: RepresentationElement) => {
+
+            if (pickingProxy.atom) {
+                //TestModification.removeAtom(stage, structure, pickingProxy.atom.index);
+                value.repr.structure.atomSet.clear(pickingProxy.atom.index);
+            } else if (pickingProxy.bond) {
+                //TestModification.removeBond(stage, structure, pickingProxy.bond.index);
+                value.repr.structure.atomSet.clear(pickingProxy.bond.index);
+            }
+
+            value.repr.build();
+        });
+    }
+
     private lastPickedAtom: AtomProxy;
     private lastPickedAtomComponent: StructureComponent;
     private atomPicked: boolean = false;
     public clickPick_left_bondBetweenAtoms(stage: Stage, pickingProxy: PickingProxy) {
-        if (!(pickingProxy.component instanceof StructureComponent)) return;
-        if (pickingProxy && pickingProxy.atom) {
+        if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent)) return;
+        if (pickingProxy.atom) {
             if (this.atomPicked && this.lastPickedAtomComponent === pickingProxy.component) {
                 let component: StructureComponent = pickingProxy.component;
-                TestModification.addBondBetweenAtoms(stage, component, this.lastPickedAtom.index, pickingProxy.atom.index);
+                TestModification.addBondBetweenAtoms(stage, component.structure, this.lastPickedAtom.index, pickingProxy.atom.index);
                 component.reprList.forEach( (value: RepresentationElement) => {
                     //let reprName: string = value.parameters.name;
                     let repr: Representation = value.repr;
@@ -94,77 +114,83 @@ export class TestModification {
     }
 
     public clickPick_left_bondFromAtom(stage: Stage, pickingProxy: PickingProxy) {
-        if (pickingProxy && pickingProxy.atom) {
+        if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent)) return;
+        if (pickingProxy.atom) {
             let text: string = "You've picked an atom!";
             text += " Here's its component and also the stage:";
             console.log(text);
             console.log(pickingProxy.component);
             console.log(stage);
 
-            if (pickingProxy.component instanceof StructureComponent) {
-                let component: StructureComponent = pickingProxy.component;
-                let structure: Structure = component.object;
-                //let atomStore: AtomStore = structure.atomStore; // Atom data is stored here!
-                //let bondStore: BondStore = structure.bondStore; // Bond data is stored here!
+            let component: StructureComponent = pickingProxy.component;
+            let structure: Structure = component.object;
+            //let atomStore: AtomStore = structure.atomStore; // Atom data is stored here!
+            //let bondStore: BondStore = structure.bondStore; // Bond data is stored here!
 
-                //console.log("And now the AtomStore and BondStore:");
-                //console.log(atomStore);
-                //console.log(bondStore);
+            //console.log("And now the AtomStore and BondStore:");
+            //console.log(atomStore);
+            //console.log(bondStore);
 
-                console.assert(stage === component.stage);
-                console.assert(stage.viewer === component.viewer);
+            console.assert(stage === component.stage);
+            console.assert(stage.viewer === component.viewer);
 
-                //let sb: StructureBuilder = new StructureBuilder(structure);
-                //sb.addAtom(0, '', '', '', 0, false);
+            //let sb: StructureBuilder = new StructureBuilder(structure);
+            //sb.addAtom(0, '', '', '', 0, false);
 
-                let id: number = structure.atomMap.add('Steve', 'Johnson');
-                console.log("ID of newly added atom/element pair: " + id);
+            let id: number = structure.atomMap.add('Steve', 'Johnson');
+            console.log("ID of newly added atom/element pair: " + id);
 
-                TestModification.addSomething(stage, component, pickingProxy.atom.index, id);
+            TestModification.addSomething(stage, component.structure, pickingProxy.atom.index, id);
 
-                /*structure.atomStore._fields.forEach((field: StoreField) => {
-                    let fieldName: string = field[0];
-                    console.log(fieldName);
-                    console.log(structure.atomStore[fieldName]);
-                }) ;*/
+            /*structure.atomStore._fields.forEach((field: StoreField) => {
+                let fieldName: string = field[0];
+                console.log(fieldName);
+                console.log(structure.atomStore[fieldName]);
+            }) ;*/
 
-                console.log("And now some representations of this component")
-                component.reprList.forEach((value: RepresentationElement) => {
-                    let reprName: string = value.parameters.name;
-                    let repr: Representation = value.repr;
-                    if (reprName === 'cartoon') {
-                        console.assert(repr instanceof CartoonRepresentation);
-                        console.log(repr);
-                    } else if (reprName === 'ball+stick') {
-                        console.assert(repr instanceof BallAndStickRepresentation);
-                        console.log(repr);
+            console.log("And now some representations of this component")
+            component.reprList.forEach((value: RepresentationElement) => {
+                let reprName: string = value.parameters.name;
+                let repr: Representation = value.repr;
+                if (reprName === 'cartoon') {
+                    console.assert(repr instanceof CartoonRepresentation);
+                    console.log(repr);
+                } else if (reprName === 'ball+stick') {
+                    console.assert(repr instanceof BallAndStickRepresentation);
+                    console.log(repr);
 
-                        let basRepr: BallAndStickRepresentation = <BallAndStickRepresentation> repr;
+                    let basRepr: BallAndStickRepresentation = <BallAndStickRepresentation>repr;
 
-                        //const what: BondDataFields | AtomDataFields = { color: true };
-                        //basRepr.update(what);
-                        //basRepr.create();
-                        basRepr.build();
-                    }
+                    //const what: BondDataFields | AtomDataFields = { color: true };
+                    //basRepr.update(what);
+                    //basRepr.create();
+                    basRepr.build();
+                }
 
-                    // Update everything (TODO: ...for now)
-                    //repr.update({position: true, color: true, radius: true, picking: true, index: true});
-                });
-            }
-        } else if (pickingProxy) {
+                // Update everything (TODO: ...for now)
+                //repr.update({position: true, color: true, radius: true, picking: true, index: true});
+            });
+        } else {
             if (pickingProxy.bond) {
                 console.log("You've picked a bond!");
             } else {
                 console.log("You've picked... something!");
             }
-        } else {
-            console.log("click!");
         }
     }
 
-    private static addBondBetweenAtoms(stage: Stage, component: StructureComponent, atomIndex1: number, atomIndex2: number) {
-        let structure: Structure = component.structure;
+    /*private static removeBond(stage: Stage, structure: Structure, bondIndex: number) {
+        let bondSet: BitArray | undefined = structure.bondSet;
+        if (bondSet) {
+            bondSet.clear(bondIndex);
+        }
+    }
 
+    private static removeAtom(stage: Stage, structure: Structure, atomIndex: number) {
+        structure.atomSet?.clear(atomIndex);
+    }*/
+
+    private static addBondBetweenAtoms(stage: Stage, structure: Structure, atomIndex1: number, atomIndex2: number) {
         //let atomStore: AtomStore = structure.atomStore;
         let bondStore: BondStore = structure.bondStore;
 
@@ -180,9 +206,7 @@ export class TestModification {
         structure.finalizeBonds();
     }
 
-    private static addSomething(stage: Stage, component: StructureComponent, atomIndex: number, atomTypeId: number) {
-        let structure: Structure = component.structure;
-
+    private static addSomething(stage: Stage, structure: Structure, atomIndex: number, atomTypeId: number) {
         let atomStore: AtomStore = structure.atomStore;
         let bondStore: BondStore = structure.bondStore;
 

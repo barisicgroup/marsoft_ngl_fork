@@ -1337,7 +1337,7 @@ NGL.SidebarWidget = function (stage) {
 
   let strCreateBond1 = "Create bond from atom";
   let strCreateBond2 = "Create bond between atoms";
-  let strRemove = "Remove bond";
+  let strRemove = "Remove atom or bond";
 
   var textModification = new UI.Text("Modification menu");
   var buttonCreateBond1 = new UI.Button(strCreateBond1).setClass("Unselected");
