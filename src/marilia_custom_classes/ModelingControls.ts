@@ -45,7 +45,7 @@ class ModelingControls {
             }
 
             if (this.newComponentPositions.length > 0) {
-                const shape = new Shape("[temp-sel-vis]");
+                const shape = new Shape("[temp-sel-vis]", { pointSize: 6 });
 
                 for (let i = 0; i < this.newComponentPositions.length; ++i) {
                     shape.addPoint(this.newComponentPositions[i], [0, 1, 0], "Selection point");
