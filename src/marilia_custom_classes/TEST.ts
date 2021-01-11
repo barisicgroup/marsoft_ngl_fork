@@ -15,7 +15,7 @@ import Representation from "../representation/representation";
 //import {StoreField} from "../store/store";
 import {Matrix4, Vector3} from "three";
 import AtomProxy from "../proxy/atom-proxy";
-import BitArray from "../utils/bitarray";
+import StructureView from "../structure/structure-view";
 //import {AtomDataFields, BondDataFields} from "../structure/structure-data";
 //import StructureBuilder from "../structure/structure-builder";
 
@@ -77,17 +77,21 @@ export class TestModification {
         if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent)) return;
         let component: StructureComponent = pickingProxy.component;
 
+        // Hide from all representations not good. TODO detect which representation the user picked
         component.reprList.forEach( (value: RepresentationElement) => {
+
+            //let structure: Structure = value.repr.structure.structure;
+            let structureView: StructureView = value.repr.structure;
 
             if (pickingProxy.atom) {
                 //TestModification.removeAtom(stage, structure, pickingProxy.atom.index);
-                value.repr.structure.atomSet.clear(pickingProxy.atom.index);
+                //value.repr.structure.structure.atomSet.clear(pickingProxy.atom.index);
+                //structure.atomSet.clear(pickingProxy.atom.index);
+                structureView.atomSet?.clear(pickingProxy.atom.index);
             } else if (pickingProxy.bond) {
                 //TestModification.removeBond(stage, structure, pickingProxy.bond.index);
-                let bondSet: BitArray | undefined = value.repr.structure.bondSet;
-                if (bondSet) {
-                    bondSet.clear(pickingProxy.bond.index);
-                }
+                //structure.bondSet.clear(pickingProxy.bond.index);
+                structureView.bondSet?.clear(pickingProxy.bond.index);
             }
 
             value.repr.build();
