@@ -22,8 +22,7 @@ export enum TestModificationMode {
     NONE,
     BOND_FROM_ATOM,
     BOND_BETWEEN_ATOMS,
-    REMOVE_BOND,
-    REMOVE_ATOM
+    REMOVE
 }
 
 export class TestModification {
@@ -46,11 +45,8 @@ export class TestModification {
     public setModeToBondBetweenAtoms() {
         this.mode = TestModificationMode.BOND_BETWEEN_ATOMS;
     }
-    public setModeToRemoveAtom() {
-        this.mode = TestModificationMode.REMOVE_ATOM;
-    }
-    public setModeToRemoveBond() {
-        this.mode = TestModificationMode.REMOVE_BOND;
+    public setModeToRemove() {
+        this.mode = TestModificationMode.REMOVE;
     }
 
     public hover(stage: Stage, pickingProxy: PickingProxy) {
@@ -67,8 +63,7 @@ export class TestModification {
             case TestModificationMode.BOND_BETWEEN_ATOMS:
                 this.clickPick_left_bondBetweenAtoms(stage, pickingProxy);
                 break;
-            case TestModificationMode.REMOVE_ATOM:
-            case TestModificationMode.REMOVE_BOND:
+            case TestModificationMode.REMOVE:
             default:
                 // Do nothing (TODO: for now...)
                 break;

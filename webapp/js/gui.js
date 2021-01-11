@@ -1337,45 +1337,32 @@ NGL.SidebarWidget = function (stage) {
 
   let strCreateBond1 = "Create bond from atom";
   let strCreateBond2 = "Create bond between atoms";
-  let strRemoveBond = "Remove bond";
-  let strRemoveAtom = "Remove atom";
+  let strRemove = "Remove bond";
 
   var textModification = new UI.Text("Modification menu");
   var buttonCreateBond1 = new UI.Button(strCreateBond1).setClass("Unselected");
   var buttonCreateBond2 = new UI.Button(strCreateBond2).setClass("Unselected");
-  var buttonRemoveBond = new UI.Button(strRemoveBond).setClass("Unselected");
-  var buttonRemoveAtom = new UI.Button(strRemoveAtom).setClass("Unselected");
+  var buttonRemove = new UI.Button(strRemove).setClass("Unselected");
 
   buttonCreateBond1.onClick(function() {
     buttonCreateBond1.setClass("Selected");
     buttonCreateBond2.setClass("Unselected");
-    buttonRemoveBond.setClass("Unselected");
-    buttonRemoveAtom.setClass("Unselected");
+    buttonRemove.setClass("Unselected");
     stage.testModification.setModeToBondFromAtom();
   });
 
   buttonCreateBond2.onClick(function() {
     buttonCreateBond1.setClass("Unselected");
     buttonCreateBond2.setClass("Selected");
-    buttonRemoveBond.setClass("Unselected");
-    buttonRemoveAtom.setClass("Unselected");
+    buttonRemove.setClass("Unselected");
     stage.testModification.setModeToBondBetweenAtoms();
   });
 
-  buttonRemoveBond.onClick(function() {
+  buttonRemove.onClick(function() {
     buttonCreateBond1.setClass("Unselected");
     buttonCreateBond2.setClass("Unselected");
-    buttonRemoveBond.setClass("Selected");
-    buttonRemoveAtom.setClass("Unselected");
-    stage.testModification.setModeToRemoveBond();
-  });
-
-  buttonRemoveAtom.onClick(function() {
-    buttonCreateBond1.setClass("Unselected");
-    buttonCreateBond2.setClass("Unselected");
-    buttonRemoveBond.setClass("Unselected");
-    buttonRemoveAtom.setClass("Selected");
-    stage.testModification.setModeToRemoveAtom();
+    buttonRemove.setClass("Selected");
+    stage.testModification.setModeToRemove();
   });
 
   panelMariliaCreation.add(
@@ -1386,8 +1373,7 @@ NGL.SidebarWidget = function (stage) {
       textModification,
       buttonCreateBond1,
       buttonCreateBond2,
-      buttonRemoveBond,
-      buttonRemoveAtom
+      buttonRemove
   );
 
   panelMarilia.add(
