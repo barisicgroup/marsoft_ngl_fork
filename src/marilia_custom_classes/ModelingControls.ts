@@ -8,7 +8,7 @@ import Shape from "../geometry/shape";
 class ModelingControls {
     private _isEnabled: boolean;
     private newComponentPositions: Vector3[]
-    private pointVisTempShapeComponent : any = undefined
+    private pointVisTempShapeComponent: any = undefined
     private lastNumOfPoints: number = 0
 
     public stage: Stage;
@@ -39,15 +39,17 @@ class ModelingControls {
     update(): void {
         if (this.newComponentPositions.length !== this.lastNumOfPoints) {
             if (this.pointVisTempShapeComponent !== undefined) {
-                this.pointVisTempShapeComponent.dispose();
+                this.stage.removeComponent(this.pointVisTempShapeComponent);
             }
 
-            var shape = new Shape("Temporary shape");
-            for (let i = 0; i < this.newComponentPositions.length; ++i) {
-                shape.addSphere(this.newComponentPositions[i], [0, 0, 1], 1, "Selected position");
+            if (this.newComponentPositions.length > 0) {
+                var shape = new Shape("Temporary shape");
+                for (let i = 0; i < this.newComponentPositions.length; ++i) {
+                    shape.addSphere(this.newComponentPositions[i], [0, 0, 1], 1, "Selected position");
+                }
+                this.pointVisTempShapeComponent = this.stage.addComponentFromObject(shape);
+                this.pointVisTempShapeComponent.addRepresentation("buffer");
             }
-            this.pointVisTempShapeComponent = this.stage.addComponentFromObject(shape);
-            this.pointVisTempShapeComponent.addRepresentation("buffer");
 
             this.lastNumOfPoints = this.newComponentPositions.length;
         }
@@ -67,7 +69,7 @@ class ModelingControls {
                 this.stage.mouseObserver.getWorldPosition());
         }
 
-        if (this.newComponentPositions.length == 3) {
+        if (this.newComponentPositions.length === 3) {
             const bottomLeftCornerPos: Vector3 = this.newComponentPositions[0];
             const blcToBrcVec: Vector3 = this.newComponentPositions[1].clone().sub(this.newComponentPositions[0]);
             const brcToTrcVec: Vector3 = this.newComponentPositions[2].clone().sub(this.newComponentPositions[1]);
