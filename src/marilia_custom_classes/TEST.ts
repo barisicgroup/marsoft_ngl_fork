@@ -9,8 +9,6 @@ import Structure from "../structure/structure";
 import AtomStore from "../store/atom-store";
 import BondStore from "../store/bond-store";
 import RepresentationElement from "../component/representation-element";
-import CartoonRepresentation from "../representation/cartoon-representation";
-import BallAndStickRepresentation from "../representation/ballandstick-representation";
 import Representation from "../representation/representation";
 //import {StoreField} from "../store/store";
 import {Matrix4, Vector3} from "three";
@@ -106,7 +104,7 @@ export class TestModification {
         if (pickingProxy.atom) {
             if (this.atomPicked && this.lastPickedAtomComponent === pickingProxy.component) {
                 let component: StructureComponent = pickingProxy.component;
-                TestModification.addBondBetweenAtoms(stage, component.structure, this.lastPickedAtom.index, pickingProxy.atom.index);
+                TestModification.addBondBetweenAtoms(stage, component, this.lastPickedAtom.index, pickingProxy.atom.index);
                 component.reprList.forEach( (value: RepresentationElement) => {
                     //let reprName: string = value.parameters.name;
                     let repr: Representation = value.repr;
@@ -124,11 +122,11 @@ export class TestModification {
     public clickPick_left_bondFromAtom(stage: Stage, pickingProxy: PickingProxy) {
         if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent)) return;
         if (pickingProxy.atom) {
-            let text: string = "You've picked an atom!";
-            text += " Here's its component and also the stage:";
-            console.log(text);
-            console.log(pickingProxy.component);
-            console.log(stage);
+            //let text: string = "You've picked an atom!";
+            //text += " Here's its component and also the stage:";
+            //console.log(text);
+            //console.log(pickingProxy.component);
+            //console.log(stage);
 
             let component: StructureComponent = pickingProxy.component;
             let structure: Structure = component.object;
@@ -146,38 +144,10 @@ export class TestModification {
             //sb.addAtom(0, '', '', '', 0, false);
 
             let id: number = structure.atomMap.add('Steve', 'Johnson');
-            console.log("ID of newly added atom/element pair: " + id);
+            //console.log("ID of newly added atom/element pair: " + id);
 
-            TestModification.addSomething(stage, component.structure, pickingProxy.atom.index, id);
+            TestModification.addSomething(stage, component, pickingProxy.atom.index, id);
 
-            /*structure.atomStore._fields.forEach((field: StoreField) => {
-                let fieldName: string = field[0];
-                console.log(fieldName);
-                console.log(structure.atomStore[fieldName]);
-            }) ;*/
-
-            console.log("And now some representations of this component")
-            component.reprList.forEach((value: RepresentationElement) => {
-                let reprName: string = value.parameters.name;
-                let repr: Representation = value.repr;
-                if (reprName === 'cartoon') {
-                    console.assert(repr instanceof CartoonRepresentation);
-                    console.log(repr);
-                } else if (reprName === 'ball+stick') {
-                    console.assert(repr instanceof BallAndStickRepresentation);
-                    console.log(repr);
-
-                    let basRepr: BallAndStickRepresentation = <BallAndStickRepresentation>repr;
-
-                    //const what: BondDataFields | AtomDataFields = { color: true };
-                    //basRepr.update(what);
-                    //basRepr.create();
-                    basRepr.build();
-                }
-
-                // Update everything (TODO: ...for now)
-                //repr.update({position: true, color: true, radius: true, picking: true, index: true});
-            });
         } else {
             if (pickingProxy.bond) {
                 console.log("You've picked a bond!");
@@ -198,9 +168,9 @@ export class TestModification {
         structure.atomSet?.clear(atomIndex);
     }*/
 
-    private static addBondBetweenAtoms(stage: Stage, structure: Structure, atomIndex1: number, atomIndex2: number) {
+    private static addBondBetweenAtoms(stage: Stage, component: StructureComponent, atomIndex1: number, atomIndex2: number) {
         //let atomStore: AtomStore = structure.atomStore;
-        let bondStore: BondStore = structure.bondStore;
+        let bondStore: BondStore = component.structure.bondStore;
 
         let bondCount: number = bondStore.count;
         {
@@ -211,12 +181,12 @@ export class TestModification {
         }
         ++bondStore.count;
 
-        structure.finalizeBonds();
+        component.structure.finalizeBonds();
     }
 
-    private static addSomething(stage: Stage, structure: Structure, atomIndex: number, atomTypeId: number) {
-        let atomStore: AtomStore = structure.atomStore;
-        let bondStore: BondStore = structure.bondStore;
+    private static addSomething(stage: Stage, component: StructureComponent, atomIndex: number, atomTypeId: number) {
+        let atomStore: AtomStore = component.structure.atomStore;
+        let bondStore: BondStore = component.structure.bondStore;
 
         let pos: Vector3 = stage.mouseObserver.getWorldPosition();
         console.log(pos);
@@ -256,8 +226,17 @@ export class TestModification {
         ++atomStore.count;
         ++bondStore.count;
 
-        structure.finalizeAtoms();
-        structure.finalizeBonds();
+        component.structure.finalizeAtoms();
+        component.structure.finalizeBonds();
+
+        component.reprList.forEach(function(value) {
+            let repr: Representation = value.repr;
+            let structureView: StructureView = repr.structure;
+            console.assert(component.structure === structureView.structure);
+            structureView.refresh();
+
+            repr.build();
+        });
 
         console.log("AtomStore and BondStore")
         console.log(atomStore);
