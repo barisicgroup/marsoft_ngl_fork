@@ -10,7 +10,7 @@ class DnaOrigamiNanostructure extends Structure {
     public readonly elementDiamater: number;
 
     constructor(name: string, bottomLeftCornerPos: Vector3, blcToBrcVec: Vector3,
-        brcToTrcVec: Vector3, depthInElements: number = 8, elementDiameter: number = 10, path: string = "") {
+        brcToTrcVec: Vector3, depthInElements: number = 32, elementDiameter: number = 2, path: string = "") {
         super(name, path);
 
         this.bottomLeftCornerPos = bottomLeftCornerPos;
@@ -29,10 +29,16 @@ class DnaOrigamiNanostructure extends Structure {
         let result: Vector3[] = [];
         const rowPositions = this.getIndividualRowPositions();
 
+        const xDir = this.blcToBrcVec.clone().normalize();
+        const yDir = this.brcToTrcVec.clone().normalize();
+
         for (let i = 0; i < rowPositions.length; ++i) {
             for (let z = 0; z < this.depthInElements; ++z) {
+                const xyOffset = xDir.clone().multiplyScalar(Math.cos(20 * z / this.depthInElements))
+                    .add(yDir.clone().multiplyScalar(Math.cos(20 * (1.0 - z / this.depthInElements)))).normalize().multiplyScalar(this.elementDiamater * 0.4);
+
                 result.push(rowPositions[i].clone().add(
-                    this.depthVector.clone().multiplyScalar(z * this.elementDiamater)))
+                    this.depthVector.clone().multiplyScalar(z * this.elementDiamater)).add(xyOffset));
             }
         }
 
