@@ -28,6 +28,9 @@ import ComponentCollection from '../component/component-collection';
 import RepresentationCollection from '../component/representation-collection';
 import { autoLoad, getFileInfo } from '../loader/loader-utils';
 import Selection from '../selection/selection';
+// Added by Lucas Melo
+import TestModification from '../marilia_custom_classes/TEST';
+import ModelingControls from '../marilia_custom_classes/ModelingControls';
 function matchName(name, object) {
     if (name instanceof RegExp) {
         return object.name.match(name) !== null;
@@ -72,6 +75,10 @@ export const StageDefaultParameters = {
  */
 class Stage {
     constructor(idOrElement, params = {}) {
+        /**
+         * Marilia stuff
+         */
+        this.testModification = new TestModification();
         this.signals = {
             parametersChanged: new Signal(),
             fullscreenChanged: new Signal(),
@@ -110,6 +117,7 @@ class Stage {
         this.animationControls = new AnimationControls(this);
         this.mouseControls = new MouseControls(this);
         this.keyControls = new KeyControls(this);
+        this.modelingControls = new ModelingControls(this);
         this.pickingBehavior = new PickingBehavior(this);
         this.mouseBehavior = new MouseBehavior(this);
         this.animationBehavior = new AnimationBehavior(this);

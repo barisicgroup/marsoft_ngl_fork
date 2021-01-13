@@ -100,6 +100,8 @@ class MouseObserver {
             dragged: new Signal(),
             dropped: new Signal(),
             clicked: new Signal(),
+            mouseDown: new Signal(),
+            mouseUp: new Signal(),
             hovered: new Signal(),
             doubleClicked: new Signal()
         };
@@ -293,6 +295,7 @@ class MouseObserver {
         this.buttons = getMouseButtons(event);
         this.pressed = true;
         this._setCanvasPosition(event);
+        this.signals.mouseDown.dispatch(this.canvasPosition.x, this.canvasPosition.y);
     }
     /**
      * handle mouse up
@@ -307,6 +310,7 @@ class MouseObserver {
         }
         this._setKeys(event);
         const cp = this.canvasPosition;
+        this.signals.mouseUp.dispatch(cp.x, cp.y);
         if (this._distance() < 4) {
             this.lastClicked = window.performance.now();
             if (this.doubleClickPending && this.prevClickCP.distanceTo(cp) < 4) {

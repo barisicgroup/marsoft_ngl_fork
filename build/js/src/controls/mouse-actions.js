@@ -5,9 +5,6 @@
  */
 import { almostIdentity } from '../math/math-utils';
 import SurfaceRepresentation from '../representation/surface-representation';
-// Added by Lucas Melo
-import TestModification from './TEST';
-export let testModification = new TestModification();
 /**
  * Mouse actions provided as static methods
  */
@@ -196,6 +193,15 @@ class MouseActions {
             stage.measureClear();
         }
     }
+    /**
+     * Marilia stuff
+     */
+    static clickPick_left(stage, pickingProxy) {
+        stage.testModification.clickPick_left(stage, pickingProxy);
+    }
+    static hover(stage, pickingProxy) {
+        stage.testModification.hover(stage, pickingProxy);
+    }
 }
 export const MouseActionPresets = {
     default: [
@@ -215,9 +221,9 @@ export const MouseActionPresets = {
         ['clickPick-ctrl-left', MouseActions.measurePick],
         ['clickPick-middle', MouseActions.movePick],
         //[ 'clickPick-left', MouseActions.movePick ],
-        ['clickPick-left', testModification.clickPick_left],
+        ['clickPick-left', MouseActions.clickPick_left],
         ['hoverPick', MouseActions.tooltipPick],
-        ['hoverPick', testModification.hover]
+        ['hoverPick', MouseActions.hover]
     ],
     pymol: [
         ['drag-left', MouseActions.rotateDrag],
