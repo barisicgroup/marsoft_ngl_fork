@@ -25,26 +25,6 @@ class DnaOrigamiNanostructure extends Structure {
         return "DnaOrigamiNanostructure";
     }
 
-    getIndividualElementCenterPositions(): Vector3[] {
-        let result: Vector3[] = [];
-        const rowPositions = this.getIndividualRowPositions();
-
-        const xDir = this.blcToBrcVec.clone().normalize();
-        const yDir = this.brcToTrcVec.clone().normalize();
-
-        for (let i = 0; i < rowPositions.length; ++i) {
-            for (let z = 0; z < this.depthInElements; ++z) {
-                const xyOffset = xDir.clone().multiplyScalar(Math.cos(20 * z / this.depthInElements))
-                    .add(yDir.clone().multiplyScalar(Math.cos(20 * (1.0 - z / this.depthInElements)))).normalize().multiplyScalar(this.elementDiamater * 0.4);
-
-                result.push(rowPositions[i].clone().add(
-                    this.depthVector.clone().multiplyScalar(z * this.elementDiamater)).add(xyOffset));
-            }
-        }
-
-        return result;
-    }
-
     getIndividualRowPositions(): Vector3[] {
         let result: Vector3[] = [];
 
@@ -62,6 +42,33 @@ class DnaOrigamiNanostructure extends Structure {
         }
 
         return result;
+    }
+
+    getIndividualElementsByRowPositions(): Vector3[][] {
+        let result: Vector3[][] = [];
+        const rowPositions = this.getIndividualRowPositions();
+
+        const xDir = this.blcToBrcVec.clone().normalize();
+        const yDir = this.brcToTrcVec.clone().normalize();
+
+        for (let i = 0; i < rowPositions.length; ++i) {
+            let thisRow: Vector3[] = []
+            for (let z = 0; z < this.depthInElements; ++z) {
+                const xyOffset = xDir.clone().multiplyScalar(Math.cos(30 * z / this.depthInElements))
+                    .add(yDir.clone().multiplyScalar(Math.cos(30 * (1.0 - z / this.depthInElements)))).normalize().multiplyScalar(this.elementDiamater * 0.5);
+
+                thisRow.push(rowPositions[i].clone().add(
+                    this.depthVector.clone().multiplyScalar(z * this.elementDiamater)).add(xyOffset));
+            }
+            result.push(thisRow);
+        }
+
+        return result;
+    }
+
+    getIndividualElementCenterPositions(): Vector3[] {
+        const elByRow: Vector3[][] = this.getIndividualElementsByRowPositions();
+        return ([] as Vector3[]).concat(...elByRow);
     }
 }
 
