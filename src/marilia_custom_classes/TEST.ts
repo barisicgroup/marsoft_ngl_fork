@@ -11,9 +11,9 @@ import BondStore from "../store/bond-store";
 import RepresentationElement from "../component/representation-element";
 import Representation from "../representation/representation";
 //import {StoreField} from "../store/store";
-import {Matrix4, Vector3} from "three";
 import AtomProxy from "../proxy/atom-proxy";
 import StructureView from "../structure/structure-view";
+import BitArray from "../utils/bitarray";
 //import {AtomDataFields, BondDataFields} from "../structure/structure-data";
 //import StructureBuilder from "../structure/structure-builder";
 
@@ -74,6 +74,12 @@ export class TestModification {
     public clickPick_left_remove(stage: Stage, pickingProxy: PickingProxy) {
         if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent)) return;
         let component: StructureComponent = pickingProxy.component;
+
+        if (pickingProxy.atom) {
+            component.structure.atomSet?.clear(pickingProxy.atom.index);
+        } else if (pickingProxy.bond) {
+            component.structure.bondSet?.clear(pickingProxy.bond.index);
+        }
 
         // Hide from all representations not good. TODO detect which representation the user picked
         component.reprList.forEach( (value: RepresentationElement) => {
@@ -150,9 +156,9 @@ export class TestModification {
 
         } else {
             if (pickingProxy.bond) {
-                console.log("You've picked a bond!");
+                //console.log("You've picked a bond!");
             } else {
-                console.log("You've picked... something!");
+                //console.log("You've picked... something!");
             }
         }
     }
@@ -188,8 +194,8 @@ export class TestModification {
         let atomStore: AtomStore = component.structure.atomStore;
         let bondStore: BondStore = component.structure.bondStore;
 
-        let pos: Vector3 = stage.mouseObserver.getWorldPosition();
-        console.log(pos);
+        //let pos: Vector3 = stage.mouseObserver.getWorldPosition();
+        //console.log(pos);
 
         let x: number = atomStore.x[atomIndex];
         let y: number = atomStore.y[atomIndex];
@@ -198,9 +204,9 @@ export class TestModification {
 
         //let componentTransformation: Matrix4 = component.matrix;
         //let camPos: Vector3 = stage.viewer.camera.position;
-        let camMat: Matrix4 = stage.viewer.camera.matrix;
-        console.log("Camera matrix:")
-        console.log(camMat);
+        //let camMat: Matrix4 = stage.viewer.camera.matrix;
+        //console.log("Camera matrix:")
+        //console.log(camMat);
 
         let atomCount: number = atomStore.count;
         let bondCount: number = bondStore.count;
@@ -233,14 +239,37 @@ export class TestModification {
             let repr: Representation = value.repr;
             let structureView: StructureView = repr.structure;
             console.assert(component.structure === structureView.structure);
-            structureView.refresh();
+            //structureView.refresh();
+
+            //structureView.atomSet?.set(structureView.atomSet?.length - 1);
+            //structureView.bondSet?.set(structureView.bondSet?.length - 1);
+            //structureView.refresh();
+            //structureView.
+
+            if (structureView.atomSet && component.structure.atomSet) {
+                let n = component.structure.atomCount;
+                let atomSet = new BitArray(n, true);
+                atomSet = atomSet.intersection(component.structure.atomSet);
+                structureView.atomSet = atomSet;
+                structureView.atomCount = n;
+            }
+
+            if (structureView.bondSet && component.structure.bondSet) {
+                let n = component.structure.bondCount;
+                let bondSet = new BitArray(n, true);
+                bondSet = bondSet.intersection(component.structure.bondSet);
+                structureView.bondSet = bondSet;
+                structureView.bondCount = n;
+            }
+
+            //structureView.refresh();
 
             repr.build();
         });
 
-        console.log("AtomStore and BondStore")
-        console.log(atomStore);
-        console.log(bondStore);
+        //console.log("AtomStore and BondStore")
+        //console.log(atomStore);
+        //console.log(bondStore);
     }
 }
 
