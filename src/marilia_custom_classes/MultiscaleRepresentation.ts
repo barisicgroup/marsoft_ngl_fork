@@ -1,9 +1,9 @@
 import { Vector3 } from "three";
-import TubeMeshBuffer from "../buffer/tubemesh-buffer";
 import Shape from "../geometry/shape";
 import Representation, { RepresentationParameters } from "../representation/representation";
 import { defaults } from '../utils'
 import Viewer from "../viewer/viewer";
+import BufferCreator from "./BufferCreator";
 import DnaOrigamiNanostructure from "./DnaOrigamiNanostructure";
 
 export interface MultiscaleRepresentationParameters extends RepresentationParameters {
@@ -60,6 +60,11 @@ class MultiscaleRepresentation extends Representation {
                 for (let rowIdx = 0; rowIdx < elementByRowPositions.length; ++rowIdx) {
                     const currentRowPositions = elementByRowPositions[rowIdx];
 
+                    this.bufferList.push(BufferCreator.createTubeMeshBufferUniformParams(currentRowPositions,
+                        this.structure.elementDiamater * 0.25,
+                        new Vector3(1, 0.2, 0), 4));
+
+                    /*
                     // Normals, binormals, .. are not really correct values now but someting which
                     // works in a way that it allows for some visualization
                     const posArray = new Float32Array(currentRowPositions.length * 3);
@@ -116,7 +121,7 @@ class MultiscaleRepresentation extends Representation {
                             aspectRatio: 1,
                             capped: true
                         })
-                    ));
+                    ));*/
                 }
                 break;
             default:
