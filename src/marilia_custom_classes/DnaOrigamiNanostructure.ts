@@ -7,7 +7,7 @@ class DnaOrigamiNanostructure extends Structure {
     public readonly brcToTrcVec: Vector3;
     public readonly depthVector: Vector3;
     public readonly depthInElements: number;
-    public readonly elementDiamater: number;
+    public readonly elementDiameter: number;
 
     constructor(name: string, bottomLeftCornerPos: Vector3, blcToBrcVec: Vector3,
         brcToTrcVec: Vector3, depthInElements: number = 32, elementDiameter: number = 2, path: string = "") {
@@ -18,7 +18,7 @@ class DnaOrigamiNanostructure extends Structure {
         this.brcToTrcVec = brcToTrcVec;
         this.depthVector = brcToTrcVec.clone().cross(blcToBrcVec).normalize();
         this.depthInElements = depthInElements;
-        this.elementDiamater = elementDiameter;
+        this.elementDiameter = elementDiameter;
     }
 
     get type() {
@@ -33,8 +33,8 @@ class DnaOrigamiNanostructure extends Structure {
         const blcToBrcLen = this.blcToBrcVec.length();
         const brcToTrcLen = this.brcToTrcVec.length();
 
-        for (let x = 0; x < blcToBrcLen; x += this.elementDiamater) {
-            for (let y = 0; y < brcToTrcLen; y += this.elementDiamater) {
+        for (let x = 0; x < blcToBrcLen; x += this.elementDiameter) {
+            for (let y = 0; y < brcToTrcLen; y += this.elementDiameter) {
                 result.push(this.bottomLeftCornerPos.clone()
                     .add(xDir.clone().multiplyScalar(x).add(
                         yDir.clone().multiplyScalar(y))));
@@ -55,10 +55,10 @@ class DnaOrigamiNanostructure extends Structure {
             let thisRow: Vector3[] = []
             for (let z = 0; z < this.depthInElements; ++z) {
                 const xyOffset = xDir.clone().multiplyScalar(Math.cos(30 * z / this.depthInElements))
-                    .add(yDir.clone().multiplyScalar(Math.cos(30 * (1.0 - z / this.depthInElements)))).normalize().multiplyScalar(this.elementDiamater * 0.5);
+                    .add(yDir.clone().multiplyScalar(Math.cos(30 * (1.0 - z / this.depthInElements)))).normalize().multiplyScalar(this.elementDiameter * 0.5);
 
                 thisRow.push(rowPositions[i].clone().add(
-                    this.depthVector.clone().multiplyScalar(z * this.elementDiamater)).add(xyOffset));
+                    this.depthVector.clone().multiplyScalar(z * this.elementDiameter)).add(xyOffset));
             }
             result.push(thisRow);
         }

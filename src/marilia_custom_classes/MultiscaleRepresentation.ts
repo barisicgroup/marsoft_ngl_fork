@@ -51,7 +51,7 @@ class MultiscaleRepresentation extends Representation {
             case 0:
                 this.currentShape = new Shape("Scale level 0");
                 for (let i = 0; i < elementCenterPositions.length; ++i) {
-                    this.currentShape.addSphere(elementCenterPositions[i], [1, i / elementCenterPositions.length, 0], this.structure.elementDiamater * 0.25, "Element_" + i.toString());
+                    this.currentShape.addSphere(elementCenterPositions[i], [1, i / elementCenterPositions.length, 0], this.structure.elementDiameter * 0.25, "Element_" + i.toString());
                 }
                 break;
             case 1:
@@ -60,9 +60,19 @@ class MultiscaleRepresentation extends Representation {
                 for (let rowIdx = 0; rowIdx < elementByRowPositions.length; ++rowIdx) {
                     const currentRowPositions = elementByRowPositions[rowIdx];
 
-                    this.bufferList.push(BufferCreator.createTubeMeshBufferUniformParams(currentRowPositions,
+                    const sizes: number[] = [];
+                    const colors: Vector3[] = [];
+
+                    for (let i = 0; i < currentRowPositions.length; ++i) {
+                        sizes.push(this.structure.elementDiameter * 0.25 + (Math.random() - 0.5) * 0.1);
+                        colors.push(new Vector3(Math.random(), Math.random(), Math.random()));
+                    }
+
+                    this.bufferList.push(BufferCreator.createTubeMeshBuffer(currentRowPositions, sizes, colors, 4));
+
+                    /*this.bufferList.push(BufferCreator.createRibbonBufferUniformParams(currentRowPositions,
                         this.structure.elementDiamater * 0.25,
-                        new Vector3(1, 0.2, 0), 4));
+                        new Vector3(1, 0.2, 0), undefined, 4));*/
 
                     /*
                     // Normals, binormals, .. are not really correct values now but someting which
@@ -131,8 +141,8 @@ class MultiscaleRepresentation extends Representation {
                     this.currentShape.addCylinder(elementRowPositions[i],
                         elementRowPositions[i].clone()
                             .add(this.structure.depthVector.clone()
-                                .multiplyScalar(this.structure.elementDiamater * this.structure.depthInElements)),
-                        [1, i / elementRowPositions.length, 0], this.structure.elementDiamater * 0.5, "Element_row_" + i.toString());
+                                .multiplyScalar(this.structure.elementDiameter * this.structure.depthInElements)),
+                        [1, i / elementRowPositions.length, 0], this.structure.elementDiameter * 0.5, "Element_row_" + i.toString());
                 }
                 break;
         }
