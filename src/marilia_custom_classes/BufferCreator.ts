@@ -4,7 +4,7 @@ import TubeMeshBuffer, { TubeMeshBufferParameters } from "../buffer/tubemesh-buf
 import { Debug } from "../globals";
 import HermitSpline from "./HermitSpline";
 
-/*
+/**
 * The purpose of this class is to provide a wrapper to selected NGL buffers
 * allowing to create given geometries in a more accessible way.
 */
@@ -39,7 +39,7 @@ class BufferCreator {
 
         for (let i = 0; i < pathElemPositions.length - 1; ++i) {
             for (let j = 0; j < interpolationSubdivisions + 2; ++j) {
-                const t = j / interpolationSubdivisions + 1;
+                const t = j / (interpolationSubdivisions + 1);
                 interpolColors.push(pathElemColors[i].clone().lerp(pathElemColors[i + 1], t));
                 interpolSizes.push(pathElemSizes[i] * t + pathElemSizes[i + 1] * (1 - t));
             }
@@ -73,7 +73,7 @@ class BufferCreator {
             colArray[3 * i + 1] = interpolColors[i].y;
             colArray[3 * i + 2] = interpolColors[i].z;
         }
-
+        
         return new TubeMeshBuffer(
             Object.assign({}, {
                 'position': posArray,
