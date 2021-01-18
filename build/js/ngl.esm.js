@@ -25880,7 +25880,7 @@ var DnaOrigamiNanostructure$$1 = /*@__PURE__*/(function (Structure$$1) {
         this.brcToTrcVec = brcToTrcVec;
         this.depthVector = brcToTrcVec.clone().cross(blcToBrcVec).normalize();
         this.depthInElements = depthInElements;
-        this.elementDiamater = elementDiameter;
+        this.elementDiameter = elementDiameter;
     }
 
     if ( Structure$$1 ) DnaOrigamiNanostructure$$1.__proto__ = Structure$$1;
@@ -25897,8 +25897,8 @@ var DnaOrigamiNanostructure$$1 = /*@__PURE__*/(function (Structure$$1) {
         var yDir = this.brcToTrcVec.clone().normalize();
         var blcToBrcLen = this.blcToBrcVec.length();
         var brcToTrcLen = this.brcToTrcVec.length();
-        for (var x = 0; x < blcToBrcLen; x += this.elementDiamater) {
-            for (var y = 0; y < brcToTrcLen; y += this.elementDiamater) {
+        for (var x = 0; x < blcToBrcLen; x += this.elementDiameter) {
+            for (var y = 0; y < brcToTrcLen; y += this.elementDiameter) {
                 result.push(this.bottomLeftCornerPos.clone()
                     .add(xDir.clone().multiplyScalar(x).add(yDir.clone().multiplyScalar(y))));
             }
@@ -25914,8 +25914,8 @@ var DnaOrigamiNanostructure$$1 = /*@__PURE__*/(function (Structure$$1) {
             var thisRow = [];
             for (var z = 0; z < this.depthInElements; ++z) {
                 var xyOffset = xDir.clone().multiplyScalar(Math.cos(30 * z / this.depthInElements))
-                    .add(yDir.clone().multiplyScalar(Math.cos(30 * (1.0 - z / this.depthInElements)))).normalize().multiplyScalar(this.elementDiamater * 0.5);
-                thisRow.push(rowPositions[i].clone().add(this.depthVector.clone().multiplyScalar(z * this.elementDiamater)).add(xyOffset));
+                    .add(yDir.clone().multiplyScalar(Math.cos(30 * (1.0 - z / this.depthInElements)))).normalize().multiplyScalar(this.elementDiameter * 0.5);
+                thisRow.push(rowPositions[i].clone().add(this.depthVector.clone().multiplyScalar(z * this.elementDiameter)).add(xyOffset));
             }
             result.push(thisRow);
         }
@@ -25932,6 +25932,180 @@ var DnaOrigamiNanostructure$$1 = /*@__PURE__*/(function (Structure$$1) {
 
     return DnaOrigamiNanostructure$$1;
 }(Structure));
+
+ShaderRegistry.add('shader/Ribbon.vert', "#define STANDARD\r\n\r\nuniform float clipNear;\r\nuniform vec3 clipCenter;\r\n\r\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\r\nvarying vec3 vViewPosition;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\nattribute vec3 dir;\r\nattribute float size;\r\n\r\n#ifdef PICKING\r\n#include unpack_color\r\nattribute float primitiveId;\r\nvarying vec3 vPickingColor;\r\n#else\r\n#include color_pars_vertex\r\n#ifndef FLAT_SHADED\r\nvarying vec3 vNormal;\r\n#endif\r\n#endif\r\n\r\n#include common\r\n\r\nvoid main(void){\r\n\r\n#ifdef PICKING\r\nvPickingColor = unpackColor( primitiveId );\r\n#else\r\n#include color_vertex\r\n#include beginnormal_vertex\r\n#include defaultnormal_vertex\r\n// Normal computed with derivatives when FLAT_SHADED\r\n#ifndef FLAT_SHADED\r\nvNormal = normalize( transformedNormal );\r\n#endif\r\n#endif\r\n\r\n#include begin_vertex\r\n\r\ntransformed += normalize( dir ) * size;\r\n\r\n#include project_vertex\r\n\r\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\r\nvViewPosition = -mvPosition.xyz;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n\r\n}");
+
+/**
+ * @file Ribbon Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var quadIndices$1 = new Uint16Array([
+    0, 1, 2,
+    1, 3, 2
+]);
+function getSize(data) {
+    var n = (data.position.length / 3) - 1;
+    var n4 = n * 4;
+    var x = n4 * 3;
+    return x;
+}
+/**
+ * Ribbon buffer. Draws a thin ribbon.
+ */
+var RibbonBuffer = /*@__PURE__*/(function (MeshBuffer$$1) {
+    function RibbonBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        MeshBuffer$$1.call(this, {
+            position: new Float32Array(getSize(data)),
+            color: new Float32Array(getSize(data)),
+            index: getUintArray(getSize(data), getSize(data) / 3),
+            normal: new Float32Array(getSize(data)),
+            picking: data.picking
+        }, params);
+        this.vertexShader = 'Ribbon.vert';
+        var n = (data.position.length / 3) - 1;
+        var n4 = n * 4;
+        var x = n4 * 3;
+        this.addAttributes({
+            'dir': { type: 'v3', value: new Float32Array(x) }
+        });
+        this.addAttributes({
+            'size': { type: 'f', value: new Float32Array(n4) }
+        });
+        data.primitiveId = serialArray(n);
+        this.setAttributes(data);
+        this.makeIndex();
+    }
+
+    if ( MeshBuffer$$1 ) RibbonBuffer.__proto__ = MeshBuffer$$1;
+    RibbonBuffer.prototype = Object.create( MeshBuffer$$1 && MeshBuffer$$1.prototype );
+    RibbonBuffer.prototype.constructor = RibbonBuffer;
+    RibbonBuffer.prototype.setAttributes = function setAttributes (data) {
+        if ( data === void 0 ) data = {};
+
+        var n4 = this.size;
+        var n = n4 / 4;
+        var attributes = this.geometry.attributes; // TODO
+        var position, normal, size, dir, color, primitiveId;
+        var aPosition, aNormal, aSize, aDir, aColor, aPrimitiveId;
+        if (data.position) {
+            position = data.position;
+            aPosition = attributes.position.array;
+            attributes.position.needsUpdate = true;
+        }
+        if (data.normal) {
+            normal = data.normal;
+            aNormal = attributes.normal.array;
+            attributes.normal.needsUpdate = true;
+        }
+        if (data.size) {
+            size = data.size;
+            aSize = attributes.size.array;
+            attributes.size.needsUpdate = true;
+        }
+        if (data.dir) {
+            dir = data.dir;
+            aDir = attributes.dir.array;
+            attributes.dir.needsUpdate = true;
+        }
+        if (data.color) {
+            color = data.color;
+            aColor = attributes.color.array;
+            attributes.color.needsUpdate = true;
+        }
+        if (data.primitiveId) {
+            primitiveId = data.primitiveId;
+            aPrimitiveId = attributes.primitiveId.array;
+            attributes.primitiveId.needsUpdate = true;
+        }
+        var v, i, k, p, l, v3;
+        var currSize;
+        var prevSize = size ? size[0] : null;
+        for (v = 0; v < n; ++v) {
+            v3 = v * 3;
+            k = v * 3 * 4;
+            l = v * 4;
+            if (position) {
+                aPosition[k] = aPosition[k + 3] = position[v3];
+                aPosition[k + 1] = aPosition[k + 4] = position[v3 + 1];
+                aPosition[k + 2] = aPosition[k + 5] = position[v3 + 2];
+                aPosition[k + 6] = aPosition[k + 9] = position[v3 + 3];
+                aPosition[k + 7] = aPosition[k + 10] = position[v3 + 4];
+                aPosition[k + 8] = aPosition[k + 11] = position[v3 + 5];
+            }
+            if (normal) {
+                aNormal[k] = aNormal[k + 3] = -normal[v3];
+                aNormal[k + 1] = aNormal[k + 4] = -normal[v3 + 1];
+                aNormal[k + 2] = aNormal[k + 5] = -normal[v3 + 2];
+                aNormal[k + 6] = aNormal[k + 9] = -normal[v3 + 3];
+                aNormal[k + 7] = aNormal[k + 10] = -normal[v3 + 4];
+                aNormal[k + 8] = aNormal[k + 11] = -normal[v3 + 5];
+            }
+            for (i = 0; i < 4; ++i) {
+                p = k + 3 * i;
+                if (color) {
+                    aColor[p] = color[v3];
+                    aColor[p + 1] = color[v3 + 1];
+                    aColor[p + 2] = color[v3 + 2];
+                }
+                if (primitiveId) {
+                    aPrimitiveId[l + i] = primitiveId[v];
+                }
+            }
+            if (size) {
+                currSize = size[v];
+                if (prevSize !== size[v]) {
+                    aSize[l] = prevSize;
+                    aSize[l + 1] = prevSize;
+                    aSize[l + 2] = currSize;
+                    aSize[l + 3] = currSize;
+                }
+                else {
+                    aSize[l] = currSize;
+                    aSize[l + 1] = currSize;
+                    aSize[l + 2] = currSize;
+                    aSize[l + 3] = currSize;
+                }
+                prevSize = currSize;
+            }
+            if (dir) {
+                aDir[k] = dir[v3];
+                aDir[k + 1] = dir[v3 + 1];
+                aDir[k + 2] = dir[v3 + 2];
+                aDir[k + 3] = -dir[v3];
+                aDir[k + 4] = -dir[v3 + 1];
+                aDir[k + 5] = -dir[v3 + 2];
+                aDir[k + 6] = dir[v3 + 3];
+                aDir[k + 7] = dir[v3 + 4];
+                aDir[k + 8] = dir[v3 + 5];
+                aDir[k + 9] = -dir[v3 + 3];
+                aDir[k + 10] = -dir[v3 + 4];
+                aDir[k + 11] = -dir[v3 + 5];
+            }
+        }
+    };
+    RibbonBuffer.prototype.makeIndex = function makeIndex () {
+        var index = this.geometry.getIndex();
+        if (!index) {
+            Log.error('Index is null');
+            return;
+        }
+        var meshIndex = index.array;
+        var n = meshIndex.length / 4 / 3;
+        for (var v = 0; v < n; ++v) {
+            var ix = v * 6;
+            var it = v * 4;
+            meshIndex.set(quadIndices$1, ix);
+            for (var s = 0; s < 6; ++s) {
+                meshIndex[ix + s] += it;
+            }
+        }
+    };
+
+    return RibbonBuffer;
+}(MeshBuffer));
 
 /**
  * @file Tube Mesh Buffer
@@ -26213,6 +26387,184 @@ var TubeMeshBuffer = /*@__PURE__*/(function (MeshBuffer$$1) {
     return TubeMeshBuffer;
 }(MeshBuffer));
 
+/**
+* Uses cubic Hermit spline / Catmull–Rom spline to interpolate given set of points
+*/
+var HermitSpline = function HermitSpline(pointsToInterpolate, interpolationSubdivisions) {
+    this.interpolatePoints(pointsToInterpolate, interpolationSubdivisions);
+};
+
+var prototypeAccessors$p = { points: { configurable: true },normals: { configurable: true },tangents: { configurable: true } };
+prototypeAccessors$p.points.get = function () {
+    return this.resultingPoints;
+};
+prototypeAccessors$p.normals.get = function () {
+    return this.resultingNormals;
+};
+prototypeAccessors$p.tangents.get = function () {
+    return this.resultingTangents;
+};
+HermitSpline.prototype.interpolatePoints = function interpolatePoints (pointsToInterpolate, interpolationSubdivisions) {
+    this.resultingPoints = [];
+    this.resultingNormals = [];
+    this.resultingTangents = [];
+    var pointsPerSegment = interpolationSubdivisions + 2;
+    for (var i = 0; i < pointsToInterpolate.length - 1; ++i) {
+        var p0 = pointsToInterpolate[i];
+        var p1 = pointsToInterpolate[i + 1];
+        var t0 = i == 0 ?
+            this.getEndpointTangent(p0, p1) :
+            this.getInteriorTangent(pointsToInterpolate[i - 1], p1);
+        var t1 = i == pointsToInterpolate.length - 2 ?
+            this.getEndpointTangent(p0, p1) :
+            this.getInteriorTangent(p0, pointsToInterpolate[i + 2]);
+        for (var j = 0; j < pointsPerSegment; ++j) {
+            var t = j / (pointsPerSegment - 1);
+            this.resultingPoints.push(this.interpolatePositionCubic(p0, t0, p1, t1, t));
+            var tangent = this.interpolateTangentCubic(p0, t0, p1, t1, t).normalize();
+            this.resultingTangents.push(tangent);
+            this.resultingNormals.push(this.getNormalForTangent(tangent));
+        }
+    }
+};
+HermitSpline.prototype.interpolatePositionCubic = function interpolatePositionCubic (p0, t0, p1, t1, t) {
+    var t2 = t * t;
+    var t3 = t2 * t;
+    return p0.clone().multiplyScalar(2 * t3 - 3 * t2 + 1).add(t0.clone().multiplyScalar(t3 - 2 * t2 + t).add(p1.clone().multiplyScalar(-2 * t3 + 3 * t2)).add(t1.clone().multiplyScalar(t3 - t2)));
+};
+HermitSpline.prototype.interpolateTangentCubic = function interpolateTangentCubic (p0, t0, p1, t1, t) {
+    var t2 = t * t;
+    // First derivative of the interpolatePositionCubic function
+    return p0.clone().multiplyScalar(6 * t2 - 6 * t).add(t0.clone().multiplyScalar(3 * t2 - 4 * t + 1).add(p1.clone().multiplyScalar(6 * t - 6 * t2)).add(t1.clone().multiplyScalar(3 * t2 - 2 * t)));
+};
+HermitSpline.prototype.getNormalForTangent = function getNormalForTangent (tang) {
+    if (Math.abs(tang.x) > 0.0) {
+        return new Vector3((-tang.y - tang.z) / tang.x, 1, 1).normalize();
+    }
+    else if (Math.abs(tang.y) > 0.0) {
+        return new Vector3(1, (-tang.x - tang.z) / tang.y, 1).normalize();
+    }
+    return new Vector3(1, 1, (-tang.x - tang.y) / tang.z).normalize();
+};
+HermitSpline.prototype.getInteriorTangent = function getInteriorTangent (prevPoint, nextPoint) {
+    return nextPoint.clone().sub(prevPoint).multiplyScalar(0.5);
+};
+HermitSpline.prototype.getEndpointTangent = function getEndpointTangent (pk, pkPlusOne) {
+    return pkPlusOne.clone().sub(pk);
+};
+
+Object.defineProperties( HermitSpline.prototype, prototypeAccessors$p );
+
+/**
+* The purpose of this class is to provide a wrapper to selected NGL buffers
+* allowing to create given geometries in a more accessible way.
+*/
+var BufferCreator = function BufferCreator () {};
+
+BufferCreator.createTubeMeshBuffer = function createTubeMeshBuffer (pathElemPositions, pathElemSizes, pathElemColors, interpolationSubdivisions, params) {
+        if ( interpolationSubdivisions === void 0 ) interpolationSubdivisions = 1;
+        if ( params === void 0 ) params = this.defaultTubeMeshBufferParams;
+
+    return this.createTubeRibbonCommon(pathElemPositions, pathElemSizes, pathElemColors, interpolationSubdivisions, function (posArray, normArray, tangArray, binormArray, colArray, sizeArray) {
+        return new TubeMeshBuffer(Object.assign({}, {
+            'position': posArray,
+            'size': sizeArray,
+            'normal': normArray,
+            'binormal': binormArray,
+            'tangent': tangArray,
+            'color': colArray
+        }), params);
+    });
+};
+BufferCreator.createTubeMeshBufferUniformParams = function createTubeMeshBufferUniformParams (pathElemPositions, elemsSize, elemsColor, interpolationSubdivisions, params) {
+        if ( interpolationSubdivisions === void 0 ) interpolationSubdivisions = 1;
+        if ( params === void 0 ) params = this.defaultTubeMeshBufferParams;
+
+    var pathElemSizes = new Array(pathElemPositions.length);
+    var pathElemColors = new Array(pathElemPositions.length);
+    pathElemSizes.fill(elemsSize);
+    pathElemColors.fill(elemsColor);
+    return this.createTubeMeshBuffer(pathElemPositions, pathElemSizes, pathElemColors, interpolationSubdivisions, params);
+};
+BufferCreator.createRibbonBuffer = function createRibbonBuffer (pathElemPositions, pathElemSizes, pathElemColors, interpolationSubdivisions, params) {
+        if ( interpolationSubdivisions === void 0 ) interpolationSubdivisions = 1;
+        if ( params === void 0 ) params = this.defaultRibbonBufferParams;
+
+    return this.createTubeRibbonCommon(pathElemPositions, pathElemSizes, pathElemColors, interpolationSubdivisions, function (posArray, normArray, tangArray, binormArray, colArray, sizeArray) {
+        return new RibbonBuffer(Object.assign({}, {
+            'position': posArray,
+            'size': sizeArray,
+            'normal': binormArray,
+            'dir': normArray,
+            'color': colArray
+        }), params);
+    });
+};
+BufferCreator.createRibbonBufferUniformParams = function createRibbonBufferUniformParams (pathElemPositions, elemsSize, elemsColor, interpolationSubdivisions, params) {
+        if ( interpolationSubdivisions === void 0 ) interpolationSubdivisions = 1;
+        if ( params === void 0 ) params = this.defaultRibbonBufferParams;
+
+    var pathElemSizes = new Array(pathElemPositions.length);
+    var pathElemColors = new Array(pathElemPositions.length);
+    pathElemSizes.fill(elemsSize);
+    pathElemColors.fill(elemsColor);
+    return this.createRibbonBuffer(pathElemPositions, pathElemSizes, pathElemColors, interpolationSubdivisions, params);
+};
+BufferCreator.createTubeRibbonCommon = function createTubeRibbonCommon (pathElemPositions, pathElemSizes, pathElemColors, interpolationSubdivisions, returnCallback) {
+        if ( interpolationSubdivisions === void 0 ) interpolationSubdivisions = 1;
+
+    if (Debug && (pathElemPositions.length != pathElemSizes.length || pathElemPositions.length != pathElemColors.length)) {
+        console.error("Invalid input arguments! Following arrays must have the same length: ", pathElemPositions, pathElemSizes, pathElemColors);
+    }
+    var interpolationSpline = new HermitSpline(pathElemPositions, interpolationSubdivisions);
+    var interpolPoints = interpolationSpline.points;
+    var interpolNormals = interpolationSpline.normals;
+    var interpolTangents = interpolationSpline.tangents;
+    var interpolBinormals = [];
+    var interpolColors = [];
+    var interpolSizes = [];
+    for (var i = 0; i < interpolNormals.length; ++i) {
+        interpolBinormals.push(interpolNormals[i].clone().cross(interpolTangents[i]));
+    }
+    for (var i$1 = 0; i$1 < pathElemPositions.length - 1; ++i$1) {
+        for (var j = 0; j < interpolationSubdivisions + 2; ++j) {
+            var t = j / (interpolationSubdivisions + 1);
+            interpolColors.push(pathElemColors[i$1].clone().lerp(pathElemColors[i$1 + 1], t));
+            interpolSizes.push(pathElemSizes[i$1] * t + pathElemSizes[i$1 + 1] * (1 - t));
+        }
+    }
+    var posArray = new Float32Array(interpolPoints.length * 3);
+    var normArray = new Float32Array(interpolPoints.length * 3);
+    var tangArray = new Float32Array(interpolPoints.length * 3);
+    var binormArray = new Float32Array(interpolPoints.length * 3);
+    var colArray = new Float32Array(interpolPoints.length * 3);
+    var sizeArray = new Float32Array(interpolSizes);
+    for (var i$2 = 0; i$2 < interpolPoints.length; ++i$2) {
+        posArray[3 * i$2] = interpolPoints[i$2].x;
+        posArray[3 * i$2 + 1] = interpolPoints[i$2].y;
+        posArray[3 * i$2 + 2] = interpolPoints[i$2].z;
+        normArray[3 * i$2] = interpolNormals[i$2].x;
+        normArray[3 * i$2 + 1] = interpolNormals[i$2].y;
+        normArray[3 * i$2 + 2] = interpolNormals[i$2].z;
+        tangArray[3 * i$2] = interpolTangents[i$2].x;
+        tangArray[3 * i$2 + 1] = interpolTangents[i$2].y;
+        tangArray[3 * i$2 + 2] = interpolTangents[i$2].z;
+        binormArray[3 * i$2] = interpolBinormals[i$2].x;
+        binormArray[3 * i$2 + 1] = interpolBinormals[i$2].y;
+        binormArray[3 * i$2 + 2] = interpolBinormals[i$2].z;
+        colArray[3 * i$2] = interpolColors[i$2].x;
+        colArray[3 * i$2 + 1] = interpolColors[i$2].y;
+        colArray[3 * i$2 + 2] = interpolColors[i$2].z;
+    }
+    return returnCallback(posArray, normArray, tangArray, binormArray, colArray, sizeArray);
+};
+BufferCreator.defaultTubeMeshBufferParams = Object.assign({
+    radialSegments: 8,
+    capped: true,
+    aspectRatio: 1.0
+}, BufferDefaultParameters);
+BufferCreator.defaultRibbonBufferParams = BufferDefaultParameters;
+
 var MultiscaleRepresentation = /*@__PURE__*/(function (Representation$$1) {
     function MultiscaleRepresentation(structure, viewer, params) {
         var p = params || {};
@@ -26246,30 +26598,46 @@ var MultiscaleRepresentation = /*@__PURE__*/(function (Representation$$1) {
             case 0:
                 this.currentShape = new Shape("Scale level 0");
                 for (var i = 0; i < elementCenterPositions.length; ++i) {
-                    this.currentShape.addSphere(elementCenterPositions[i], [1, i / elementCenterPositions.length, 0], this.structure.elementDiamater * 0.25, "Element_" + i.toString());
+                    this.currentShape.addSphere(elementCenterPositions[i], [1, i / elementCenterPositions.length, 0], this.structure.elementDiameter * 0.25, "Element_" + i.toString());
                 }
                 break;
             case 1:
                 this.currentShape = new Shape("Scale level 1"); // Not necessary, left just to not have it undefined
                 for (var rowIdx = 0; rowIdx < elementByRowPositions.length; ++rowIdx) {
                     var currentRowPositions = elementByRowPositions[rowIdx];
+                    var sizes = [];
+                    var colors = [];
+                    for (var i$1 = 0; i$1 < currentRowPositions.length; ++i$1) {
+                        sizes.push(this.structure.elementDiameter * 0.25 + (Math.random() - 0.5) * 0.1);
+                        colors.push(new Vector3(Math.random(), Math.random(), Math.random()));
+                    }
+                    this.bufferList.push(BufferCreator.createTubeMeshBuffer(currentRowPositions, sizes, colors, 4));
+                    /*this.bufferList.push(BufferCreator.createRibbonBufferUniformParams(currentRowPositions,
+                        this.structure.elementDiamater * 0.25,
+                        new Vector3(1, 0.2, 0), undefined, 4));*/
+                    /*
                     // Normals, binormals, .. are not really correct values now but someting which
                     // works in a way that it allows for some visualization
-                    var posArray = new Float32Array(currentRowPositions.length * 3);
-                    var normArray = new Float32Array(currentRowPositions.length * 3);
-                    var binormArray = new Float32Array(currentRowPositions.length * 3);
-                    var tangArray = new Float32Array(currentRowPositions.length * 3);
-                    var colArray = new Float32Array(currentRowPositions.length * 3);
-                    var sizeArray = new Float32Array(currentRowPositions.length);
-                    for (var i$1 = 0; i$1 < currentRowPositions.length; ++i$1) {
-                        posArray[3 * i$1] = currentRowPositions[i$1].x;
-                        posArray[3 * i$1 + 1] = currentRowPositions[i$1].y;
-                        posArray[3 * i$1 + 2] = currentRowPositions[i$1].z;
-                        var dir = i$1 === currentRowPositions.length - 1 ? new Vector3(1, 0, 0) : currentRowPositions[i$1 + 1].clone().sub(currentRowPositions[i$1]).normalize();
-                        tangArray[3 * i$1] = dir.x;
-                        tangArray[3 * i$1 + 1] = dir.y;
-                        tangArray[3 * i$1 + 2] = dir.z;
-                        var norm = (void 0);
+                    const posArray = new Float32Array(currentRowPositions.length * 3);
+                    const normArray = new Float32Array(currentRowPositions.length * 3);
+                    const binormArray = new Float32Array(currentRowPositions.length * 3);
+                    const tangArray = new Float32Array(currentRowPositions.length * 3);
+                    const colArray = new Float32Array(currentRowPositions.length * 3);
+                    const sizeArray = new Float32Array(currentRowPositions.length);
+
+                    for (let i = 0; i < currentRowPositions.length; ++i) {
+                        posArray[3 * i] = currentRowPositions[i].x;
+                        posArray[3 * i + 1] = currentRowPositions[i].y;
+                        posArray[3 * i + 2] = currentRowPositions[i].z;
+
+                        const dir = i === currentRowPositions.length - 1 ? new Vector3(1, 0, 0) : currentRowPositions[i + 1].clone().sub(currentRowPositions[i]).normalize();
+
+                        tangArray[3 * i] = dir.x;
+                        tangArray[3 * i + 1] = dir.y;
+                        tangArray[3 * i + 2] = dir.z;
+
+                        let norm: Vector3;
+
                         if (dir.x > 0.0) {
                             norm = new Vector3((-dir.y - dir.z) / dir.x, 1, 1).normalize();
                         }
@@ -26279,23 +26647,32 @@ var MultiscaleRepresentation = /*@__PURE__*/(function (Representation$$1) {
                         else {
                             norm = new Vector3(1, 1, (-dir.x - dir.y) / dir.z).normalize();
                         }
-                        normArray[3 * i$1] = norm.x;
-                        normArray[3 * i$1 + 1] = norm.y;
-                        normArray[3 * i$1 + 2] = norm.z;
-                        var bn = dir.clone().cross(norm).normalize();
-                        binormArray[3 * i$1] = bn.x;
-                        binormArray[3 * i$1 + 1] = bn.y;
-                        binormArray[3 * i$1 + 2] = bn.z;
-                        colArray[3 * i$1] = 1;
-                        colArray[3 * i$1 + 1] = (i$1 / currentRowPositions.length + rowIdx / elementByRowPositions.length) * 0.5;
-                        colArray[3 * i$1 + 2] = 0;
+
+                        normArray[3 * i] = norm.x;
+                        normArray[3 * i + 1] = norm.y;
+                        normArray[3 * i + 2] = norm.z;
+
+                        const bn = dir.clone().cross(norm).normalize();
+
+                        binormArray[3 * i] = bn.x;
+                        binormArray[3 * i + 1] = bn.y;
+                        binormArray[3 * i + 2] = bn.z;
+
+                        colArray[3 * i] = 1;
+                        colArray[3 * i + 1] = (i / currentRowPositions.length + rowIdx / elementByRowPositions.length) * 0.5;
+                        colArray[3 * i + 2] = 0;
                     }
+
                     sizeArray.fill(this.structure.elementDiamater * 0.25);
-                    this.bufferList.push(new TubeMeshBuffer(Object.assign({}, { 'position': posArray, 'size': sizeArray, 'normal': normArray, 'binormal': binormArray, 'tangent': tangArray, 'color': colArray }), this.getBufferParams({
-                        radialSegments: 12,
-                        aspectRatio: 1,
-                        capped: true
-                    })));
+
+                    this.bufferList.push(new TubeMeshBuffer(
+                        Object.assign({}, { 'position': posArray, 'size': sizeArray, 'normal': normArray, 'binormal': binormArray, 'tangent': tangArray, 'color': colArray }),
+                        this.getBufferParams({
+                            radialSegments: 12,
+                            aspectRatio: 1,
+                            capped: true
+                        })
+                    ));*/
                 }
                 break;
             default:
@@ -26303,7 +26680,7 @@ var MultiscaleRepresentation = /*@__PURE__*/(function (Representation$$1) {
                 for (var i$2 = 0; i$2 < elementRowPositions.length; ++i$2) {
                     this.currentShape.addCylinder(elementRowPositions[i$2], elementRowPositions[i$2].clone()
                         .add(this.structure.depthVector.clone()
-                        .multiplyScalar(this.structure.elementDiamater * this.structure.depthInElements)), [1, i$2 / elementRowPositions.length, 0], this.structure.elementDiamater * 0.5, "Element_row_" + i$2.toString());
+                        .multiplyScalar(this.structure.elementDiameter * this.structure.depthInElements)), [1, i$2 / elementRowPositions.length, 0], this.structure.elementDiameter * 0.5, "Element_row_" + i$2.toString());
                 }
                 break;
         }
@@ -26456,9 +26833,9 @@ var Element = function Element(stage, params) {
     this.uuid = generateUUID();
 };
 
-var prototypeAccessors$p = { defaultParameters: { configurable: true },name: { configurable: true } };
-prototypeAccessors$p.defaultParameters.get = function () { return ElementDefaultParameters; };
-prototypeAccessors$p.name.get = function () { return this.parameters.name; };
+var prototypeAccessors$q = { defaultParameters: { configurable: true },name: { configurable: true } };
+prototypeAccessors$q.defaultParameters.get = function () { return ElementDefaultParameters; };
+prototypeAccessors$q.name.get = function () { return this.parameters.name; };
 Element.prototype.setStatus = function setStatus (value) {
     this.parameters.status = value;
     this.signals.statusChanged.dispatch(value);
@@ -26473,7 +26850,7 @@ Element.prototype.dispose = function dispose () {
     this.signals.disposed.dispatch();
 };
 
-Object.defineProperties( Element.prototype, prototypeAccessors$p );
+Object.defineProperties( Element.prototype, prototypeAccessors$q );
 
 /**
  * @file Representation Element
@@ -26670,11 +27047,11 @@ var Component = function Component(stage, object, params) {
     this.controls = new ComponentControls(this);
 };
 
-var prototypeAccessors$q = { defaultParameters: { configurable: true },name: { configurable: true },status: { configurable: true },visible: { configurable: true } };
-prototypeAccessors$q.defaultParameters.get = function () { return ComponentDefaultParameters; };
-prototypeAccessors$q.name.get = function () { return this.parameters.name; };
-prototypeAccessors$q.status.get = function () { return this.parameters.status; };
-prototypeAccessors$q.visible.get = function () { return this.parameters.visible; };
+var prototypeAccessors$r = { defaultParameters: { configurable: true },name: { configurable: true },status: { configurable: true },visible: { configurable: true } };
+prototypeAccessors$r.defaultParameters.get = function () { return ComponentDefaultParameters; };
+prototypeAccessors$r.name.get = function () { return this.parameters.name; };
+prototypeAccessors$r.status.get = function () { return this.parameters.status; };
+prototypeAccessors$r.visible.get = function () { return this.parameters.visible; };
 /**
  * Set position transform
  *
@@ -26970,7 +27347,7 @@ Component.prototype.autoView = function autoView (duration) {
     this.stage.animationControls.zoomMove(this.getCenter(), this.getZoom(), defaults(duration, 0));
 };
 
-Object.defineProperties( Component.prototype, prototypeAccessors$q );
+Object.defineProperties( Component.prototype, prototypeAccessors$r );
 
 /**
  * @file Collection
@@ -26989,14 +27366,14 @@ var Collection = function Collection(list) {
     }
 };
 
-var prototypeAccessors$r = { first: { configurable: true } };
+var prototypeAccessors$s = { first: { configurable: true } };
 Collection.prototype._remove = function _remove (elm) {
     var idx = this.list.indexOf(elm);
     if (idx !== -1) {
         this.list.splice(idx, 1);
     }
 };
-prototypeAccessors$r.first.get = function () {
+prototypeAccessors$s.first.get = function () {
     return this.list.length > 0 ? this.list[0] : undefined;
 };
 Collection.prototype.forEach = function forEach (fn) {
@@ -27007,7 +27384,7 @@ Collection.prototype.dispose = function dispose () {
     return this.forEach(function (elm) { return elm.dispose(); });
 };
 
-Object.defineProperties( Collection.prototype, prototypeAccessors$r );
+Object.defineProperties( Collection.prototype, prototypeAccessors$s );
 
 /**
  * @file Component Collection
@@ -27162,10 +27539,10 @@ var Frames = function Frames(name, path) {
     this.deltaTime = 1;
 };
 
-var prototypeAccessors$s = { type: { configurable: true } };
-prototypeAccessors$s.type.get = function () { return 'Frames'; };
+var prototypeAccessors$t = { type: { configurable: true } };
+prototypeAccessors$t.type.get = function () { return 'Frames'; };
 
-Object.defineProperties( Frames.prototype, prototypeAccessors$s );
+Object.defineProperties( Frames.prototype, prototypeAccessors$t );
 
 /**
  * @file Superposition
@@ -27413,8 +27790,8 @@ var TrajectoryPlayer = function TrajectoryPlayer(traj, params) {
     this._animate = this._animate.bind(this);
 };
 
-var prototypeAccessors$t = { isRunning: { configurable: true } };
-prototypeAccessors$t.isRunning.get = function () { return this._run; };
+var prototypeAccessors$u = { isRunning: { configurable: true } };
+prototypeAccessors$u.isRunning.get = function () { return this._run; };
 /**
  * set player parameters
  * @param {TrajectoryPlayerParameters} [params] - parameter object
@@ -27596,7 +27973,7 @@ TrajectoryPlayer.prototype.stop = function stop () {
     this.traj.setFrame(this.parameters.start);
 };
 
-Object.defineProperties( TrajectoryPlayer.prototype, prototypeAccessors$t );
+Object.defineProperties( TrajectoryPlayer.prototype, prototypeAccessors$u );
 
 /**
  * @file Trajectory
@@ -27740,17 +28117,17 @@ var Trajectory = function Trajectory(trajPath, structure, params) {
     });
 };
 
-var prototypeAccessors$u = { frameCount: { configurable: true },currentFrame: { configurable: true } };
+var prototypeAccessors$v = { frameCount: { configurable: true },currentFrame: { configurable: true } };
 /**
  * Number of frames in the trajectory
  */
-prototypeAccessors$u.frameCount.get = function () {
+prototypeAccessors$v.frameCount.get = function () {
     return this._frameCount;
 };
 /**
  * Currently set frame of the trajectory
  */
-prototypeAccessors$u.currentFrame.get = function () {
+prototypeAccessors$v.currentFrame.get = function () {
     return this._currentFrame;
 };
 Trajectory.prototype._init = function _init (structure) {
@@ -28079,7 +28456,7 @@ Trajectory.prototype.getFrameTime = function getFrameTime (i) {
     return this.timeOffset + i * this.deltaTime;
 };
 
-Object.defineProperties( Trajectory.prototype, prototypeAccessors$u );
+Object.defineProperties( Trajectory.prototype, prototypeAccessors$v );
 
 /**
  * @file Frames Trajectory
@@ -29455,11 +29832,11 @@ var TestModification = function TestModification( /* Maybe have some input*/) {
     this.atomPicked = false;
 };
 
-var prototypeAccessors$v = { mode: { configurable: true } };
-prototypeAccessors$v.mode.get = function () {
+var prototypeAccessors$w = { mode: { configurable: true } };
+prototypeAccessors$w.mode.get = function () {
     return this._mode;
 };
-prototypeAccessors$v.mode.set = function (mode) {
+prototypeAccessors$w.mode.set = function (mode) {
     this._mode = mode;
 };
 TestModification.prototype.setModeToBondFromAtom = function setModeToBondFromAtom () {
@@ -29490,9 +29867,16 @@ TestModification.prototype.clickPick_left = function clickPick_left (stage, pick
     }
 };
 TestModification.prototype.clickPick_left_remove = function clickPick_left_remove (stage, pickingProxy) {
+    var _a, _b;
     if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent))
         { return; }
     var component = pickingProxy.component;
+    if (pickingProxy.atom) {
+        (_a = component.structure.atomSet) === null || _a === void 0 ? void 0 : _a.clear(pickingProxy.atom.index);
+    }
+    else if (pickingProxy.bond) {
+        (_b = component.structure.bondSet) === null || _b === void 0 ? void 0 : _b.clear(pickingProxy.bond.index);
+    }
     // Hide from all representations not good. TODO detect which representation the user picked
     component.reprList.forEach(function (value) {
         var _a, _b;
@@ -29558,12 +29942,7 @@ TestModification.prototype.clickPick_left_bondFromAtom = function clickPick_left
         TestModification.addSomething(stage, component, pickingProxy.atom.index, id);
     }
     else {
-        if (pickingProxy.bond) {
-            console.log("You've picked a bond!");
-        }
-        else {
-            console.log("You've picked... something!");
-        }
+        if (pickingProxy.bond) ;
     }
 };
 /*private static removeBond(stage: Stage, structure: Structure, bondIndex: number) {
@@ -29592,17 +29971,17 @@ TestModification.addBondBetweenAtoms = function addBondBetweenAtoms (stage, comp
 TestModification.addSomething = function addSomething (stage, component, atomIndex, atomTypeId) {
     var atomStore = component.structure.atomStore;
     var bondStore = component.structure.bondStore;
-    var pos = stage.mouseObserver.getWorldPosition();
-    console.log(pos);
+    //let pos: Vector3 = stage.mouseObserver.getWorldPosition();
+    //console.log(pos);
     var x = atomStore.x[atomIndex];
     var y = atomStore.y[atomIndex];
     var z = atomStore.z[atomIndex];
     //let offset = new Vector3(x, y, z);
     //let componentTransformation: Matrix4 = component.matrix;
     //let camPos: Vector3 = stage.viewer.camera.position;
-    var camMat = stage.viewer.camera.matrix;
-    console.log("Camera matrix:");
-    console.log(camMat);
+    //let camMat: Matrix4 = stage.viewer.camera.matrix;
+    //console.log("Camera matrix:")
+    //console.log(camMat);
     var atomCount = atomStore.count;
     var bondCount = bondStore.count;
     {
@@ -29633,15 +30012,34 @@ TestModification.addSomething = function addSomething (stage, component, atomInd
         var repr = value.repr;
         var structureView = repr.structure;
         console.assert(component.structure === structureView.structure);
-        structureView.refresh();
+        //structureView.refresh();
+        //structureView.atomSet?.set(structureView.atomSet?.length - 1);
+        //structureView.bondSet?.set(structureView.bondSet?.length - 1);
+        //structureView.refresh();
+        //structureView.
+        if (structureView.atomSet && component.structure.atomSet) {
+            var n = component.structure.atomCount;
+            var atomSet = new BitArray(n, true);
+            atomSet = atomSet.intersection(component.structure.atomSet);
+            structureView.atomSet = atomSet;
+            structureView.atomCount = n;
+        }
+        if (structureView.bondSet && component.structure.bondSet) {
+            var n$1 = component.structure.bondCount;
+            var bondSet = new BitArray(n$1, true);
+            bondSet = bondSet.intersection(component.structure.bondSet);
+            structureView.bondSet = bondSet;
+            structureView.bondCount = n$1;
+        }
+        //structureView.refresh();
         repr.build();
     });
-    console.log("AtomStore and BondStore");
-    console.log(atomStore);
-    console.log(bondStore);
+    //console.log("AtomStore and BondStore")
+    //console.log(atomStore);
+    //console.log(bondStore);
 };
 
-Object.defineProperties( TestModification.prototype, prototypeAccessors$v );
+Object.defineProperties( TestModification.prototype, prototypeAccessors$w );
 
 var CustomComponent = /*@__PURE__*/(function (Component$$1) {
     function CustomComponent(stage, nanostructure, params) {
@@ -29681,11 +30079,11 @@ var ModelingControls$$1 = function ModelingControls$$1(stage) {
     this.update();
 };
 
-var prototypeAccessors$w = { isEnabled: { configurable: true } };
-prototypeAccessors$w.isEnabled.get = function () {
+var prototypeAccessors$x = { isEnabled: { configurable: true } };
+prototypeAccessors$x.isEnabled.get = function () {
     return this._isEnabled;
 };
-prototypeAccessors$w.isEnabled.set = function (value) {
+prototypeAccessors$x.isEnabled.set = function (value) {
     this._isEnabled = value;
     if (!value) {
         this.resetControls();
@@ -29735,7 +30133,7 @@ ModelingControls$$1.prototype.onMouseClick = function onMouseClick (pickingProxy
     }
 };
 
-Object.defineProperties( ModelingControls$$1.prototype, prototypeAccessors$w );
+Object.defineProperties( ModelingControls$$1.prototype, prototypeAccessors$x );
 
 /**
  * @file Stage
@@ -36156,7 +36554,7 @@ RepresentationRegistry.add('distance', DistanceRepresentation);
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-function getSize(data) {
+function getSize$1(data) {
     var n = data.position.length / 3;
     return n * 2 * 3;
 }
@@ -36172,15 +36570,15 @@ var VectorBuffer = /*@__PURE__*/(function (Buffer$$1) {
         if ( params === void 0 ) params = {};
 
         Buffer$$1.call(this, {
-            position: new Float32Array(getSize(data)),
-            color: new Float32Array(getSize(data))
+            position: new Float32Array(getSize$1(data)),
+            color: new Float32Array(getSize$1(data))
         }, params);
         this.isLine = true;
         this.vertexShader = 'Line.vert';
         this.fragmentShader = 'Line.frag';
         var color = new Color(this.parameters.color);
         var attributes = this.geometry.attributes; // TODO
-        uniformArray3(getSize(data) / 3, color.r, color.g, color.b, attributes.color.array);
+        uniformArray3(getSize$1(data) / 3, color.r, color.g, color.b, attributes.color.array);
         this.setAttributes(data);
     }
 
@@ -38851,180 +39249,6 @@ var PointRepresentation = /*@__PURE__*/(function (StructureRepresentation$$1) {
 }(StructureRepresentation));
 RepresentationRegistry.add('point', PointRepresentation);
 
-ShaderRegistry.add('shader/Ribbon.vert', "#define STANDARD\r\n\r\nuniform float clipNear;\r\nuniform vec3 clipCenter;\r\n\r\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\r\nvarying vec3 vViewPosition;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvarying vec3 vClipCenter;\r\n#endif\r\n\r\nattribute vec3 dir;\r\nattribute float size;\r\n\r\n#ifdef PICKING\r\n#include unpack_color\r\nattribute float primitiveId;\r\nvarying vec3 vPickingColor;\r\n#else\r\n#include color_pars_vertex\r\n#ifndef FLAT_SHADED\r\nvarying vec3 vNormal;\r\n#endif\r\n#endif\r\n\r\n#include common\r\n\r\nvoid main(void){\r\n\r\n#ifdef PICKING\r\nvPickingColor = unpackColor( primitiveId );\r\n#else\r\n#include color_vertex\r\n#include beginnormal_vertex\r\n#include defaultnormal_vertex\r\n// Normal computed with derivatives when FLAT_SHADED\r\n#ifndef FLAT_SHADED\r\nvNormal = normalize( transformedNormal );\r\n#endif\r\n#endif\r\n\r\n#include begin_vertex\r\n\r\ntransformed += normalize( dir ) * size;\r\n\r\n#include project_vertex\r\n\r\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\r\nvViewPosition = -mvPosition.xyz;\r\n#endif\r\n\r\n#if defined( RADIUS_CLIP )\r\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\r\n#endif\r\n\r\n#include nearclip_vertex\r\n\r\n}");
-
-/**
- * @file Ribbon Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var quadIndices$1 = new Uint16Array([
-    0, 1, 2,
-    1, 3, 2
-]);
-function getSize$1(data) {
-    var n = (data.position.length / 3) - 1;
-    var n4 = n * 4;
-    var x = n4 * 3;
-    return x;
-}
-/**
- * Ribbon buffer. Draws a thin ribbon.
- */
-var RibbonBuffer = /*@__PURE__*/(function (MeshBuffer$$1) {
-    function RibbonBuffer(data, params) {
-        if ( params === void 0 ) params = {};
-
-        MeshBuffer$$1.call(this, {
-            position: new Float32Array(getSize$1(data)),
-            color: new Float32Array(getSize$1(data)),
-            index: getUintArray(getSize$1(data), getSize$1(data) / 3),
-            normal: new Float32Array(getSize$1(data)),
-            picking: data.picking
-        }, params);
-        this.vertexShader = 'Ribbon.vert';
-        var n = (data.position.length / 3) - 1;
-        var n4 = n * 4;
-        var x = n4 * 3;
-        this.addAttributes({
-            'dir': { type: 'v3', value: new Float32Array(x) }
-        });
-        this.addAttributes({
-            'size': { type: 'f', value: new Float32Array(n4) }
-        });
-        data.primitiveId = serialArray(n);
-        this.setAttributes(data);
-        this.makeIndex();
-    }
-
-    if ( MeshBuffer$$1 ) RibbonBuffer.__proto__ = MeshBuffer$$1;
-    RibbonBuffer.prototype = Object.create( MeshBuffer$$1 && MeshBuffer$$1.prototype );
-    RibbonBuffer.prototype.constructor = RibbonBuffer;
-    RibbonBuffer.prototype.setAttributes = function setAttributes (data) {
-        if ( data === void 0 ) data = {};
-
-        var n4 = this.size;
-        var n = n4 / 4;
-        var attributes = this.geometry.attributes; // TODO
-        var position, normal, size, dir, color, primitiveId;
-        var aPosition, aNormal, aSize, aDir, aColor, aPrimitiveId;
-        if (data.position) {
-            position = data.position;
-            aPosition = attributes.position.array;
-            attributes.position.needsUpdate = true;
-        }
-        if (data.normal) {
-            normal = data.normal;
-            aNormal = attributes.normal.array;
-            attributes.normal.needsUpdate = true;
-        }
-        if (data.size) {
-            size = data.size;
-            aSize = attributes.size.array;
-            attributes.size.needsUpdate = true;
-        }
-        if (data.dir) {
-            dir = data.dir;
-            aDir = attributes.dir.array;
-            attributes.dir.needsUpdate = true;
-        }
-        if (data.color) {
-            color = data.color;
-            aColor = attributes.color.array;
-            attributes.color.needsUpdate = true;
-        }
-        if (data.primitiveId) {
-            primitiveId = data.primitiveId;
-            aPrimitiveId = attributes.primitiveId.array;
-            attributes.primitiveId.needsUpdate = true;
-        }
-        var v, i, k, p, l, v3;
-        var currSize;
-        var prevSize = size ? size[0] : null;
-        for (v = 0; v < n; ++v) {
-            v3 = v * 3;
-            k = v * 3 * 4;
-            l = v * 4;
-            if (position) {
-                aPosition[k] = aPosition[k + 3] = position[v3];
-                aPosition[k + 1] = aPosition[k + 4] = position[v3 + 1];
-                aPosition[k + 2] = aPosition[k + 5] = position[v3 + 2];
-                aPosition[k + 6] = aPosition[k + 9] = position[v3 + 3];
-                aPosition[k + 7] = aPosition[k + 10] = position[v3 + 4];
-                aPosition[k + 8] = aPosition[k + 11] = position[v3 + 5];
-            }
-            if (normal) {
-                aNormal[k] = aNormal[k + 3] = -normal[v3];
-                aNormal[k + 1] = aNormal[k + 4] = -normal[v3 + 1];
-                aNormal[k + 2] = aNormal[k + 5] = -normal[v3 + 2];
-                aNormal[k + 6] = aNormal[k + 9] = -normal[v3 + 3];
-                aNormal[k + 7] = aNormal[k + 10] = -normal[v3 + 4];
-                aNormal[k + 8] = aNormal[k + 11] = -normal[v3 + 5];
-            }
-            for (i = 0; i < 4; ++i) {
-                p = k + 3 * i;
-                if (color) {
-                    aColor[p] = color[v3];
-                    aColor[p + 1] = color[v3 + 1];
-                    aColor[p + 2] = color[v3 + 2];
-                }
-                if (primitiveId) {
-                    aPrimitiveId[l + i] = primitiveId[v];
-                }
-            }
-            if (size) {
-                currSize = size[v];
-                if (prevSize !== size[v]) {
-                    aSize[l] = prevSize;
-                    aSize[l + 1] = prevSize;
-                    aSize[l + 2] = currSize;
-                    aSize[l + 3] = currSize;
-                }
-                else {
-                    aSize[l] = currSize;
-                    aSize[l + 1] = currSize;
-                    aSize[l + 2] = currSize;
-                    aSize[l + 3] = currSize;
-                }
-                prevSize = currSize;
-            }
-            if (dir) {
-                aDir[k] = dir[v3];
-                aDir[k + 1] = dir[v3 + 1];
-                aDir[k + 2] = dir[v3 + 2];
-                aDir[k + 3] = -dir[v3];
-                aDir[k + 4] = -dir[v3 + 1];
-                aDir[k + 5] = -dir[v3 + 2];
-                aDir[k + 6] = dir[v3 + 3];
-                aDir[k + 7] = dir[v3 + 4];
-                aDir[k + 8] = dir[v3 + 5];
-                aDir[k + 9] = -dir[v3 + 3];
-                aDir[k + 10] = -dir[v3 + 4];
-                aDir[k + 11] = -dir[v3 + 5];
-            }
-        }
-    };
-    RibbonBuffer.prototype.makeIndex = function makeIndex () {
-        var index = this.geometry.getIndex();
-        if (!index) {
-            Log.error('Index is null');
-            return;
-        }
-        var meshIndex = index.array;
-        var n = meshIndex.length / 4 / 3;
-        for (var v = 0; v < n; ++v) {
-            var ix = v * 6;
-            var it = v * 4;
-            meshIndex.set(quadIndices$1, ix);
-            for (var s = 0; s < 6; ++s) {
-                meshIndex[ix + s] += it;
-            }
-        }
-    };
-
-    return RibbonBuffer;
-}(MeshBuffer));
-
 /**
  * @file Ribbon Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
@@ -39937,15 +40161,15 @@ var ArrowBuffer = function ArrowBuffer(data, params) {
     this.picking = data.picking;
 };
 
-var prototypeAccessors$x = { defaultParameters: { configurable: true },matrix: { configurable: true },pickable: { configurable: true } };
-prototypeAccessors$x.defaultParameters.get = function () { return ArrowBufferDefaultParameters; };
-prototypeAccessors$x.matrix.set = function (m) {
+var prototypeAccessors$y = { defaultParameters: { configurable: true },matrix: { configurable: true },pickable: { configurable: true } };
+prototypeAccessors$y.defaultParameters.get = function () { return ArrowBufferDefaultParameters; };
+prototypeAccessors$y.matrix.set = function (m) {
     Buffer.prototype.setMatrix.call(this, m);
 };
-prototypeAccessors$x.matrix.get = function () {
+prototypeAccessors$y.matrix.get = function () {
     return this.group.matrix.clone();
 };
-prototypeAccessors$x.pickable.get = function () {
+prototypeAccessors$y.pickable.get = function () {
     return !!this.picking;
 };
 ArrowBuffer.prototype.makeAttributes = function makeAttributes (data) {
@@ -40039,7 +40263,7 @@ ArrowBuffer.prototype.dispose = function dispose () {
     this.coneBuffer.dispose();
 };
 
-Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$x );
+Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$y );
 BufferRegistry.add('arrow', ArrowBuffer);
 
 /**
@@ -40353,12 +40577,12 @@ var Parser = function Parser(streamer, params) {
     this.path = defaults(p.path, '');
 };
 
-var prototypeAccessors$y = { type: { configurable: true },__objName: { configurable: true },isBinary: { configurable: true },isJson: { configurable: true },isXml: { configurable: true } };
-prototypeAccessors$y.type.get = function () { return ''; };
-prototypeAccessors$y.__objName.get = function () { return ''; };
-prototypeAccessors$y.isBinary.get = function () { return false; };
-prototypeAccessors$y.isJson.get = function () { return false; };
-prototypeAccessors$y.isXml.get = function () { return false; };
+var prototypeAccessors$z = { type: { configurable: true },__objName: { configurable: true },isBinary: { configurable: true },isJson: { configurable: true },isXml: { configurable: true } };
+prototypeAccessors$z.type.get = function () { return ''; };
+prototypeAccessors$z.__objName.get = function () { return ''; };
+prototypeAccessors$z.isBinary.get = function () { return false; };
+prototypeAccessors$z.isJson.get = function () { return false; };
+prototypeAccessors$z.isXml.get = function () { return false; };
 Parser.prototype.parse = function parse () {
         var this$1 = this;
 
@@ -40376,7 +40600,7 @@ Parser.prototype._afterParse = function _afterParse () {
         { Log.log(this[this.__objName]); }
 };
 
-Object.defineProperties( Parser.prototype, prototypeAccessors$y );
+Object.defineProperties( Parser.prototype, prototypeAccessors$z );
 
 /**
  * @file Structure Parser
@@ -40458,8 +40682,8 @@ var Entity = function Entity(structure, index, description, type, chainIndexList
     });
 };
 
-var prototypeAccessors$z = { type: { configurable: true } };
-prototypeAccessors$z.type.get = function () { return entityFromType(this.entityType); };
+var prototypeAccessors$A = { type: { configurable: true } };
+prototypeAccessors$A.type.get = function () { return entityFromType(this.entityType); };
 Entity.prototype.getEntityType = function getEntityType () {
     return this.entityType;
 };
@@ -40483,7 +40707,7 @@ Entity.prototype.eachChain = function eachChain (callback) {
     });
 };
 
-Object.defineProperties( Entity.prototype, prototypeAccessors$z );
+Object.defineProperties( Entity.prototype, prototypeAccessors$A );
 
 /**
  * @file Unitcell
@@ -45008,11 +45232,11 @@ var NetcdfReader = function NetcdfReader(data) {
     this.buffer = buffer;
 };
 
-var prototypeAccessors$A = { version: { configurable: true },recordDimension: { configurable: true },dimensions: { configurable: true },globalAttributes: { configurable: true },variables: { configurable: true } };
+var prototypeAccessors$B = { version: { configurable: true },recordDimension: { configurable: true },dimensions: { configurable: true },globalAttributes: { configurable: true },variables: { configurable: true } };
 /**
  * @return {string} - Version for the NetCDF format
  */
-prototypeAccessors$A.version.get = function () {
+prototypeAccessors$B.version.get = function () {
     if (this.header.version === 1) {
         return 'classic format';
     }
@@ -45027,7 +45251,7 @@ prototypeAccessors$A.version.get = function () {
  *  * `name`: String with the name of the record dimension
  *  * `recordStep`: Number with the record variables step size
  */
-prototypeAccessors$A.recordDimension.get = function () {
+prototypeAccessors$B.recordDimension.get = function () {
     return this.header.recordDimension;
 };
 /**
@@ -45035,7 +45259,7 @@ prototypeAccessors$A.recordDimension.get = function () {
  *  * `name`: String with the name of the dimension
  *  * `size`: Number with the size of the dimension
  */
-prototypeAccessors$A.dimensions.get = function () {
+prototypeAccessors$B.dimensions.get = function () {
     return this.header.dimensions;
 };
 /**
@@ -45044,7 +45268,7 @@ prototypeAccessors$A.dimensions.get = function () {
  *  * `type`: String with the type of the attribute
  *  * `value`: A number or string with the value of the attribute
  */
-prototypeAccessors$A.globalAttributes.get = function () {
+prototypeAccessors$B.globalAttributes.get = function () {
     return this.header.globalAttributes;
 };
 /**
@@ -45057,7 +45281,7 @@ prototypeAccessors$A.globalAttributes.get = function () {
  *  * `offset`: Number with the offset where of the variable begins
  *  * `record`: True if is a record variable, false otherwise
  */
-prototypeAccessors$A.variables.get = function () {
+prototypeAccessors$B.variables.get = function () {
     return this.header.variables;
 };
 /**
@@ -45100,7 +45324,7 @@ NetcdfReader.prototype.getDataVariable = function getDataVariable (variableName)
     }
 };
 
-Object.defineProperties( NetcdfReader.prototype, prototypeAccessors$A );
+Object.defineProperties( NetcdfReader.prototype, prototypeAccessors$B );
 
 /**
  * @file Nctraj Parser
@@ -48251,8 +48475,8 @@ var Validation = function Validation(name, path) {
     this.clashSele = 'NONE';
 };
 
-var prototypeAccessors$B = { type: { configurable: true } };
-prototypeAccessors$B.type.get = function () { return 'validation'; };
+var prototypeAccessors$C = { type: { configurable: true } };
+prototypeAccessors$C.type.get = function () { return 'validation'; };
 Validation.prototype.fromXml = function fromXml (xml) {
     if (Debug)
         { Log.time('Validation.fromXml'); }
@@ -48428,7 +48652,7 @@ Validation.prototype.getClashData = function getClashData (params) {
     };
 };
 
-Object.defineProperties( Validation.prototype, prototypeAccessors$B );
+Object.defineProperties( Validation.prototype, prototypeAccessors$C );
 
 /**
  * @file Validation Parser

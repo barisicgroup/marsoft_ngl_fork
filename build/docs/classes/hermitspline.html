@@ -1,0 +1,531 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>HermitSpline | marsoft</title>
+	<meta name="description" content="Documentation for marsoft">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="../index.html" class="title">marsoft</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="../globals.html">Globals</a>
+				</li>
+				<li>
+					<a href="hermitspline.html">HermitSpline</a>
+				</li>
+			</ul>
+			<h1>Class HermitSpline</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>Uses cubic Hermit spline / Catmull–Rom spline to interpolate given set of points</p>
+					</div>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<span class="target">HermitSpline</span>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Constructors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="hermitspline.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Properties</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="hermitspline.html#resultingnormals" class="tsd-kind-icon">resulting<wbr>Normals</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="hermitspline.html#resultingpoints" class="tsd-kind-icon">resulting<wbr>Points</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="hermitspline.html#resultingtangents" class="tsd-kind-icon">resulting<wbr>Tangents</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Accessors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="hermitspline.html#normals" class="tsd-kind-icon">normals</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="hermitspline.html#points" class="tsd-kind-icon">points</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="hermitspline.html#tangents" class="tsd-kind-icon">tangents</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section tsd-is-private tsd-is-private-protected">
+							<h3>Methods</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="hermitspline.html#getendpointtangent" class="tsd-kind-icon">get<wbr>Endpoint<wbr>Tangent</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="hermitspline.html#getinteriortangent" class="tsd-kind-icon">get<wbr>Interior<wbr>Tangent</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="hermitspline.html#getnormalfortangent" class="tsd-kind-icon">get<wbr>Normal<wbr>For<wbr>Tangent</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="hermitspline.html#interpolatepoints" class="tsd-kind-icon">interpolate<wbr>Points</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="hermitspline.html#interpolatepositioncubic" class="tsd-kind-icon">interpolate<wbr>Position<wbr>Cubic</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="hermitspline.html#interpolatetangentcubic" class="tsd-kind-icon">interpolate<wbr>Tangent<wbr>Cubic</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Hermit<wbr>Spline<span class="tsd-signature-symbol">(</span>pointsToInterpolate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span>, interpolationSubdivisions<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="hermitspline.html" class="tsd-signature-type">HermitSpline</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L9">src/marilia_custom_classes/HermitSpline.ts:9</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>pointsToInterpolate: <span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>points to be interpolated</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<h5>interpolationSubdivisions: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>how many additional interpolated points will be added to each line segment</p>
+										</div>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="hermitspline.html" class="tsd-signature-type">HermitSpline</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="resultingnormals" class="tsd-anchor"></a>
+					<h3>resulting<wbr>Normals</h3>
+					<div class="tsd-signature tsd-kind-icon">resulting<wbr>Normals<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L8">src/marilia_custom_classes/HermitSpline.ts:8</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="resultingpoints" class="tsd-anchor"></a>
+					<h3>resulting<wbr>Points</h3>
+					<div class="tsd-signature tsd-kind-icon">resulting<wbr>Points<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L7">src/marilia_custom_classes/HermitSpline.ts:7</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="resultingtangents" class="tsd-anchor"></a>
+					<h3>resulting<wbr>Tangents</h3>
+					<div class="tsd-signature tsd-kind-icon">resulting<wbr>Tangents<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L9">src/marilia_custom_classes/HermitSpline.ts:9</a></li>
+						</ul>
+					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Accessors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="normals" class="tsd-anchor"></a>
+					<h3>normals</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> normals<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L23">src/marilia_custom_classes/HermitSpline.ts:23</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="points" class="tsd-anchor"></a>
+					<h3>points</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> points<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L19">src/marilia_custom_classes/HermitSpline.ts:19</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="tangents" class="tsd-anchor"></a>
+					<h3>tangents</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> tangents<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L27">src/marilia_custom_classes/HermitSpline.ts:27</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group tsd-is-private tsd-is-private-protected">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="getendpointtangent" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> get<wbr>Endpoint<wbr>Tangent</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Endpoint<wbr>Tangent<span class="tsd-signature-symbol">(</span>pk<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, pkPlusOne<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L96">src/marilia_custom_classes/HermitSpline.ts:96</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>pk: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+								<li>
+									<h5>pkPlusOne: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Vector3</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="getinteriortangent" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> get<wbr>Interior<wbr>Tangent</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Interior<wbr>Tangent<span class="tsd-signature-symbol">(</span>prevPoint<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, nextPoint<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L92">src/marilia_custom_classes/HermitSpline.ts:92</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>prevPoint: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+								<li>
+									<h5>nextPoint: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Vector3</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="getnormalfortangent" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> get<wbr>Normal<wbr>For<wbr>Tangent</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Normal<wbr>For<wbr>Tangent<span class="tsd-signature-symbol">(</span>tang<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L82">src/marilia_custom_classes/HermitSpline.ts:82</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>tang: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Vector3</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="interpolatepoints" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> interpolate<wbr>Points</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">interpolate<wbr>Points<span class="tsd-signature-symbol">(</span>pointsToInterpolate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span>, interpolationSubdivisions<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L31">src/marilia_custom_classes/HermitSpline.ts:31</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>pointsToInterpolate: <span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">[]</span></h5>
+								</li>
+								<li>
+									<h5>interpolationSubdivisions: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="interpolatepositioncubic" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> interpolate<wbr>Position<wbr>Cubic</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">interpolate<wbr>Position<wbr>Cubic<span class="tsd-signature-symbol">(</span>p0<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, t0<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, p1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, t1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L62">src/marilia_custom_classes/HermitSpline.ts:62</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>p0: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+								<li>
+									<h5>t0: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+								<li>
+									<h5>p1: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+								<li>
+									<h5>t1: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+								<li>
+									<h5>t: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Vector3</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="interpolatetangentcubic" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> interpolate<wbr>Tangent<wbr>Cubic</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">interpolate<wbr>Tangent<wbr>Cubic<span class="tsd-signature-symbol">(</span>p0<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, t0<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, p1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, t1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/barisicgroup/marsoft_ngl_fork/blob/13e2ce64/src/marilia_custom_classes/HermitSpline.ts#L72">src/marilia_custom_classes/HermitSpline.ts:72</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>p0: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+								<li>
+									<h5>t0: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+								<li>
+									<h5>p1: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+								<li>
+									<h5>t1: <span class="tsd-signature-type">Vector3</span></h5>
+								</li>
+								<li>
+									<h5>t: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Vector3</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="../globals.html"><em>Globals</em></a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-class">
+						<a href="hermitspline.html" class="tsd-kind-icon">Hermit<wbr>Spline</a>
+						<ul>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class">
+								<a href="hermitspline.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="hermitspline.html#resultingnormals" class="tsd-kind-icon">resulting<wbr>Normals</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="hermitspline.html#resultingpoints" class="tsd-kind-icon">resulting<wbr>Points</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="hermitspline.html#resultingtangents" class="tsd-kind-icon">resulting<wbr>Tangents</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="hermitspline.html#normals" class="tsd-kind-icon">normals</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="hermitspline.html#points" class="tsd-kind-icon">points</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="hermitspline.html#tangents" class="tsd-kind-icon">tangents</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="hermitspline.html#getendpointtangent" class="tsd-kind-icon">get<wbr>Endpoint<wbr>Tangent</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="hermitspline.html#getinteriortangent" class="tsd-kind-icon">get<wbr>Interior<wbr>Tangent</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="hermitspline.html#getnormalfortangent" class="tsd-kind-icon">get<wbr>Normal<wbr>For<wbr>Tangent</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="hermitspline.html#interpolatepoints" class="tsd-kind-icon">interpolate<wbr>Points</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="hermitspline.html#interpolatepositioncubic" class="tsd-kind-icon">interpolate<wbr>Position<wbr>Cubic</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="hermitspline.html#interpolatetangentcubic" class="tsd-kind-icon">interpolate<wbr>Tangent<wbr>Cubic</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>
