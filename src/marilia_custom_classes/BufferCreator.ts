@@ -2,6 +2,7 @@ import { Vector3 } from "three";
 import Buffer, { BufferParameters, BufferDefaultParameters } from "../buffer/buffer";
 import RibbonBuffer from "../buffer/ribbon-buffer";
 import TubeMeshBuffer, { TubeMeshBufferParameters } from "../buffer/tubemesh-buffer";
+import WidelineBuffer, { WideLineBufferDefaultParameters, WideLineBufferParameters } from "../buffer/wideline-buffer";
 import { Debug } from "../globals";
 import HermitSpline from "./HermitSpline";
 
@@ -17,6 +18,8 @@ class BufferCreator {
     }, BufferDefaultParameters);
 
     public static readonly defaultRibbonBufferParams: Partial<BufferParameters> = BufferDefaultParameters;
+
+    public static readonly defaultWidelineBufferParams: Partial<WideLineBufferParameters> = WideLineBufferDefaultParameters;
 
     public static createTubeMeshBuffer(pathElemPositions: Vector3[], pathElemSizes: number[], pathElemColors: Vector3[],
         interpolationSubdivisions: number = 1,
@@ -81,6 +84,55 @@ class BufferCreator {
 
         return this.createRibbonBuffer(pathElemPositions, pathElemSizes, pathElemColors,
             interpolationSubdivisions, params);
+    }
+
+    public static createWideLineBuffer(startPos: Vector3, endPos: Vector3, startColor: Vector3,
+        endColor: Vector3, lineWidth: number, params: Partial<WideLineBufferParameters> = this.defaultWidelineBufferParams): Buffer {
+        return new WidelineBuffer(Object.assign({}, {
+            'position1': Float32Array.of(startPos.x, startPos.y, startPos.z),
+            'position2': Float32Array.of(endPos.x, endPos.y, endPos.z),
+            'color': Float32Array.of(startColor.x, startColor.y, startColor.z),
+            'color2': Float32Array.of(endColor.x, endColor.y, endColor.z),
+        }), Object.assign(params, {
+            'linewidth': lineWidth
+        }));
+    }
+
+    public static createWideLineStripBuffer(vertices: Vector3[], colors: Vector3[], lineWidth: number,
+        params: Partial<WideLineBufferParameters> = this.defaultWidelineBufferParams): Buffer {
+        const arrElems = (vertices.length - 1) * 3;
+
+        const position1 = new Float32Array(arrElems);
+        const position2 = new Float32Array(arrElems);
+        const color = new Float32Array(arrElems);
+        const color2 = new Float32Array(arrElems);
+
+        for (let i = 0; i < vertices.length - 1; ++i) {
+            position1[3 * i] = vertices[i].x;
+            position1[3 * i + 1] = vertices[i].y;
+            position1[3 * i + 2] = vertices[i].z;
+
+            color[3 * i] = colors[i].x;
+            color[3 * i + 1] = colors[i].y;
+            color[3 * i + 2] = colors[i].z;
+
+            position2[3 * i] = vertices[i + 1].x;
+            position2[3 * i + 1] = vertices[i + 1].y;
+            position2[3 * i + 2] = vertices[i + 1].z;
+
+            color2[3 * i] = colors[i + 1].x;
+            color2[3 * i + 1] = colors[i + 1].y;
+            color2[3 * i + 2] = colors[i + 1].z;
+        }
+
+        return new WidelineBuffer(Object.assign({}, {
+            'position1': position1,
+            'position2': position2,
+            'color': color,
+            'color2': color2,
+        }), Object.assign(params, {
+            'linewidth': lineWidth
+        }));
     }
 
     private static createTubeRibbonCommon(pathElemPositions: Vector3[], pathElemSizes: number[], pathElemColors: Vector3[],

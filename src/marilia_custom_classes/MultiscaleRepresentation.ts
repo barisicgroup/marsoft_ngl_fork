@@ -68,7 +68,9 @@ class MultiscaleRepresentation extends Representation {
                         colors.push(new Vector3(Math.random(), Math.random(), Math.random()));
                     }
 
-                    this.bufferList.push(BufferCreator.createTubeMeshBuffer(currentRowPositions, sizes, colors, 4));
+
+                    this.bufferList.push(BufferCreator.createWideLineStripBuffer(currentRowPositions, colors, 4));
+                    //this.bufferList.push(BufferCreator.createTubeMeshBuffer(currentRowPositions, sizes, colors, 4));
 
                     /*this.bufferList.push(BufferCreator.createRibbonBufferUniformParams(currentRowPositions,
                         this.structure.elementDiamater * 0.25,
