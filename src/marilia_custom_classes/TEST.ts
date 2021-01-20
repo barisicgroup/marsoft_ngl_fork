@@ -38,6 +38,9 @@ export class TestModification {
     set mode(mode: TestModificationMode) {
         this._mode = mode;
     }
+    public setModeToNone() {
+        this.mode = TestModificationMode.NONE;
+    }
     public setModeToBondFromAtom() {
         this.mode = TestModificationMode.BOND_FROM_ATOM;
     }

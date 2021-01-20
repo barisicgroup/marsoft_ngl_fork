@@ -1,6 +1,6 @@
 import Representation, {RepresentationParameters} from "../../representation/representation";
 import Viewer from "../../viewer/viewer";
-import {DNAStrand} from "./dna";
+import {DNAStrand} from "./dna-strand";
 import Buffer from "../../buffer/buffer"
 import {defaults} from "../../utils";
 import CylinderImpostorBuffer, {CylinderImpostorBufferParameters} from "../../buffer/cylinderimpostor-buffer";
@@ -11,6 +11,8 @@ interface DNARepresentationParameters extends RepresentationParameters {
 }
 
 class DNARepresentation extends Representation {
+
+    // Params
     protected representationScale: string;
 
     private dna: DNAStrand;

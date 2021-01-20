@@ -221,10 +221,22 @@ class MouseActions {
    * Marilia stuff
    */
   static clickPick_left(stage: Stage, pickingProxy: PickingProxy) {
-    stage.testModification.clickPick_left(stage, pickingProxy);
+    let block = stage.mariliaActions.clickPick_left(stage, pickingProxy);
+    if (!block) {
+      MouseActions.movePick(stage, pickingProxy);
+    }
   }
-  static hover(stage: Stage, pickingProxy: PickingProxy) {
-    stage.testModification.hover(stage, pickingProxy);
+  static hover_pick(stage: Stage, pickingProxy: PickingProxy) {
+    let block = stage.mariliaActions.hover(stage, pickingProxy);
+    if (!block) {
+      MouseActions.tooltipPick(stage, pickingProxy);
+    }
+  }
+  static drag_left(stage: Stage, dx: number, dy: number) {
+    let block = stage.mariliaActions.drag_left(stage, dx, dy);
+    if (!block) {
+      MouseActions.rotateDrag(stage, dx, dy);
+    }
   }
 }
 
@@ -236,7 +248,7 @@ export const MouseActionPresets = {
     [ 'scroll-ctrl', MouseActions.isolevelScroll ],
     [ 'scroll-shift-ctrl', MouseActions.zoomFocusScroll ],
 
-    [ 'drag-left', MouseActions.rotateDrag ],
+    [ 'drag-left', MouseActions.drag_left ],//[ 'drag-left', MouseActions.rotateDrag ],
     [ 'drag-right', MouseActions.panDrag ],
     [ 'drag-ctrl-left', MouseActions.panDrag ],
     [ 'drag-ctrl-right', MouseActions.zRotateDrag ],
@@ -249,10 +261,8 @@ export const MouseActionPresets = {
     [ 'clickPick-right', MouseActions.measurePick ],
     [ 'clickPick-ctrl-left', MouseActions.measurePick ],
     [ 'clickPick-middle', MouseActions.movePick ],
-    //[ 'clickPick-left', MouseActions.movePick ],
-    [ 'clickPick-left', MouseActions.clickPick_left ],
-    [ 'hoverPick', MouseActions.tooltipPick ],
-    [ 'hoverPick', MouseActions.hover ]
+    [ 'clickPick-left', MouseActions.clickPick_left ], //[ 'clickPick-left', MouseActions.movePick ],
+    [ 'hoverPick', MouseActions.hover_pick ] //[ 'hoverPick', MouseActions.tooltipPick ],
   ] as MouseActionPreset,
   pymol: [
     [ 'drag-left', MouseActions.rotateDrag ],
