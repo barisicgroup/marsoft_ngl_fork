@@ -1,15 +1,17 @@
 import {Vector3} from "three";
 
-export enum NucleobaseType {
+export enum StrictNucleobaseType {
     C, // cytosine
     G, // guanine
     A, // adenine
     T, // thymine
 }
 
+export type NucleobaseType = StrictNucleobaseType | undefined;
+
 export class Nucleobase {
     private type: NucleobaseType;
-    constructor(t: NucleobaseType) {
+    constructor(t?: NucleobaseType) {
         this.type = t;
     }
 
@@ -17,10 +19,11 @@ export class Nucleobase {
 
     private static getComplementaryType(t: NucleobaseType): NucleobaseType {
         switch (t) {
-            case NucleobaseType.C: return NucleobaseType.G;
-            case NucleobaseType.G: return NucleobaseType.C;
-            case NucleobaseType.A: return NucleobaseType.T;
-            case NucleobaseType.T: return NucleobaseType.A;
+            case StrictNucleobaseType.C: return StrictNucleobaseType.G;
+            case StrictNucleobaseType.G: return StrictNucleobaseType.C;
+            case StrictNucleobaseType.A: return StrictNucleobaseType.T;
+            case StrictNucleobaseType.T: return StrictNucleobaseType.A;
+            case undefined: return undefined;
         }
         throw "Unknown NucleobaseType " + t;
     }
@@ -46,7 +49,7 @@ export class DNAStrand {
     private _nucleobases: Array<Nucleobase>;
     private _startPos: Vector3;
     private _direction: Vector3;
-    constructor(nbs: Array<Nucleobase> | undefined,
+    constructor(nbs?: Array<Nucleobase>,
                 startPos: Vector3 = new Vector3(0, 0, 0),
                 direction: Vector3 = new Vector3(0, 1, 0)) {
         this._nucleobases = nbs ? nbs : [];
