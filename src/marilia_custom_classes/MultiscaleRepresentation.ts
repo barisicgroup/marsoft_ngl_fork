@@ -69,7 +69,16 @@ class MultiscaleRepresentation extends Representation {
                     }
 
 
-                    this.bufferList.push(BufferCreator.createWideLineStripBuffer(currentRowPositions, colors, 4));
+                   //this.bufferList.push(BufferCreator.createWideLinePairsBuffer(currentRowPositions, colors, 3));
+
+                    const radiuses = new Array<number>(currentRowPositions.length - 1);
+                    radiuses.fill(this.structure.elementDiameter * 0.5);
+                    this.bufferList.push(BufferCreator.createCylinderStripBuffer(currentRowPositions, colors, radiuses));
+
+                    //this.bufferList.push(BufferCreator.createCylinderBuffer(new Vector3(0, 0, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 0), new Vector3(0, 1, 0), 2));
+                    //this.bufferList.push(BufferCreator.createCylinderBuffer(new Vector3(0, 0, 0), new Vector3(-1, 1, 0), new Vector3(1, 0, 0), new Vector3(0, 1, 0), 4, true));
+                    //this.bufferList.push(BufferCreator.createCylinderBuffer(new Vector3(0, 0, 0), new Vector3(1, -1, 0), new Vector3(1, 0, 0), new Vector3(0, 1, 0), 3, false, true));
+                    //this.bufferList.push(BufferCreator.createCylinderBuffer(new Vector3(0, 0, 0), new Vector3(-1, -1, 0), new Vector3(1, 0, 0), new Vector3(0, 1, 0), 1, true, true));
                     //this.bufferList.push(BufferCreator.createTubeMeshBuffer(currentRowPositions, sizes, colors, 4));
 
                     /*this.bufferList.push(BufferCreator.createRibbonBufferUniformParams(currentRowPositions,

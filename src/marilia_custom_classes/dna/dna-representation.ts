@@ -80,6 +80,13 @@ class DNARepresentation extends Representation {
 
         const start = this.dna.startPos;
         const end = start.add(this.dna.direction.multiplyScalar(this.dna.lengthInNanometers));
+        // 
+        // TODO: NOTE by DAVID
+        // I extended my BufferCreator class (which serves as a wrapper for buffers) with createCylinderBuffer function. 
+        // Therefore, it should be possible for you to replace the rest of this code with a simple BufferCreator.createCylinderBuffer(...) call.
+        // For example, you can simply do this:
+        // buffers[0] = BufferCreator.createCylinderBuffer(start, end, new Vector3(1, 1, 1), new Vector3(1, 1, 1), 1);
+        //
         let data: CylinderBufferData = {
             position1: new Float32Array(3),
             position2: new Float32Array(3),
