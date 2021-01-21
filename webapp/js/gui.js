@@ -1332,41 +1332,59 @@ NGL.SidebarWidget = function (stage) {
   var panelMariliaCreation = new UI.Panel();
   var panelMariliaModification = new UI.Panel();
 
+  const selected = "Selected";
+  const unselected = "Unselected";
+
+
+
+  let strCreateDnaStrand = "Create DNA strand";
+
   var textCreation = new UI.Text("Creation menu");
-  // TODO
+  let buttonCreateDnaStrand = new UI.Button(strCreateDnaStrand).setClass(unselected);
+
+
 
   let strCreateBond1 = "Create bond from atom";
   let strCreateBond2 = "Create bond between atoms";
   let strRemove = "Remove atom or bond";
 
-  var textModification = new UI.Text("Modification menu");
-  var buttonCreateBond1 = new UI.Button(strCreateBond1).setClass("Unselected");
-  var buttonCreateBond2 = new UI.Button(strCreateBond2).setClass("Unselected");
-  var buttonRemove = new UI.Button(strRemove).setClass("Unselected");
+  let textModification = new UI.Text("Modification menu");
+  let buttonCreateBond1 = new UI.Button(strCreateBond1).setClass(unselected);
+  let buttonCreateBond2 = new UI.Button(strCreateBond2).setClass(unselected);
+  let buttonRemove = new UI.Button(strRemove).setClass(unselected);
 
-  buttonCreateBond1.onClick(function() {
-    buttonCreateBond1.setClass("Selected");
-    buttonCreateBond2.setClass("Unselected");
-    buttonRemove.setClass("Unselected");
-    stage.testModification.setModeToBondFromAtom();
-  });
 
-  buttonCreateBond2.onClick(function() {
-    buttonCreateBond1.setClass("Unselected");
-    buttonCreateBond2.setClass("Selected");
-    buttonRemove.setClass("Unselected");
-    stage.testModification.setModeToBondBetweenAtoms();
-  });
 
-  buttonRemove.onClick(function() {
-    buttonCreateBond1.setClass("Unselected");
-    buttonCreateBond2.setClass("Unselected");
-    buttonRemove.setClass("Selected");
-    stage.testModification.setModeToRemove();
-  });
+  let clickFun = (button, newState) => {
+    let select = button.dom.className === unselected;
+
+    buttonCreateDnaStrand.setClass(unselected);
+    buttonCreateBond1.setClass(unselected);
+    buttonCreateBond2.setClass(unselected);
+    buttonRemove.setClass(unselected);
+
+    if (select) {
+      button.setClass(selected);
+      //stateChangeFun();
+      stage.mariliaActions.state = newState;
+    } else {
+      //stage.mariliaActions.setStateToDefault();
+      stage.mariliaActions.state = MariliaActionsState.DEFAULT;
+    }
+  }
+
+  /*buttonCreateDnaStrand.onClick(() => clickFun(buttonCreateDnaStrand, stage.mariliaActions.setStateToCreateDnaStrand));
+  buttonCreateBond1.onClick(() => clickFun(buttonCreateBond1, stage.mariliaActions.setStateToBondFromAtom));
+  buttonCreateBond2.onClick(() => clickFun(buttonCreateBond2, stage.mariliaActions.setStateToBondBetweenAtoms));
+  buttonRemove.onClick(() => clickFun(buttonRemove, stage.mariliaActions.setStateToRemove));*/
+  buttonCreateDnaStrand.onClick(() => clickFun(buttonCreateDnaStrand, MariliaActionsState.CREATE_DNA_STRAND));
+  buttonCreateBond1.onClick(() => clickFun(buttonCreateBond1, MariliaActionsState.BOND_FROM_ATOM));
+  buttonCreateBond2.onClick(() => clickFun(buttonCreateBond2, MariliaActionsState.BOND_BETWEEN_ATOMS));
+  buttonRemove.onClick(() => clickFun(buttonRemove, MariliaActionsState.REMOVE));
 
   panelMariliaCreation.add(
-      textCreation
+      textCreation,
+      buttonCreateDnaStrand
   );
 
   panelMariliaModification.add(

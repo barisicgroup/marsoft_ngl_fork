@@ -1,6 +1,7 @@
 import Stage from "../stage/stage";
 import PickingProxy from "../controls/picking-proxy";
 import TestModification from "./TEST";
+import {Vector2} from "three";
 
 export enum MariliaActionsState {
     DEFAULT,
@@ -47,6 +48,26 @@ class MariliaActions {
         }
     }
 
+    public setStateToDefault() {
+        this.state = MariliaActionsState.DEFAULT;
+    }
+
+    public setStateToCreateDnaStrand() {
+        this.state = MariliaActionsState.CREATE_DNA_STRAND;
+    }
+
+    public setStateToBondFromAtom() {
+        this.state = MariliaActionsState.BOND_FROM_ATOM;
+    }
+
+    public setStateToBondBetweenAtoms() {
+        this.state = MariliaActionsState.BOND_BETWEEN_ATOMS;
+    }
+
+    public setStateToRemove() {
+        this.state = MariliaActionsState.REMOVE;
+    }
+
     /**
      * Returns true if further actions should be blocked
      * Returns false otherwise (action propagates)
@@ -74,6 +95,10 @@ class MariliaActions {
     public drag_left(stage: Stage, dx: number, dy: number): boolean {
         if (this.state === MariliaActionsState.CREATE_DNA_STRAND) {
             // TODO
+
+            let pos: Vector2 = stage.mouseObserver.position;
+            console.log("position: " + pos);
+
             return true;
         }
         return false;
