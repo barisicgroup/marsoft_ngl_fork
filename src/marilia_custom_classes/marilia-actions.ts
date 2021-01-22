@@ -1,7 +1,9 @@
 import Stage from "../stage/stage";
 import PickingProxy from "../controls/picking-proxy";
 import TestModification from "./TEST";
-import {Vector2} from "three";
+import {Vector3} from "three";
+import DNAStrand, {DummyDNAStrand} from "./dna/dna-strand";
+import {DNAStrandComponent} from "./dna/dna-component";
 
 export enum MariliaActionsState {
     DEFAULT,
@@ -19,6 +21,7 @@ class MariliaActions {
     // TODO remove TestModification class eventually
     private readonly testModification: TestModification = new TestModification();
 
+    private data: {[id: string]: any} = {}; // Dictionary used for interactions
 
     private _state: MariliaActionsState = MariliaActionsState.DEFAULT;
 
@@ -28,6 +31,7 @@ class MariliaActions {
 
     set state(s: MariliaActionsState) {
         this._state = s;
+        this.data = {};
 
         // TODO remove TestModification class eventually
         switch (s) {
@@ -53,8 +57,35 @@ class MariliaActions {
      * Returns false otherwise (action propagates)
      */
     public clickPick_left(stage: Stage, pickingProxy: PickingProxy): boolean {
+        if (this.state === MariliaActionsState.DEFAULT) {
+            return false;
+        }
+
+        if (this.state === MariliaActionsState.CREATE_DNA_STRAND) {
+
+            let pos: Vector3 = stage.mouseObserver.getWorldPosition();
+
+            if (!this.data.dnaStrand) {
+                this.data.dnaStrand = new DummyDNAStrand(pos, pos);
+                this.data.component = new DNAStrandComponent(stage, this.data.dnaStrand);
+                this.data.component.addRepresentation("TODO", undefined); //TODO
+                stage.addComponent(this.data.component);
+                return true;
+            }
+
+            this.data.dnaStrand.endPos = pos;
+            let dnaStrand: DNAStrand = this.data.dnaStrand.toDNAStrand();
+            let component: DNAStrandComponent = new DNAStrandComponent(stage, dnaStrand);
+            component.addRepresentation("TODO", undefined); // TODO
+            this.data.component.removeAllRepresentations();
+            stage.removeComponent(this.data.component);
+            this.data = {};
+            return true;
+        }
+
         // TODO remove TestModification class eventually
         this.testModification.clickPick_left(stage, pickingProxy);
+
         return true;
     }
 
@@ -63,6 +94,18 @@ class MariliaActions {
      * Returns false otherwise (action propagates)
      */
     public hover(stage: Stage, pickingProxy: PickingProxy): boolean {
+        if (this.state === MariliaActionsState.DEFAULT) {
+            return false;
+        }
+
+        if (this.state === MariliaActionsState.CREATE_DNA_STRAND) {
+            if (this.data.dnaStrand) {
+                let pos: Vector3 = stage.mouseObserver.getWorldPosition();
+                this.data.dnaStrand.endPos = pos;
+            }
+            return true;
+        }
+
         // TODO remove TestModification class eventually
         this.testModification.hover(stage, pickingProxy);
         return false;
@@ -73,14 +116,6 @@ class MariliaActions {
      * Returns false otherwise (action propagates)
      */
     public drag_left(stage: Stage, dx: number, dy: number): boolean {
-        if (this.state === MariliaActionsState.CREATE_DNA_STRAND) {
-            // TODO
-
-            let pos: Vector2 = stage.mouseObserver.position;
-            console.log("position: " + pos);
-
-            return true;
-        }
         return false;
     }
 }

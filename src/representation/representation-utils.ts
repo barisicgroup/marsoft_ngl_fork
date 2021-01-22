@@ -16,8 +16,12 @@ import BufferRepresentation from './buffer-representation'
 import SurfaceRepresentation from './surface-representation'
 import DotRepresentation from './dot-representation'
 import SliceRepresentation from './slice-representation'
+
 import DnaOrigamiNanostructure from '../marilia_custom_classes/DnaOrigamiNanostructure'
 import MultiscaleRepresentation from '../marilia_custom_classes/MultiscaleRepresentation'
+
+import DNAStrand, {DummyDNAStrand} from "../marilia_custom_classes/dna/dna-strand";
+import DNARepresentation from "../marilia_custom_classes/dna/dna-representation";
 
 function logReprUnknown(type: string) {
   Log.error(`makeRepresentation: representation type ${type} unknown`)
@@ -36,6 +40,10 @@ export function makeRepresentation(type: string, object: any, viewer: Viewer, pa
       logReprUnknown(type);
       return;
     }
+  }
+  else if (object instanceof DNAStrand || object instanceof DummyDNAStrand) {
+    // TODO types
+    ReprClass = DNARepresentation;
   }
   else if (object instanceof Structure) {
     ReprClass = RepresentationRegistry.get(type)

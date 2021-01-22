@@ -1,6 +1,6 @@
 import Representation, {RepresentationParameters} from "../../representation/representation";
 import Viewer from "../../viewer/viewer";
-import {DNAStrand} from "./dna-strand";
+import DNAStrand, {DummyDNAStrand} from "./dna-strand";
 import Buffer from "../../buffer/buffer"
 import {defaults} from "../../utils";
 import CylinderImpostorBuffer, {CylinderImpostorBufferParameters} from "../../buffer/cylinderimpostor-buffer";
@@ -15,9 +15,9 @@ class DNARepresentation extends Representation {
     // Params
     protected representationScale: string;
 
-    private dna: DNAStrand;
+    private dna: DNAStrand | DummyDNAStrand;
 
-    constructor(dna: DNAStrand, viewer: Viewer, params: Partial<DNARepresentationParameters>) {
+    constructor(dna: DNAStrand | DummyDNAStrand, viewer: Viewer, params: Partial<DNARepresentationParameters>) {
         super(dna, viewer, params)
 
         this.dna = dna;
@@ -79,7 +79,7 @@ class DNARepresentation extends Representation {
         let buffers: Array<Buffer> = new Array<Buffer>(1);
 
         const start = this.dna.startPos;
-        const end = start.add(this.dna.direction.multiplyScalar(this.dna.lengthInNanometers));
+        const end = this.dna.endPos;
         // 
         // TODO: NOTE by DAVID
         // I extended my BufferCreator class (which serves as a wrapper for buffers) with createCylinderBuffer function. 

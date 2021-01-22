@@ -43,12 +43,13 @@ export class Nucleobase {
     }
 }
 
-export class DNAStrand {
+class DNAStrand {
     public static readonly DISTANCE = 2; // in nanometers
 
     private _nucleobases: Array<Nucleobase>;
     private _startPos: Vector3;
     private _direction: Vector3;
+
     constructor(nbs?: Array<Nucleobase>,
                 startPos: Vector3 = new Vector3(0, 0, 0),
                 direction: Vector3 = new Vector3(0, 1, 0)) {
@@ -63,6 +64,10 @@ export class DNAStrand {
 
     get startPos(): Vector3 {
         return this._startPos;
+    }
+
+    get endPos(): Vector3 {
+        return this.startPos.add(this.direction.multiplyScalar(this.lengthInNanometers));
     }
 
     get direction(): Vector3 {
@@ -82,3 +87,43 @@ export class DNAStrand {
         return new DNAStrand(nbs);
     }
 }
+
+export class DummyDNAStrand {
+    private _startPos: Vector3;
+    private _endPos: Vector3;
+
+    constructor(startPos: Vector3 = new Vector3(0, 0, 0),
+                endPos: Vector3 = new Vector3(0, 0, 0)) {
+        this._startPos = startPos;
+        this._endPos = endPos;
+    }
+
+    get startPos(): Vector3 {
+        return this._startPos;
+    }
+
+    get endPos(): Vector3 {
+        return this._endPos;
+    }
+
+    set endPos(endPos: Vector3) {
+        this._endPos = endPos;
+    }
+
+    get numOfNucleobases(): number {
+        let distance: number = this.startPos.distanceTo(this.endPos);
+        let numOfNucleobases: number = Math.floor(distance / DNAStrand.DISTANCE);
+        return numOfNucleobases;
+    }
+
+    get lengthInNanometers(): number {
+        return this.numOfNucleobases * DNAStrand.DISTANCE;
+    }
+
+    public toDNAStrand(): DNAStrand {
+        let direction: Vector3 = this.endPos.sub(this.startPos).normalize();
+        return new DNAStrand(new Array<Nucleobase>(this.numOfNucleobases), this.startPos, direction);
+    }
+}
+
+export default DNAStrand;
