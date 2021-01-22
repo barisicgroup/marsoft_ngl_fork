@@ -1,13 +1,14 @@
 import { Vector3 } from "three";
-import Buffer, { BufferParameters, BufferDefaultParameters } from "../buffer/buffer";
-import { CylinderBufferParameters, CylinderBufferDefaultParameters } from "../buffer/cylinder-buffer";
-import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
-import CylinderImpostorBuffer from '../buffer/cylinderimpostor-buffer';
-import RibbonBuffer from "../buffer/ribbon-buffer";
-import TubeMeshBuffer, { TubeMeshBufferParameters } from "../buffer/tubemesh-buffer";
-import WidelineBuffer, { WideLineBufferDefaultParameters, WideLineBufferParameters } from "../buffer/wideline-buffer";
-import { Debug } from "../globals";
+import Buffer, { BufferParameters, BufferDefaultParameters } from "../../buffer/buffer";
+import { CylinderBufferParameters, CylinderBufferDefaultParameters } from "../../buffer/cylinder-buffer";
+import CylinderGeometryBuffer from '../../buffer/cylindergeometry-buffer';
+import CylinderImpostorBuffer from '../../buffer/cylinderimpostor-buffer';
+import RibbonBuffer from "../../buffer/ribbon-buffer";
+import TubeMeshBuffer, { TubeMeshBufferParameters } from "../../buffer/tubemesh-buffer";
+import WidelineBuffer, { WideLineBufferDefaultParameters, WideLineBufferParameters } from "../../buffer/wideline-buffer";
+import { Debug } from "../../globals";
 import HermitSpline from "./HermitSpline";
+//import { Picker } from "../../utils/picker";
 
 /**
 * The purpose of this class is to provide a wrapper to selected NGL buffers

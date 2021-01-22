@@ -3,7 +3,7 @@ import Shape from "../geometry/shape";
 import Representation, { RepresentationParameters } from "../representation/representation";
 import { defaults } from '../utils'
 import Viewer from "../viewer/viewer";
-import BufferCreator from "./BufferCreator";
+import BufferCreator from "./geometry/BufferCreator";
 import DnaOrigamiNanostructure from "./DnaOrigamiNanostructure";
 
 export interface MultiscaleRepresentationParameters extends RepresentationParameters {

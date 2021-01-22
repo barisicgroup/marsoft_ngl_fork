@@ -19,6 +19,7 @@ import Surface from '../surface/surface'
 import Volume from '../surface/volume'
 import Unitcell from '../symmetry/unitcell'
 import Component from '../component/component';
+import {TestPickingNucleotideProxy} from "../marilia_custom_classes/geometry/NucleotidePicker";
 
 const tmpVec = new Vector3()
 
@@ -297,6 +298,11 @@ class PickingProxy {
    */
   get wideline () { return this._objectIfType('wideline') as ShapePrimitive }
 
+  //
+  // MARILA TEST STUFF
+  //
+  get nucleotide () { return this._objectIfType('nucleotide') as TestPickingNucleotideProxy; }
+
   _objectIfType (type: string) {
     return this.type === type ? this.object : undefined
   }
@@ -350,6 +356,8 @@ class PickingProxy {
       msg = `volume: ${this.volume.value.toPrecision(3)} (${this.volume.volume.name})`
     } else if (this.wideline) {
       msg = this.wideline.name
+    } else if(this.nucleotide) {
+      msg = `nucleotide: ${this.nucleotide.nbType}, id ${this.nucleotide.id}, pos [${this.nucleotide.pos.x}, ${this.nucleotide.pos.y}, ${this.nucleotide.pos.z}])`
     }
     return msg
   }
