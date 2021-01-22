@@ -3,8 +3,9 @@ import Shape from "../geometry/shape";
 import Representation, { RepresentationParameters } from "../representation/representation";
 import { defaults } from '../utils'
 import Viewer from "../viewer/viewer";
-import BufferCreator from "./BufferCreator";
+import BufferCreator from "./geometry/BufferCreator";
 import DnaOrigamiNanostructure from "./DnaOrigamiNanostructure";
+import NucleotidePicker, { TestPickingStructure, TestPickingNucleotide } from "./geometry/NucleotidePicker";
 
 export interface MultiscaleRepresentationParameters extends RepresentationParameters {
     desiredScale: number
@@ -62,18 +63,33 @@ class MultiscaleRepresentation extends Representation {
 
                     const sizes: number[] = [];
                     const colors: Vector3[] = [];
+                    const testPickNucleotides = [];
+                    const pickingIds = [];
+                    const nbTypes: Array<"A" | "T" | "C" | "G"> = ["A", "T", "C", "G"];
 
                     for (let i = 0; i < currentRowPositions.length; ++i) {
                         sizes.push(this.structure.elementDiameter * 0.25 + (Math.random() - 0.5) * 0.1);
                         colors.push(new Vector3(Math.random(), Math.random(), Math.random()));
+                        testPickNucleotides.push(new TestPickingNucleotide(nbTypes[i % 4], currentRowPositions[i]));
+                        pickingIds.push(i);
                     }
 
-
-                   //this.bufferList.push(BufferCreator.createWideLinePairsBuffer(currentRowPositions, colors, 3));
+                    //this.bufferList.push(BufferCreator.createWideLinePairsBuffer(currentRowPositions, colors, 3));
 
                     const radiuses = new Array<number>(currentRowPositions.length - 1);
                     radiuses.fill(this.structure.elementDiameter * 0.5);
-                    this.bufferList.push(BufferCreator.createCylinderStripBuffer(currentRowPositions, colors, radiuses));
+
+                    const testPickStructure = new TestPickingStructure(testPickNucleotides);
+
+                    /*this.bufferList.push(BufferCreator.createCylinderStripBuffer(currentRowPositions, colors, radiuses, pickingIds, 
+                        (idsArr) => {
+                            return new NucleotidePicker(idsArr, testPickStructure);
+                        }));*/
+
+                    this.bufferList.push(BufferCreator.createWideLineStripBuffer(currentRowPositions, colors, 2, pickingIds,
+                        (idsArr) => {
+                            return new NucleotidePicker(idsArr, testPickStructure);
+                        }));
 
                     //this.bufferList.push(BufferCreator.createCylinderBuffer(new Vector3(0, 0, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 0), new Vector3(0, 1, 0), 2));
                     //this.bufferList.push(BufferCreator.createCylinderBuffer(new Vector3(0, 0, 0), new Vector3(-1, 1, 0), new Vector3(1, 0, 0), new Vector3(0, 1, 0), 4, true));

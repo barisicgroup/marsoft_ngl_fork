@@ -1,13 +1,14 @@
 import { Vector3 } from "three";
-import Buffer, { BufferParameters, BufferDefaultParameters } from "../buffer/buffer";
-import { CylinderBufferParameters, CylinderBufferDefaultParameters } from "../buffer/cylinder-buffer";
-import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
-import CylinderImpostorBuffer from '../buffer/cylinderimpostor-buffer';
-import RibbonBuffer from "../buffer/ribbon-buffer";
-import TubeMeshBuffer, { TubeMeshBufferParameters } from "../buffer/tubemesh-buffer";
-import WidelineBuffer, { WideLineBufferDefaultParameters, WideLineBufferParameters } from "../buffer/wideline-buffer";
-import { Debug } from "../globals";
+import Buffer, { BufferParameters, BufferDefaultParameters } from "../../buffer/buffer";
+import { CylinderBufferParameters, CylinderBufferDefaultParameters } from "../../buffer/cylinder-buffer";
+import CylinderGeometryBuffer from '../../buffer/cylindergeometry-buffer';
+import CylinderImpostorBuffer from '../../buffer/cylinderimpostor-buffer';
+import RibbonBuffer from "../../buffer/ribbon-buffer";
+import TubeMeshBuffer, { TubeMeshBufferParameters } from "../../buffer/tubemesh-buffer";
+import WidelineBuffer, { WideLineBufferDefaultParameters, WideLineBufferParameters } from "../../buffer/wideline-buffer";
+import { Debug } from "../../globals";
 import HermitSpline from "./HermitSpline";
+import { Picker } from "../../utils/picker";
 
 /**
 * The purpose of this class is to provide a wrapper to selected NGL buffers
@@ -147,6 +148,7 @@ class BufferCreator {
     }
 
     public static createWideLineStripBuffer(vertices: Vector3[], colors: Vector3[], lineWidth: number,
+        pickingIds?: number[], pickingCreator?: (idsArr: number[]) => Picker,
         params: Partial<WideLineBufferParameters> = this.defaultWidelineBufferParams): Buffer {
         const arrElems = (vertices.length - 1) * 3;
 
@@ -180,6 +182,7 @@ class BufferCreator {
             'position2': position2,
             'color': color,
             'color2': color2,
+            'picking': pickingCreator !== undefined && pickingIds !== undefined ? pickingCreator(pickingIds) : undefined,
         }), Object.assign(params, {
             'linewidth': lineWidth
         }));
@@ -250,6 +253,7 @@ class BufferCreator {
 
     // |vertices| === |colors| === |radiuses+1|
     public static createCylinderStripBuffer(vertices: Vector3[], colors: Vector3[], radiuses: number[],
+        pickingIds?: number[], pickingCreator?: (idsArr: number[]) => Picker,
         openEnded: boolean = false, disableImpostor: boolean = false,
         params: Partial<CylinderBufferParameters> = this.defaultCylinderBufferParams): Buffer {
         const SelectedBufferClass = disableImpostor ? CylinderGeometryBuffer : CylinderImpostorBuffer;
@@ -288,6 +292,7 @@ class BufferCreator {
             'color': color,
             'color2': color2,
             'radius': radius,
+            'picking': pickingCreator !== undefined && pickingIds !== undefined ? pickingCreator(pickingIds) : undefined,
         }), Object.assign(params, {
             openEnded: openEnded,
             disableImpostor: disableImpostor
