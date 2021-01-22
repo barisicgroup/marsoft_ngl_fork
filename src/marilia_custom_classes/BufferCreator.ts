@@ -14,17 +14,21 @@ import HermitSpline from "./HermitSpline";
 * allowing to create given geometries in a more accessible way.
 */
 class BufferCreator {
-    public static readonly defaultTubeMeshBufferParams: Partial<TubeMeshBufferParameters> = Object.assign({
+    public static readonly defaultTubeMeshBufferParams: Partial<TubeMeshBufferParameters> = Object.assign(
+        BufferDefaultParameters, {
         radialSegments: 8,
         capped: true,
         aspectRatio: 1.0
-    }, BufferDefaultParameters);
+    });
 
     public static readonly defaultRibbonBufferParams: Partial<BufferParameters> = BufferDefaultParameters;
 
     public static readonly defaultWidelineBufferParams: Partial<WideLineBufferParameters> = WideLineBufferDefaultParameters;
 
-    public static readonly defaultCylinderBufferParams: Partial<CylinderBufferParameters> = CylinderBufferDefaultParameters;
+    public static readonly defaultCylinderBufferParams: Partial<CylinderBufferParameters> = Object.assign(
+        CylinderBufferDefaultParameters, {
+        radialSegments: 8
+    });
 
     public static createTubeMeshBuffer(pathElemPositions: Vector3[], pathElemSizes: number[], pathElemColors: Vector3[],
         interpolationSubdivisions: number = 1,
@@ -181,7 +185,6 @@ class BufferCreator {
         }));
     }
 
-    // TODO FIX createCylinderBuffer methods not working when impostors disabled (something seems to be rendered but it is black for some reason)
     public static createCylinderBuffer(startPos: Vector3, endPos: Vector3, startColor: Vector3,
         endColor: Vector3, radius: number, openEnded: boolean = false, disableImpostor: boolean = false,
         params: Partial<CylinderBufferParameters> = this.defaultCylinderBufferParams): Buffer {
