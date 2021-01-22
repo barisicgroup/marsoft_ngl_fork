@@ -60,6 +60,10 @@
           if (traj) o.addTrajectory(traj)
         })
       }
+
+      stage.signals.clicked.add(function (pickingProxy) {
+        console.log("Selected picking proxy: ", pickingProxy);
+      });
     })
 
   </script>

@@ -38,8 +38,8 @@ export class TestPickingNucleotideProxy {
 class NucleotidePicker extends Picker {
     structure: TestPickingStructure;
 
-    constructor(structure: TestPickingStructure) {
-        super();
+    constructor(idsArray : number[], structure: TestPickingStructure) {
+        super(idsArray);
         this.structure = structure;
     }
 
@@ -56,7 +56,7 @@ class NucleotidePicker extends Picker {
     }
 
     _getPosition(pid: number) {
-        return this.getObject(pid).pos;
+        return this.getObject(pid).pos.clone();
     }
 }
 
