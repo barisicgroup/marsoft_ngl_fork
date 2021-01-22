@@ -14,7 +14,7 @@ export class DNAStrandComponent extends Component {
     }
 
     get type(): string {
-        return "dna-strand";
+        return "custom";
     }
 
     addRepresentation(type: any, params: any): any {

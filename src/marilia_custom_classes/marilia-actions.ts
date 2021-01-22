@@ -68,17 +68,22 @@ class MariliaActions {
             if (!this.data.dnaStrand) {
                 this.data.dnaStrand = new DummyDNAStrand(pos, pos);
                 this.data.component = new DNAStrandComponent(stage, this.data.dnaStrand);
-                this.data.component.addRepresentation("TODO", undefined); //TODO
+                this.data.component.setName("DNA strand (dummy)");
                 stage.addComponent(this.data.component);
+                this.data.component.addRepresentation("TODO", undefined); //TODO
                 return true;
             }
 
             this.data.dnaStrand.endPos = pos;
-            let dnaStrand: DNAStrand = this.data.dnaStrand.toDNAStrand();
-            let component: DNAStrandComponent = new DNAStrandComponent(stage, dnaStrand);
-            component.addRepresentation("TODO", undefined); // TODO
             this.data.component.removeAllRepresentations();
             stage.removeComponent(this.data.component);
+
+            let dnaStrand: DNAStrand = this.data.dnaStrand.toDNAStrand();
+            let component: DNAStrandComponent = new DNAStrandComponent(stage, dnaStrand);
+            component.setName("DNA strand");
+            stage.addComponent(component);
+            component.addRepresentation("TODO", undefined); // TODO
+
             this.data = {};
             return true;
         }

@@ -53,7 +53,8 @@ class DNARepresentation extends Representation {
     }
 
     update(what?: any) {
-        // TODO
+        // TODO?
+        super.update(what);
     }
 
     attach(callback: () => void) {
