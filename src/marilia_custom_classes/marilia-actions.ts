@@ -48,26 +48,6 @@ class MariliaActions {
         }
     }
 
-    public setStateToDefault() {
-        this.state = MariliaActionsState.DEFAULT;
-    }
-
-    public setStateToCreateDnaStrand() {
-        this.state = MariliaActionsState.CREATE_DNA_STRAND;
-    }
-
-    public setStateToBondFromAtom() {
-        this.state = MariliaActionsState.BOND_FROM_ATOM;
-    }
-
-    public setStateToBondBetweenAtoms() {
-        this.state = MariliaActionsState.BOND_BETWEEN_ATOMS;
-    }
-
-    public setStateToRemove() {
-        this.state = MariliaActionsState.REMOVE;
-    }
-
     /**
      * Returns true if further actions should be blocked
      * Returns false otherwise (action propagates)

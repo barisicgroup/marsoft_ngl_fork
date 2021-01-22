@@ -47,9 +47,10 @@ import Volume from '../surface/volume'
 import Shape from '../geometry/shape'
 import Script from '../script'
 
-// Added by Lucas Melo
+// Marilia stuff
 import ModelingControls from '../marilia_custom_classes/ModelingControls'
 import MariliaActions from "../marilia_custom_classes/marilia-actions";
+
 
 function matchName (name: string|RegExp, object: { name: string }) {
   if (name instanceof RegExp) {

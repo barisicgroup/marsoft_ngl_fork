@@ -1369,18 +1369,14 @@ NGL.SidebarWidget = function (stage) {
       stage.mariliaActions.state = newState;
     } else {
       //stage.mariliaActions.setStateToDefault();
-      stage.mariliaActions.state = MariliaActionsState.DEFAULT;
+      stage.mariliaActions.state = NGL.MariliaActionsState.DEFAULT;
     }
   }
 
-  /*buttonCreateDnaStrand.onClick(() => clickFun(buttonCreateDnaStrand, stage.mariliaActions.setStateToCreateDnaStrand));
-  buttonCreateBond1.onClick(() => clickFun(buttonCreateBond1, stage.mariliaActions.setStateToBondFromAtom));
-  buttonCreateBond2.onClick(() => clickFun(buttonCreateBond2, stage.mariliaActions.setStateToBondBetweenAtoms));
-  buttonRemove.onClick(() => clickFun(buttonRemove, stage.mariliaActions.setStateToRemove));*/
-  buttonCreateDnaStrand.onClick(() => clickFun(buttonCreateDnaStrand, MariliaActionsState.CREATE_DNA_STRAND));
-  buttonCreateBond1.onClick(() => clickFun(buttonCreateBond1, MariliaActionsState.BOND_FROM_ATOM));
-  buttonCreateBond2.onClick(() => clickFun(buttonCreateBond2, MariliaActionsState.BOND_BETWEEN_ATOMS));
-  buttonRemove.onClick(() => clickFun(buttonRemove, MariliaActionsState.REMOVE));
+  buttonCreateDnaStrand.onClick(() => clickFun(buttonCreateDnaStrand, NGL.MariliaActionsState.CREATE_DNA_STRAND));
+  buttonCreateBond1.onClick(() => clickFun(buttonCreateBond1, NGL.MariliaActionsState.BOND_FROM_ATOM));
+  buttonCreateBond2.onClick(() => clickFun(buttonCreateBond2, NGL.MariliaActionsState.BOND_BETWEEN_ATOMS));
+  buttonRemove.onClick(() => clickFun(buttonRemove, NGL.MariliaActionsState.REMOVE));
 
   panelMariliaCreation.add(
       textCreation,

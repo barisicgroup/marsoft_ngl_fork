@@ -210,10 +210,11 @@ export { UIStageParameters } from './ui/parameters'
 
 import Version from './version'
 
-// MARILIA codes
+// MARILIA stuff
 import CustomComponent from "./marilia_custom_classes/CustomComponent"
 import DnaOrigamiNanostructure from "./marilia_custom_classes/DnaOrigamiNanostructure"
 import ModelingControls from "./marilia_custom_classes/ModelingControls"
+import {MariliaActionsState} from "./marilia_custom_classes/marilia-actions"
 
 if (!(window as any).Promise) {
   (window as any).Promise = _Promise
@@ -274,7 +275,9 @@ export {
   KeyActions,
   PickingProxy,
 
+  // MARILIA stuff
   CustomComponent,
   DnaOrigamiNanostructure,
-  ModelingControls
+  ModelingControls,
+  MariliaActionsState
 }
