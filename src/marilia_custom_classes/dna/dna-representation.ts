@@ -54,7 +54,6 @@ class DNARepresentation extends Representation {
     }
 
     update(what?: any) {
-        // TODO?
         super.update(what);
     }
 
@@ -82,8 +81,6 @@ class DNARepresentation extends Representation {
 
         const start = this.dna.startPos;
         const end = this.dna.endPos;
-        //const start = new Vector3(0, 0, 0);
-        //const end = new Vector3(0, 10, 0);
 
         buffers[0] = BufferCreator.createCylinderBuffer(start, end, new Vector3(1, 1, 1), new Vector3(1, 1, 1), 1);
 

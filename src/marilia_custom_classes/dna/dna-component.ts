@@ -21,5 +21,8 @@ export class DNAStrandComponent extends Component {
         return this._addRepresentation(type, this.dnaStrand, params);
     }
 
-
+    updateRepresentations(what: any) {
+        // TODO tailor the 'what' parameter
+        super.updateRepresentations(what);
+    }
 }

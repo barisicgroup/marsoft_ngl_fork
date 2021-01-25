@@ -108,6 +108,7 @@ class MariliaActions {
             if (this.data.dnaStrand) {
                 let pos: Vector3 = stage.mouseObserver.getWorldPosition();
                 this.data.dnaStrand.endPos = pos;
+                this.data.component.updateRepresentations();
             }
             return true;
         }
