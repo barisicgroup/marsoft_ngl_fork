@@ -1,18 +1,27 @@
 import {Vector3} from "three";
 
 export enum StrictNucleobaseType {
-    C, // cytosine
-    G, // guanine
-    A, // adenine
-    T, // thymine
+    C = 0, // cytosine
+    G = 1, // guanine
+    A = 2, // adenine
+    T = 3, // thymine
 }
 
 export type NucleobaseType = StrictNucleobaseType | undefined;
 
 export class Nucleobase {
-    private type: NucleobaseType;
+    private _type: NucleobaseType;
+
     constructor(t?: NucleobaseType) {
-        this.type = t;
+        this._type = t ? t : undefined;
+    }
+
+    get type() {
+        return this._type;
+    }
+
+    set type(t: NucleobaseType) {
+        this._type = t;
     }
 
 
@@ -43,22 +52,38 @@ export class Nucleobase {
     }
 }
 
-class DNAStrand {
+abstract class AbstractDNAStrand {
+    abstract get startPos(): Vector3;
+    abstract get endPos(): Vector3;
+    abstract set endPos(endPos: Vector3);
+    abstract get numOfNucleobases(): number;
+    abstract get lengthInNanometers(): number;
+}
+
+class DNAStrand extends AbstractDNAStrand {
     public static readonly DISTANCE = 2; // in nanometers
 
     private _nucleobases: Array<Nucleobase>;
     private _startPos: Vector3;
     private _direction: Vector3;
 
-    constructor(nbs?: Array<Nucleobase>,
+    constructor(nbs: Array<Nucleobase> | number,
                 startPos: Vector3 = new Vector3(0, 0, 0),
                 direction: Vector3 = new Vector3(0, 1, 0)) {
-        this._nucleobases = nbs ? nbs : [];
+        super();
+        if (nbs instanceof Array) {
+            this._nucleobases = nbs;
+        } else {
+            this._nucleobases = new Array<Nucleobase>(nbs);
+            for (let i = 0; i < nbs; ++i) {
+                this._nucleobases[i] = new Nucleobase();
+            }
+        }
         this._startPos = startPos;
         this._direction = direction;
     }
 
-    get nucleobases(): ReadonlyArray<Nucleobase> {
+    get nucleobases(): Array<Nucleobase> {
         return this._nucleobases;
     }
 
@@ -78,6 +103,10 @@ class DNAStrand {
         return this._nucleobases.length * DNAStrand.DISTANCE;
     }
 
+    get numOfNucleobases(): number {
+        return this._nucleobases.length;
+    }
+
     public createComplementary(): DNAStrand {
         const n: number = this.nucleobases.length;
         let nbs: Array<Nucleobase> = new Array<Nucleobase>(n);
@@ -88,12 +117,13 @@ class DNAStrand {
     }
 }
 
-export class DummyDNAStrand {
+export class DummyDNAStrand extends AbstractDNAStrand {
     private _startPos: Vector3;
     private _endPos: Vector3;
 
     constructor(startPos: Vector3 = new Vector3(0, 0, 0),
                 endPos: Vector3 = new Vector3(0, 0, 0)) {
+        super();
         this._startPos = startPos;
         this._endPos = endPos;
     }
@@ -122,7 +152,7 @@ export class DummyDNAStrand {
 
     public toDNAStrand(): DNAStrand {
         let direction: Vector3 = this.endPos.clone().sub(this.startPos).normalize();
-        return new DNAStrand(new Array<Nucleobase>(this.numOfNucleobases), this.startPos, direction);
+        return new DNAStrand(this.numOfNucleobases, this.startPos, direction);
     }
 }
 

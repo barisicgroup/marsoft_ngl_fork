@@ -1,4 +1,4 @@
-import { Vector3 } from "three";
+import {Color, Vector3} from "three";
 import Buffer, { BufferParameters, BufferDefaultParameters } from "../../buffer/buffer";
 import { CylinderBufferParameters, CylinderBufferDefaultParameters } from "../../buffer/cylinder-buffer";
 import CylinderGeometryBuffer from '../../buffer/cylindergeometry-buffer';
@@ -15,6 +15,18 @@ import { Picker } from "../../utils/picker";
 * allowing to create given geometries in a more accessible way.
 */
 class BufferCreator {
+    public static insertVector3InFloat32Array(array: Float32Array, vector: Vector3, position: number) {
+        array[position] = vector.x;
+        array[position+1] = vector.y;
+        array[position+2] = vector.z;
+    }
+
+    public static insertColorInFloat32Array(array: Float32Array, color: Color, position: number) {
+        array[position] = color.r;
+        array[position+1] = color.g;
+        array[position+2] = color.b;
+    }
+
     public static readonly defaultTubeMeshBufferParams: Partial<TubeMeshBufferParameters> = Object.assign(
         BufferDefaultParameters, {
         radialSegments: 8,
@@ -256,7 +268,6 @@ class BufferCreator {
         pickingIds?: number[], pickingCreator?: (idsArr: number[]) => Picker,
         openEnded: boolean = false, disableImpostor: boolean = false,
         params: Partial<CylinderBufferParameters> = this.defaultCylinderBufferParams): Buffer {
-        const SelectedBufferClass = disableImpostor ? CylinderGeometryBuffer : CylinderImpostorBuffer;
 
         const arrElems = (vertices.length - 1) * 3;
 
@@ -286,13 +297,22 @@ class BufferCreator {
             color2[buffArrayStartPos + 2] = colors[i + 1].z;
         }
 
+        return this.createCylinderStripBufferFromArrays(position1, position2, color, color2, radius,
+            openEnded, disableImpostor, params);
+    }
+
+    public static createCylinderStripBufferFromArrays(position1: Float32Array, position2: Float32Array,
+                                                       color: Float32Array, color2: Float32Array, radius: Float32Array,
+                                                       openEnded: boolean = false, disableImpostor: boolean = false,
+                                                       params: Partial<CylinderBufferParameters> = this.defaultCylinderBufferParams): Buffer {
+        const SelectedBufferClass = disableImpostor ? CylinderGeometryBuffer : CylinderImpostorBuffer;
         return new SelectedBufferClass(Object.assign({}, {
             'position1': position1,
             'position2': position2,
             'color': color,
             'color2': color2,
             'radius': radius,
-            'picking': pickingCreator !== undefined && pickingIds !== undefined ? pickingCreator(pickingIds) : undefined,
+            //'picking': pickingCreator !== undefined && pickingIds !== undefined ? pickingCreator(pickingIds) : undefined, // TODO
         }), Object.assign(params, {
             openEnded: openEnded,
             disableImpostor: disableImpostor
