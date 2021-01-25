@@ -1,13 +1,13 @@
 import Component, {ComponentParameters} from "../../component/component";
 import Stage from "../../stage/stage";
-//import DNAStrand, {DummyDNAStrand} from "./dna-strand";
+import DNAStrand, {DummyDNAStrand} from "./dna-strand";
 
 
 export class DNAStrandComponent extends Component {
 
-    private dnaStrand: any;//DNAStrand | DummyDNAStrand;
+    private dnaStrand: DNAStrand | DummyDNAStrand;
 
-    constructor(readonly stage: Stage, dnaStrand: any, params: Partial<ComponentParameters> = {}) {
+    constructor(readonly stage: Stage, dnaStrand: DNAStrand | DummyDNAStrand, params: Partial<ComponentParameters> = {}) {
         super(stage, dnaStrand, params);
 
         this.dnaStrand = dnaStrand;

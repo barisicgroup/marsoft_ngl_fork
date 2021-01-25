@@ -67,7 +67,7 @@ class DNAStrand {
     }
 
     get endPos(): Vector3 {
-        return this.startPos.add(this.direction.multiplyScalar(this.lengthInNanometers));
+        return this.startPos.clone().add(this.direction.multiplyScalar(this.lengthInNanometers));
     }
 
     get direction(): Vector3 {
@@ -121,7 +121,7 @@ export class DummyDNAStrand {
     }
 
     public toDNAStrand(): DNAStrand {
-        let direction: Vector3 = this.endPos.sub(this.startPos).normalize();
+        let direction: Vector3 = this.endPos.clone().sub(this.startPos).normalize();
         return new DNAStrand(new Array<Nucleobase>(this.numOfNucleobases), this.startPos, direction);
     }
 }

@@ -75,12 +75,13 @@ class MariliaActions {
             }
 
             this.data.dnaStrand.endPos = pos;
-            this.data.component.removeAllRepresentations();
-            stage.removeComponent(this.data.component);
+            console.log(this.data.dnaStrand.startPos);
+            console.log(pos);
 
             let dnaStrand: DNAStrand = this.data.dnaStrand.toDNAStrand();
             let component: DNAStrandComponent = new DNAStrandComponent(stage, dnaStrand);
             component.setName("DNA strand");
+            stage.removeComponent(this.data.component);
             stage.addComponent(component);
             component.addRepresentation("TODO", undefined); // TODO
 
