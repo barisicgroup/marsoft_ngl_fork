@@ -19,9 +19,8 @@ import Surface from '../surface/surface'
 import Volume from '../surface/volume'
 import Unitcell from '../symmetry/unitcell'
 import Component from '../component/component';
-import {TestPickingNucleotideProxy} from "../marilia_custom_classes/geometry/NucleotidePicker";
-import {NucleobaseProxy} from "../marilia_custom_classes/dna/dna-picker";
-import {StrictNucleobaseType} from "../marilia_custom_classes/dna/dna-strand";
+import {NucleotideProxy} from "../marilia_custom_classes/dna/dna-picker";
+import {StrictNucleotideType} from "../marilia_custom_classes/dna/dna-strand";
 
 const tmpVec = new Vector3()
 
@@ -301,15 +300,13 @@ class PickingProxy {
   get wideline () { return this._objectIfType('wideline') as ShapePrimitive }
 
   // MARILA stuff
-  // TODO remove test
-  get nucleotide () { return this._objectIfType('nucleotide') as TestPickingNucleotideProxy; }
-  get nucleobase() { return this._objectIfType('nucleobase') as NucleobaseProxy; }
-  private static getNucleobaseName(np: NucleobaseProxy): string {
-    switch (np.nucleobase.type) {
-      case StrictNucleobaseType.A: return "Adenine";
-      case StrictNucleobaseType.C: return "Cytosine";
-      case StrictNucleobaseType.G: return "Guanine";
-      case StrictNucleobaseType.T: return "Thymine";
+  get nucleotide () { return this._objectIfType('nucleotide') as NucleotideProxy; }
+  private static getNucleotideName(np: NucleotideProxy): string {
+    switch (np.nucleotide.type) {
+      case StrictNucleotideType.A: return "Adenine";
+      case StrictNucleotideType.C: return "Cytosine";
+      case StrictNucleotideType.G: return "Guanine";
+      case StrictNucleotideType.T: return "Thymine";
     }
     return "undefined";
   }
@@ -367,10 +364,10 @@ class PickingProxy {
       msg = `volume: ${this.volume.value.toPrecision(3)} (${this.volume.volume.name})`
     } else if (this.wideline) {
       msg = this.wideline.name
-    } else if(this.nucleotide) {
-      msg = `nucleotide: ${this.nucleotide.nbType}, id ${this.nucleotide.id}, pos [${this.nucleotide.pos.x}, ${this.nucleotide.pos.y}, ${this.nucleotide.pos.z}])`
-    } else if (this.nucleobase) {
-      msg = "nucleobase: " + PickingProxy.getNucleobaseName(this.nucleobase);
+    //} else if(this.nucleotide) { // TODO remove
+    //  msg = `nucleotide: ${this.nucleotide.nbType}, id ${this.nucleotide.id}, pos [${this.nucleotide.pos.x}, ${this.nucleotide.pos.y}, ${this.nucleotide.pos.z}])`
+    } else if (this.nucleotide) {
+      msg = "nucleotide: " + PickingProxy.getNucleotideName(this.nucleotide);
     }
     return msg
   }

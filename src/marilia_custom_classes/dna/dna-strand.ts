@@ -1,18 +1,18 @@
 import {Vector3} from "three";
 
-export enum StrictNucleobaseType {
+export enum StrictNucleotideType {
     C = 0, // cytosine
     G = 1, // guanine
     A = 2, // adenine
     T = 3, // thymine
 }
 
-export type NucleobaseType = StrictNucleobaseType | undefined;
+export type NucleotideType = StrictNucleotideType | undefined;
 
-export class Nucleobase {
-    private _type: NucleobaseType;
+export class Nucleotide {
+    private _type: NucleotideType;
 
-    constructor(t?: NucleobaseType) {
+    constructor(t?: NucleotideType) {
         this._type = t ? t : undefined;
     }
 
@@ -20,70 +20,72 @@ export class Nucleobase {
         return this._type;
     }
 
-    set type(t: NucleobaseType) {
+    set type(t: NucleotideType) {
         this._type = t;
     }
 
 
 
-    private static getComplementaryType(t: NucleobaseType): NucleobaseType {
+    private static getComplementaryType(t: NucleotideType): NucleotideType {
         switch (t) {
-            case StrictNucleobaseType.C: return StrictNucleobaseType.G;
-            case StrictNucleobaseType.G: return StrictNucleobaseType.C;
-            case StrictNucleobaseType.A: return StrictNucleobaseType.T;
-            case StrictNucleobaseType.T: return StrictNucleobaseType.A;
+            case StrictNucleotideType.C: return StrictNucleotideType.G;
+            case StrictNucleotideType.G: return StrictNucleotideType.C;
+            case StrictNucleotideType.A: return StrictNucleotideType.T;
+            case StrictNucleotideType.T: return StrictNucleotideType.A;
             case undefined: return undefined;
         }
-        throw "Unknown NucleobaseType " + t;
+        throw "Unknown NucleotideType " + t;
     }
 
-    private static canPair(t1: NucleobaseType, t2: NucleobaseType): boolean {
+    private static canPair(t1: NucleotideType, t2: NucleotideType): boolean {
         return this.getComplementaryType(t1) === t2;
     }
 
 
 
-    public createComplementary(): Nucleobase {
-        return new Nucleobase(Nucleobase.getComplementaryType(this.type));
+    public createComplementary(): Nucleotide {
+        return new Nucleotide(Nucleotide.getComplementaryType(this.type));
     }
 
-    public canPairWith(nb: Nucleobase): boolean {
-        return Nucleobase.canPair(this.type, nb.type);
+    public canPairWith(nb: Nucleotide): boolean {
+        return Nucleotide.canPair(this.type, nb.type);
     }
 }
 
 export abstract class AbstractDnaStrand {
-    public static readonly DISTANCE = 2; // in nanometers
+    public static readonly PITCH = 3.4; // According to Wikipedia: https://en.wikipedia.org/wiki/DNA
+    public static readonly LEAD = AbstractDnaStrand.PITCH * 2;
+    public static readonly RADIUS = 1; // According to Wikipedia: https://en.wikipedia.org/wiki/DNA
     abstract get startPos(): Vector3;
     abstract get endPos(): Vector3;
     abstract set endPos(endPos: Vector3);
-    abstract get numOfNucleobases(): number;
+    abstract get numOfNucleotides(): number;
     abstract get lengthInNanometers(): number;
 }
 
 class DnaStrand extends AbstractDnaStrand {
-    private _nucleobases: Array<Nucleobase>;
+    private _nucleotides: Array<Nucleotide>;
     private _startPos: Vector3;
     private _direction: Vector3;
 
-    constructor(nbs: Array<Nucleobase> | number,
+    constructor(nbs: Array<Nucleotide> | number,
                 startPos: Vector3 = new Vector3(0, 0, 0),
                 direction: Vector3 = new Vector3(0, 1, 0)) {
         super();
         if (nbs instanceof Array) {
-            this._nucleobases = nbs;
+            this._nucleotides = nbs;
         } else {
-            this._nucleobases = new Array<Nucleobase>(nbs);
+            this._nucleotides = new Array<Nucleotide>(nbs);
             for (let i = 0; i < nbs; ++i) {
-                this._nucleobases[i] = new Nucleobase();
+                this._nucleotides[i] = new Nucleotide();
             }
         }
         this._startPos = startPos;
         this._direction = direction;
     }
 
-    get nucleobases(): Array<Nucleobase> {
-        return this._nucleobases;
+    get nucleotides(): Array<Nucleotide> {
+        return this._nucleotides;
     }
 
     get startPos(): Vector3 {
@@ -99,18 +101,18 @@ class DnaStrand extends AbstractDnaStrand {
     }
 
     get lengthInNanometers(): number {
-        return this._nucleobases.length * DnaStrand.DISTANCE;
+        return this._nucleotides.length * DnaStrand.LEAD;
     }
 
-    get numOfNucleobases(): number {
-        return this._nucleobases.length;
+    get numOfNucleotides(): number {
+        return this._nucleotides.length;
     }
 
     public createComplementary(): DnaStrand {
-        const n: number = this.nucleobases.length;
-        let nbs: Array<Nucleobase> = new Array<Nucleobase>(n);
+        const n: number = this.nucleotides.length;
+        let nbs: Array<Nucleotide> = new Array<Nucleotide>(n);
         for (let i = 0; i < n; ++i) {
-            nbs[i] = this.nucleobases[i].createComplementary();
+            nbs[i] = this.nucleotides[i].createComplementary();
         }
         return new DnaStrand(nbs);
     }
@@ -139,19 +141,19 @@ export class DummyDnaStrand extends AbstractDnaStrand {
         this._endPos = endPos;
     }
 
-    get numOfNucleobases(): number {
+    get numOfNucleotides(): number {
         let distance: number = this.startPos.distanceTo(this.endPos);
-        let numOfNucleobases: number = Math.floor(distance / DnaStrand.DISTANCE);
-        return numOfNucleobases;
+        let numOfNucleotides: number = Math.floor(distance / DnaStrand.LEAD);
+        return numOfNucleotides;
     }
 
     get lengthInNanometers(): number {
-        return this.numOfNucleobases * DnaStrand.DISTANCE;
+        return this.numOfNucleotides * DnaStrand.LEAD;
     }
 
     public toDNAStrand(): DnaStrand {
         let direction: Vector3 = this.endPos.clone().sub(this.startPos).normalize();
-        return new DnaStrand(this.numOfNucleobases, this.startPos, direction);
+        return new DnaStrand(this.numOfNucleotides, this.startPos, direction);
     }
 }
 

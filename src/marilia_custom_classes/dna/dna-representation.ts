@@ -1,11 +1,11 @@
 import Representation, {RepresentationParameters} from "../../representation/representation";
 import Viewer from "../../viewer/viewer";
-import DnaStrand, {DummyDnaStrand, Nucleobase, NucleobaseType, StrictNucleobaseType} from "./dna-strand";
+import DnaStrand, {DummyDnaStrand, Nucleotide, NucleotideType, StrictNucleotideType} from "./dna-strand";
 import Buffer from "../../buffer/buffer"
 import {defaults} from "../../utils";
 import BufferCreator from "../geometry/BufferCreator";
 import {Color, Vector3} from "three";
-import NucleobasePicker from "./dna-picker";
+import NucleotidePicker from "./dna-picker";
 
 interface DnaRepresentationParameters extends RepresentationParameters {
     representationScale: "cylinder";
@@ -82,19 +82,19 @@ class DnaRepresentation extends Representation {
 
     // Multiscale representations --------------------------------------------------------------------------------------
 
-    private static getNucleobaseTypeColor(t: NucleobaseType): Color {
+    private static getNucleotideTypeColor(t: NucleotideType): Color {
         switch (t) {
             // Colors taken from the Wikipedia images: https://en.wikipedia.org/wiki/Nucleobase
-            case StrictNucleobaseType.A: return new Color(0xe47a7a);
-            case StrictNucleobaseType.G: return new Color(0x8483d3);
-            case StrictNucleobaseType.C: return new Color(0xf8f49c);
-            case StrictNucleobaseType.T: return new Color(0xf8c39d);
+            case StrictNucleotideType.A: return new Color(0xe47a7a);
+            case StrictNucleotideType.G: return new Color(0x8483d3);
+            case StrictNucleotideType.C: return new Color(0xf8f49c);
+            case StrictNucleotideType.T: return new Color(0xf8c39d);
         }
         return new Color(1, 1, 1);
     }
 
-    private static getNucleobaseColor(nucleobase: Nucleobase): Color {
-        return this.getNucleobaseTypeColor(nucleobase.type);
+    private static getNucleotideColor(nucleotide?: Nucleotide): Color {
+        return this.getNucleotideTypeColor(nucleotide?.type);
     }
 
     private createCylinder(radius: number = 1): Buffer[] {
@@ -112,7 +112,7 @@ class DnaRepresentation extends Representation {
         if (this.dna.lengthInNanometers == 0) return [];
         if (this.dna instanceof DummyDnaStrand) return this.createCylinder(radius);
 
-        const n = this.dna.numOfNucleobases;
+        const n = this.dna.numOfNucleotides;
         let buffers: Array<Buffer> = new Array<Buffer>(1);
 
         const start: Vector3 = this.dna.startPos;
@@ -129,9 +129,9 @@ class DnaRepresentation extends Representation {
         let radiusArray = new Float32Array(n);
         let pickerArray = new Uint32Array(n);
 
-        const nucleobases = this.dna.nucleobases;
+        const nucleotide = this.dna.nucleotides;
         for (let i = 0, j = 0; i < n; ++i, j += 3) {
-            const color = DnaRepresentation.getNucleobaseColor(nucleobases[i]);
+            const color = DnaRepresentation.getNucleotideColor(nucleotide[i]);
 
             BufferCreator.insertVector3InFloat32Array(position1Array, curPos, j);
             BufferCreator.insertVector3InFloat32Array(position2Array, nextPos, j);
@@ -144,13 +144,53 @@ class DnaRepresentation extends Representation {
             nextPos.add(increment);
         }
 
-        let picker: NucleobasePicker = new NucleobasePicker(pickerArray, this.dna);
+        let picker: NucleotidePicker = new NucleotidePicker(pickerArray, this.dna);
 
         buffers[0] = BufferCreator.createCylinderStripBufferFromArrays(position1Array, position2Array,
             color1Array, color2Array, radiusArray, picker);
 
         return buffers;
     }
+
+    /*private createBallsAndSticks(ballRadius: number = 1, stickRadius: number = 0.5) {
+        //if (this.dna.lengthInNanometers == 0) return [];
+        //if (this.dna instanceof DummyDnaStrand) return this.createCylinder(radius);
+
+        const n = this.dna.numOfNucleobases;
+        let buffers: Array<Buffer> = new Array<Buffer>(2);
+
+        const start: Vector3 = this.dna.startPos;
+        const end: Vector3 = this.dna.endPos;
+
+        let curPos: Vector3 = start;
+
+        let cylinders = {
+            position1: new Float32Array((n - 1) * 3),
+            position2: new Float32Array((n - 1) * 3),
+            color1: new Float32Array((n - 1) * 3),
+            color2: new Float32Array((n - 1) * 3),
+            radius: new Float32Array((n - 1)),
+            //picker: new Uint32Array(n),
+        }
+
+        let spheres = {
+            position: new Float32Array(n * 3),
+            color: new Float32Array(n * 3),
+            radius: new Float32Array(n),
+            picker: new Uint32Array(n),
+        }
+
+        for (let i = 0, j = 0; i < n; ++i, j += 3) {
+
+        }
+
+        let picker: NucleobasePicker = new NucleobasePicker(pickerArray, this.dna);
+
+        buffers[0] = BufferCreator.createCylinderStripBufferFromArrays(position1Array, position2Array,
+            color1Array, color2Array, radiusArray, picker);
+
+        return buffers;
+    }*/
 }
 
 export default DnaRepresentation;

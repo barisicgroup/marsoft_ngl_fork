@@ -79,8 +79,8 @@ class MariliaActions {
             console.log(pos);
 
             let dnaStrand: DnaStrand = this.data.dnaStrand.toDNAStrand();
-            for (let i = 0; i < dnaStrand.nucleobases.length; ++i) {
-                dnaStrand.nucleobases[i].type = Math.floor(Math.random() * 4);
+            for (let i = 0; i < dnaStrand.nucleotides.length; ++i) {
+                dnaStrand.nucleotides[i].type = Math.floor(Math.random() * 4);
             }
             let component: DnaStrandComponent = new DnaStrandComponent(stage, dnaStrand);
             component.setName("DNA strand");

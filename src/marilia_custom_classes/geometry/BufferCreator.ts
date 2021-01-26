@@ -322,6 +322,25 @@ class BufferCreator {
         }));
     }
 
+    public static createSphereBufferFromArrays(position1: Float32Array, position2: Float32Array,
+                                               color: Float32Array, color2: Float32Array, radius: Float32Array,
+                                               picking: Picker | undefined,
+                                               openEnded: boolean = false, disableImpostor: boolean = false,
+                                               params: Partial<CylinderBufferParameters> = this.defaultCylinderBufferParams): Buffer {
+        const SelectedBufferClass = disableImpostor ? CylinderGeometryBuffer : CylinderImpostorBuffer;
+        return new SelectedBufferClass(Object.assign({}, {
+            'position1': position1,
+            'position2': position2,
+            'color': color,
+            'color2': color2,
+            'radius': radius,
+            'picking': picking
+        }), Object.assign(params, {
+            openEnded: openEnded,
+            disableImpostor: disableImpostor
+        }));
+    }
+
     private static createTubeRibbonCommon(pathElemPositions: Vector3[], pathElemSizes: number[], pathElemColors: Vector3[],
         interpolationSubdivisions: number = 1,
         returnCallback: (posArray: Float32Array, normArray: Float32Array, tangArray: Float32Array,

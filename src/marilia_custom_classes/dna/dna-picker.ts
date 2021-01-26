@@ -1,8 +1,8 @@
 import {Picker} from "../../utils/picker";
-import DnaStrand, {Nucleobase} from "./dna-strand";
+import DnaStrand, {Nucleotide} from "./dna-strand";
 import {Vector3} from "three";
 
-export class NucleobaseProxy {
+export class NucleotideProxy {
     private _dna: DnaStrand;
     private _index: number;
     constructor(dna: DnaStrand, pid: number) {
@@ -10,8 +10,8 @@ export class NucleobaseProxy {
         this._index = pid;
     }
 
-    get nucleobase(): Nucleobase {
-        return this._dna.nucleobases[this.index];
+    get nucleotide(): Nucleotide {
+        return this._dna.nucleotides[this.index];
     }
 
     get dnaStrand(): DnaStrand {
@@ -30,7 +30,7 @@ export class NucleobaseProxy {
     }
 }
 
-class NucleobasePicker extends Picker {
+class NucleotidePicker extends Picker {
     private dna: DnaStrand;
     constructor(array: Uint32Array, dna: DnaStrand) {
         super(array);
@@ -38,15 +38,15 @@ class NucleobasePicker extends Picker {
     }
 
     get type(): string {
-        return "nucleobase";
+        return "nucleotide";
     }
 
     get data(): DnaStrand {
         return this.dna;
     }
 
-    getObject(pid: number): NucleobaseProxy {
-        return new NucleobaseProxy(this.dna, this.getIndex(pid));
+    getObject(pid: number): NucleotideProxy {
+        return new NucleotideProxy(this.dna, this.getIndex(pid));
     }
 
     _getPosition(pid: number): Vector3 {
@@ -54,4 +54,4 @@ class NucleobasePicker extends Picker {
     }
 }
 
-export default NucleobasePicker;
+export default NucleotidePicker;
