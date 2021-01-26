@@ -4,12 +4,12 @@
  * @private
  */
 
-import { Vector3, Matrix4, Vector2 } from 'three'
+import {Matrix4, Vector2, Vector3} from 'three'
 
 import Stage from '../stage/stage'
 import StructureComponent from '../component/structure-component'
 import MouseObserver from '../stage/mouse-observer'
-import { Picker } from '../utils/picker'
+import {Picker} from '../utils/picker'
 import ViewerControls from './viewer-controls'
 import Shape from '../geometry/shape'
 import Structure from '../structure/structure'
@@ -20,6 +20,8 @@ import Volume from '../surface/volume'
 import Unitcell from '../symmetry/unitcell'
 import Component from '../component/component';
 import {TestPickingNucleotideProxy} from "../marilia_custom_classes/geometry/NucleotidePicker";
+import {NucleobaseProxy} from "../marilia_custom_classes/dna/dna-picker";
+import {StrictNucleobaseType} from "../marilia_custom_classes/dna/dna-strand";
 
 const tmpVec = new Vector3()
 
@@ -298,10 +300,19 @@ class PickingProxy {
    */
   get wideline () { return this._objectIfType('wideline') as ShapePrimitive }
 
-  //
-  // MARILA TEST STUFF
-  //
+  // MARILA stuff
+  // TODO remove test
   get nucleotide () { return this._objectIfType('nucleotide') as TestPickingNucleotideProxy; }
+  get nucleobase() { return this._objectIfType('nucleobase') as NucleobaseProxy; }
+  private static getNucleobaseName(np: NucleobaseProxy): string {
+    switch (np.nucleobase.type) {
+      case StrictNucleobaseType.A: return "Adenine";
+      case StrictNucleobaseType.C: return "Cytosine";
+      case StrictNucleobaseType.G: return "Guanine";
+      case StrictNucleobaseType.T: return "Thymine";
+    }
+    return "undefined";
+  }
 
   _objectIfType (type: string) {
     return this.type === type ? this.object : undefined
@@ -358,6 +369,8 @@ class PickingProxy {
       msg = this.wideline.name
     } else if(this.nucleotide) {
       msg = `nucleotide: ${this.nucleotide.nbType}, id ${this.nucleotide.id}, pos [${this.nucleotide.pos.x}, ${this.nucleotide.pos.y}, ${this.nucleotide.pos.z}])`
+    } else if (this.nucleobase) {
+      msg = "nucleobase: " + PickingProxy.getNucleobaseName(this.nucleobase);
     }
     return msg
   }

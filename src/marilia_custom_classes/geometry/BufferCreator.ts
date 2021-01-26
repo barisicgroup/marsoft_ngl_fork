@@ -297,12 +297,15 @@ class BufferCreator {
             color2[buffArrayStartPos + 2] = colors[i + 1].z;
         }
 
+        const picking = pickingCreator !== undefined && pickingIds !== undefined ? pickingCreator(pickingIds) : undefined;
+
         return this.createCylinderStripBufferFromArrays(position1, position2, color, color2, radius,
-            openEnded, disableImpostor, params);
+            picking, openEnded, disableImpostor, params);
     }
 
     public static createCylinderStripBufferFromArrays(position1: Float32Array, position2: Float32Array,
                                                        color: Float32Array, color2: Float32Array, radius: Float32Array,
+                                                       picking: Picker | undefined,
                                                        openEnded: boolean = false, disableImpostor: boolean = false,
                                                        params: Partial<CylinderBufferParameters> = this.defaultCylinderBufferParams): Buffer {
         const SelectedBufferClass = disableImpostor ? CylinderGeometryBuffer : CylinderImpostorBuffer;
@@ -312,7 +315,7 @@ class BufferCreator {
             'color': color,
             'color2': color2,
             'radius': radius,
-            //'picking': pickingCreator !== undefined && pickingIds !== undefined ? pickingCreator(pickingIds) : undefined, // TODO
+            'picking': picking
         }), Object.assign(params, {
             openEnded: openEnded,
             disableImpostor: disableImpostor

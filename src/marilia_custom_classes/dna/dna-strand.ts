@@ -52,7 +52,8 @@ export class Nucleobase {
     }
 }
 
-abstract class AbstractDNAStrand {
+export abstract class AbstractDnaStrand {
+    public static readonly DISTANCE = 2; // in nanometers
     abstract get startPos(): Vector3;
     abstract get endPos(): Vector3;
     abstract set endPos(endPos: Vector3);
@@ -60,9 +61,7 @@ abstract class AbstractDNAStrand {
     abstract get lengthInNanometers(): number;
 }
 
-class DNAStrand extends AbstractDNAStrand {
-    public static readonly DISTANCE = 2; // in nanometers
-
+class DnaStrand extends AbstractDnaStrand {
     private _nucleobases: Array<Nucleobase>;
     private _startPos: Vector3;
     private _direction: Vector3;
@@ -100,24 +99,24 @@ class DNAStrand extends AbstractDNAStrand {
     }
 
     get lengthInNanometers(): number {
-        return this._nucleobases.length * DNAStrand.DISTANCE;
+        return this._nucleobases.length * DnaStrand.DISTANCE;
     }
 
     get numOfNucleobases(): number {
         return this._nucleobases.length;
     }
 
-    public createComplementary(): DNAStrand {
+    public createComplementary(): DnaStrand {
         const n: number = this.nucleobases.length;
         let nbs: Array<Nucleobase> = new Array<Nucleobase>(n);
         for (let i = 0; i < n; ++i) {
             nbs[i] = this.nucleobases[i].createComplementary();
         }
-        return new DNAStrand(nbs);
+        return new DnaStrand(nbs);
     }
 }
 
-export class DummyDNAStrand extends AbstractDNAStrand {
+export class DummyDnaStrand extends AbstractDnaStrand {
     private _startPos: Vector3;
     private _endPos: Vector3;
 
@@ -142,18 +141,18 @@ export class DummyDNAStrand extends AbstractDNAStrand {
 
     get numOfNucleobases(): number {
         let distance: number = this.startPos.distanceTo(this.endPos);
-        let numOfNucleobases: number = Math.floor(distance / DNAStrand.DISTANCE);
+        let numOfNucleobases: number = Math.floor(distance / DnaStrand.DISTANCE);
         return numOfNucleobases;
     }
 
     get lengthInNanometers(): number {
-        return this.numOfNucleobases * DNAStrand.DISTANCE;
+        return this.numOfNucleobases * DnaStrand.DISTANCE;
     }
 
-    public toDNAStrand(): DNAStrand {
+    public toDNAStrand(): DnaStrand {
         let direction: Vector3 = this.endPos.clone().sub(this.startPos).normalize();
-        return new DNAStrand(this.numOfNucleobases, this.startPos, direction);
+        return new DnaStrand(this.numOfNucleobases, this.startPos, direction);
     }
 }
 
-export default DNAStrand;
+export default DnaStrand;

@@ -2,8 +2,8 @@ import Stage from "../stage/stage";
 import PickingProxy from "../controls/picking-proxy";
 import TestModification from "./TEST";
 import {Vector3} from "three";
-import DNAStrand, {DummyDNAStrand} from "./dna/dna-strand";
-import {DNAStrandComponent} from "./dna/dna-component";
+import DnaStrand, {DummyDnaStrand} from "./dna/dna-strand";
+import {DnaStrandComponent} from "./dna/dna-component";
 
 export enum MariliaActionsState {
     DEFAULT,
@@ -66,8 +66,8 @@ class MariliaActions {
             let pos: Vector3 = stage.mouseObserver.getWorldPosition();
 
             if (!this.data.dnaStrand) {
-                this.data.dnaStrand = new DummyDNAStrand(pos, pos);
-                this.data.component = new DNAStrandComponent(stage, this.data.dnaStrand);
+                this.data.dnaStrand = new DummyDnaStrand(pos, pos);
+                this.data.component = new DnaStrandComponent(stage, this.data.dnaStrand);
                 this.data.component.setName("DNA strand (dummy)");
                 stage.addComponent(this.data.component);
                 this.data.component.addRepresentation("TODO", undefined); //TODO
@@ -78,11 +78,11 @@ class MariliaActions {
             console.log(this.data.dnaStrand.startPos);
             console.log(pos);
 
-            let dnaStrand: DNAStrand = this.data.dnaStrand.toDNAStrand();
+            let dnaStrand: DnaStrand = this.data.dnaStrand.toDNAStrand();
             for (let i = 0; i < dnaStrand.nucleobases.length; ++i) {
                 dnaStrand.nucleobases[i].type = Math.floor(Math.random() * 4);
             }
-            let component: DNAStrandComponent = new DNAStrandComponent(stage, dnaStrand);
+            let component: DnaStrandComponent = new DnaStrandComponent(stage, dnaStrand);
             component.setName("DNA strand");
             stage.removeComponent(this.data.component);
             stage.addComponent(component);
