@@ -108,8 +108,8 @@ class DnaRepresentation extends Representation {
     }
 
     private static getNucleotidePosition(yPos: number, offsetAngleInRad: number = 0): Vector3 {
-        const xPos: number = Math.sin(yPos * 2 * Math.PI / AbstractDnaStrand.HELIX_LEAD) * AbstractDnaStrand.HELIX_RADIUS;
-        const zPos: number = Math.cos(yPos * 2 * Math.PI / AbstractDnaStrand.HELIX_LEAD) * AbstractDnaStrand.HELIX_RADIUS;
+        const xPos: number = Math.sin(yPos * 2 * Math.PI / AbstractDnaStrand.HELIX_PITCH) * AbstractDnaStrand.HELIX_RADIUS;
+        const zPos: number = Math.cos(yPos * 2 * Math.PI / AbstractDnaStrand.HELIX_PITCH) * AbstractDnaStrand.HELIX_RADIUS;
         return new Vector3(xPos, yPos, zPos);
     }
 
@@ -171,7 +171,7 @@ class DnaRepresentation extends Representation {
         return buffers;
     }
 
-    private createBallsAndSticks(ballRadius: number = 0.25, stickRadius: number = 0.1) {
+    private createBallsAndSticks() {
         //if (this.dna.lengthInNanometers == 0) return [];
         if (this.dna instanceof DummyDnaStrand) return this.createCylinder();
 
@@ -212,7 +212,7 @@ class DnaRepresentation extends Representation {
 
             BufferCreator.insertVector3InFloat32Array(spheres.position, position, j);
             BufferCreator.insertColorInFloat32Array(spheres.color, color, j);
-            spheres.radius[i] = ballRadius;
+            spheres.radius[i] = AbstractDnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES / 2;
             spheres.picking[i] = i;
 
             y+= yInc;
