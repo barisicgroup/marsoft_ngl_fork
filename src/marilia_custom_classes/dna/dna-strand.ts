@@ -56,9 +56,15 @@ export abstract class AbstractDnaStrand {
     public static readonly PITCH = 3.4; // According to Wikipedia: https://en.wikipedia.org/wiki/DNA
     public static readonly LEAD = AbstractDnaStrand.PITCH * 2;
     public static readonly RADIUS = 1; // According to Wikipedia: https://en.wikipedia.org/wiki/DNA
+
+    /**
+     * All Vector3s returned must never be a reference to a member! Use clone() to return a copy
+     */
+
     abstract get startPos(): Vector3;
     abstract get endPos(): Vector3;
     abstract set endPos(endPos: Vector3);
+    abstract get direction(): Vector3; // Returns a normalized vector
     abstract get numOfNucleotides(): number;
     abstract get lengthInNanometers(): number;
 }
@@ -89,7 +95,7 @@ class DnaStrand extends AbstractDnaStrand {
     }
 
     get startPos(): Vector3 {
-        return this._startPos;
+        return this._startPos.clone();
     }
 
     get endPos(): Vector3 {
@@ -97,7 +103,7 @@ class DnaStrand extends AbstractDnaStrand {
     }
 
     get direction(): Vector3 {
-        return this._direction;
+        return this._direction.clone();
     }
 
     get lengthInNanometers(): number {
@@ -130,15 +136,19 @@ export class DummyDnaStrand extends AbstractDnaStrand {
     }
 
     get startPos(): Vector3 {
-        return this._startPos;
+        return this._startPos.clone();
     }
 
     get endPos(): Vector3 {
-        return this._endPos;
+        return this._endPos.clone();
     }
 
     set endPos(endPos: Vector3) {
-        this._endPos = endPos;
+        this._endPos.copy(endPos);
+    }
+
+    get direction(): Vector3 {
+        return this.endPos.clone().sub(this.startPos).normalize();
     }
 
     get numOfNucleotides(): number {
@@ -152,8 +162,7 @@ export class DummyDnaStrand extends AbstractDnaStrand {
     }
 
     public toDNAStrand(): DnaStrand {
-        let direction: Vector3 = this.endPos.clone().sub(this.startPos).normalize();
-        return new DnaStrand(this.numOfNucleotides, this.startPos, direction);
+        return new DnaStrand(this.numOfNucleotides, this.startPos, this.direction);
     }
 }
 

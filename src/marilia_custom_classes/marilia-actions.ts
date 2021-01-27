@@ -66,7 +66,7 @@ class MariliaActions {
             let pos: Vector3 = stage.mouseObserver.getWorldPosition();
 
             if (!this.data.dnaStrand) {
-                this.data.dnaStrand = new DummyDnaStrand(pos, pos);
+                this.data.dnaStrand = new DummyDnaStrand(pos, pos.clone());
                 this.data.component = new DnaStrandComponent(stage, this.data.dnaStrand);
                 this.data.component.setName("DNA strand (dummy)");
                 stage.addComponent(this.data.component);
@@ -75,8 +75,6 @@ class MariliaActions {
             }
 
             this.data.dnaStrand.endPos = pos;
-            console.log(this.data.dnaStrand.startPos);
-            console.log(pos);
 
             let dnaStrand: DnaStrand = this.data.dnaStrand.toDNAStrand();
             for (let i = 0; i < dnaStrand.nucleotides.length; ++i) {

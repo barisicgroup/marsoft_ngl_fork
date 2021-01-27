@@ -4,7 +4,7 @@ import DnaStrand, {DummyDnaStrand, Nucleotide, NucleotideType, StrictNucleotideT
 import Buffer from "../../buffer/buffer"
 import {defaults} from "../../utils";
 import BufferCreator from "../geometry/BufferCreator";
-import {Color, Vector3} from "three";
+import {Color, Matrix4, Quaternion, Vector3} from "three";
 import NucleotidePicker from "./dna-picker";
 
 interface DnaRepresentationParameters extends RepresentationParameters {
@@ -29,7 +29,8 @@ class DnaRepresentation extends Representation {
                 rebuild: true,
                 options: {
                     "cylinder": "cylinder",
-                    "cylinders": "cylinders"
+                    "cylinders": "cylinders",
+                    "balls+sticks helix": "balls+sticks helix"
                 }
             }
         }, this.parameters);
@@ -40,7 +41,7 @@ class DnaRepresentation extends Representation {
     init(params: Partial<DnaRepresentationParameters>) {
         let p = params || {}; // TODO figure out what this does
 
-        this.representationScale = defaults(p.representationScale, "cylinders");
+        this.representationScale = defaults(p.representationScale, "balls+sticks helix");
 
         super.init(params);
         this.build();
@@ -50,6 +51,9 @@ class DnaRepresentation extends Representation {
         switch (this.representationScale) {
             case "cylinders":
                 this.bufferList = this.createManyCylinders();
+                break;
+            case "balls+sticks helix":
+                this.bufferList = this.createBallsAndSticks();
                 break;
             case "cylinder":
             default:
@@ -96,6 +100,15 @@ class DnaRepresentation extends Representation {
     private static getNucleotideColor(nucleotide?: Nucleotide): Color {
         return this.getNucleotideTypeColor(nucleotide?.type);
     }
+
+    /*private static getNucleotidePosition(yPos: number, offsetAngle: number = 0): Vector3 {
+        const xPos: number = Math.sin(yPos * 2 * Math.PI / DnaStrand.LEAD);
+        const zPos: number = Math.sin(yPos * 2 * Math.PI / DnaStrand.LEAD);
+        return new Vector3(xPos, yPos, zPos);
+    }*/
+
+    // Must be unit vector (normalized)
+    private static readonly DNA_DIRECTION: Vector3 = new Vector3(0, 1, 0);
 
     private createCylinder(radius: number = 1): Buffer[] {
         let buffers: Array<Buffer> = new Array<Buffer>(1);
@@ -152,19 +165,28 @@ class DnaRepresentation extends Representation {
         return buffers;
     }
 
-    /*private createBallsAndSticks(ballRadius: number = 1, stickRadius: number = 0.5) {
+    private createBallsAndSticks(ballRadius: number = 1, stickRadius: number = 0.5) {
         //if (this.dna.lengthInNanometers == 0) return [];
-        //if (this.dna instanceof DummyDnaStrand) return this.createCylinder(radius);
+        if (this.dna instanceof DummyDnaStrand) return this.createCylinder(stickRadius);
+        return this.createManyCylinders(stickRadius); // TODO remove
 
-        const n = this.dna.numOfNucleobases;
+        //const n = this.dna.numOfNucleotides;
         let buffers: Array<Buffer> = new Array<Buffer>(2);
 
         const start: Vector3 = this.dna.startPos;
-        const end: Vector3 = this.dna.endPos;
+        const dir: Vector3 = this.dna.direction;
 
-        let curPos: Vector3 = start;
+        const rotationQuaternion: Quaternion = new Quaternion().setFromUnitVectors(DnaRepresentation.DNA_DIRECTION, dir);
+        const rot: Matrix4 = new Matrix4().makeRotationFromQuaternion(rotationQuaternion);
+        rot.premultiply(new Matrix4().makeTranslation(start.x, start.y, start.z));
 
-        let cylinders = {
+        let a: Vector3 = new Vector3(0, 1, 0);
+        a.applyMatrix4(rot);
+        let b: Vector3 = start.clone().add(dir);
+        console.log(a);
+        console.log(b);
+
+        /*let cylinders = {
             position1: new Float32Array((n - 1) * 3),
             position2: new Float32Array((n - 1) * 3),
             color1: new Float32Array((n - 1) * 3),
@@ -181,16 +203,16 @@ class DnaRepresentation extends Representation {
         }
 
         for (let i = 0, j = 0; i < n; ++i, j += 3) {
-
+            let nextPos: Vector3 =
         }
 
-        let picker: NucleobasePicker = new NucleobasePicker(pickerArray, this.dna);
+        let picker: NucleotidePicker = new NucleotidePicker(pickerArray, this.dna);
 
         buffers[0] = BufferCreator.createCylinderStripBufferFromArrays(position1Array, position2Array,
-            color1Array, color2Array, radiusArray, picker);
+            color1Array, color2Array, radiusArray, picker);*/
 
         return buffers;
-    }*/
+    }
 }
 
 export default DnaRepresentation;
