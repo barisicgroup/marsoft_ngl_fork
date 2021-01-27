@@ -9,6 +9,8 @@ import WidelineBuffer, { WideLineBufferDefaultParameters, WideLineBufferParamete
 import { Debug } from "../../globals";
 import HermitSpline from "./HermitSpline";
 import { Picker } from "../../utils/picker";
+import SphereGeometryBuffer from "../../buffer/spheregeometry-buffer";
+import SphereImpostorBuffer from "../../buffer/sphereimpostor-buffer";
 
 /**
 * The purpose of this class is to provide a wrapper to selected NGL buffers
@@ -322,17 +324,14 @@ class BufferCreator {
         }));
     }
 
-    public static createSphereBufferFromArrays(position1: Float32Array, position2: Float32Array,
-                                               color: Float32Array, color2: Float32Array, radius: Float32Array,
+    public static createSphereBufferFromArrays(position: Float32Array, color: Float32Array, radius: Float32Array,
                                                picking: Picker | undefined,
                                                openEnded: boolean = false, disableImpostor: boolean = false,
                                                params: Partial<CylinderBufferParameters> = this.defaultCylinderBufferParams): Buffer {
-        const SelectedBufferClass = disableImpostor ? CylinderGeometryBuffer : CylinderImpostorBuffer;
+        const SelectedBufferClass = disableImpostor ? SphereGeometryBuffer : SphereImpostorBuffer;
         return new SelectedBufferClass(Object.assign({}, {
-            'position1': position1,
-            'position2': position2,
+            'position': position,
             'color': color,
-            'color2': color2,
             'radius': radius,
             'picking': picking
         }), Object.assign(params, {

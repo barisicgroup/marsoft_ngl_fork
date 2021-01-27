@@ -53,9 +53,11 @@ export class Nucleotide {
 }
 
 export abstract class AbstractDnaStrand {
-    public static readonly PITCH = 3.4; // According to Wikipedia: https://en.wikipedia.org/wiki/DNA
-    public static readonly LEAD = AbstractDnaStrand.PITCH * 2;
-    public static readonly RADIUS = 1; // According to Wikipedia: https://en.wikipedia.org/wiki/DNA
+    public static readonly HELIX_PITCH = 3.4; // According to Wikipedia: https://en.wikipedia.org/wiki/DNA
+    public static readonly HELIX_LEAD = AbstractDnaStrand.HELIX_PITCH * 2;
+    public static readonly HELIX_RADIUS = 1; // According to Wikipedia: https://en.wikipedia.org/wiki/DNA
+    public static readonly NUCLEOTIDES_PER_TURN = 10.5; // According to Wikipedia: TODO link
+    public static readonly HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES = AbstractDnaStrand.HELIX_LEAD / AbstractDnaStrand.NUCLEOTIDES_PER_TURN;
 
     /**
      * All Vector3s returned must never be a reference to a member! Use clone() to return a copy
@@ -107,7 +109,7 @@ class DnaStrand extends AbstractDnaStrand {
     }
 
     get lengthInNanometers(): number {
-        return this._nucleotides.length * DnaStrand.LEAD;
+        return this._nucleotides.length * DnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES;
     }
 
     get numOfNucleotides(): number {
@@ -153,12 +155,12 @@ export class DummyDnaStrand extends AbstractDnaStrand {
 
     get numOfNucleotides(): number {
         let distance: number = this.startPos.distanceTo(this.endPos);
-        let numOfNucleotides: number = Math.floor(distance / DnaStrand.LEAD);
+        let numOfNucleotides: number = Math.floor(distance / DummyDnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES);
         return numOfNucleotides;
     }
 
     get lengthInNanometers(): number {
-        return this.numOfNucleotides * DnaStrand.LEAD;
+        return this.numOfNucleotides * DummyDnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES;
     }
 
     public toDNAStrand(): DnaStrand {
