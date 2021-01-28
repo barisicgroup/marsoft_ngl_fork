@@ -1,6 +1,7 @@
 import {Picker} from "../../utils/picker";
-import DnaStrand, {Nucleotide} from "./dna-strand";
+import DnaStrand from "./dna-strand";
 import {Vector3} from "three";
+import Nucleotide from "./nucleotide";
 
 export class NucleotideProxy {
     private _dna: DnaStrand;

@@ -20,7 +20,7 @@ import Volume from '../surface/volume'
 import Unitcell from '../symmetry/unitcell'
 import Component from '../component/component';
 import {NucleotideProxy} from "../marilia_custom_classes/dna/dna-picker";
-import {StrictNucleotideType} from "../marilia_custom_classes/dna/dna-strand";
+import {StrictNucleotideType} from "../marilia_custom_classes/dna/nucleotide";
 
 const tmpVec = new Vector3()
 

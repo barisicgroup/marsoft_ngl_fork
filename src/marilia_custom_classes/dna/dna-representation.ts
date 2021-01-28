@@ -1,17 +1,12 @@
 import Representation, {RepresentationParameters} from "../../representation/representation";
 import Viewer from "../../viewer/viewer";
-import DnaStrand, {
-    AbstractDnaStrand,
-    DummyDnaStrand,
-    Nucleotide,
-    NucleotideType,
-    StrictNucleotideType
-} from "./dna-strand";
+import DnaStrand, {AbstractDnaStrand, DummyDnaStrand} from "./dna-strand";
 import Buffer from "../../buffer/buffer"
 import {defaults} from "../../utils";
 import BufferCreator from "../geometry/BufferCreator";
 import {Color, Matrix4, Quaternion, Vector3} from "three";
 import NucleotidePicker from "./dna-picker";
+import Nucleotide, {NucleotideType, StrictNucleotideType} from "./nucleotide";
 
 interface DnaRepresentationParameters extends RepresentationParameters {
     representationScale: "cylinder";
