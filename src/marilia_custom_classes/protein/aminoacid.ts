@@ -19,7 +19,7 @@ export enum StrictAminoacidType {
 
     // Special cases
     Cysteine = 9,
-    Selenocysteine = 10,
+    Selenocysteine = 10, // TODO not listed on the PDB 101 guide??? https://pdb101.rcsb.org/learn/guide-to-understanding-pdb-data/primary-sequences-and-the-pdb-format
     Glycine = 11,
     Proline = 12,
 
@@ -94,7 +94,7 @@ class Aminoacid {
                 case "c":
                     t = StrictAminoacidType.Cysteine; // 9
                     break;
-                case "selenocysteine":
+                case "selenocysteine": // TODO not listed on the PDB 101 guide??? https://pdb101.rcsb.org/learn/guide-to-understanding-pdb-data/primary-sequences-and-the-pdb-format
                 case "sec":
                 case "u":
                     t = StrictAminoacidType.Selenocysteine; // 10
@@ -150,6 +150,7 @@ class Aminoacid {
                     t = StrictAminoacidType.Tryptophan; // 20
                     break;
                 default:
+                    console.error("Given amino acid type " + t + " was not recognized. Setting type to undefined");
                     t = undefined;
                     break;
             }
