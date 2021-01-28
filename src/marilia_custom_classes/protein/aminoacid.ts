@@ -149,8 +149,11 @@ class Aminoacid {
                 case "w":
                     t = StrictAminoacidType.Tryptophan; // 20
                     break;
+                default:
+                    t = undefined;
             }
         }
+        this._type = t;
     }
 
     get type(): AminoacidType {
