@@ -212,7 +212,7 @@ class DnaRepresentation extends Representation {
         const stickRadius = ballRadius / 3;
         let curPos: Vector3 = DnaRepresentation.getNucleotidePosition(0, ballRadius).applyMatrix4(mat);
         for (let i = 0, j = 0; i < n; ++i, j += 3) {
-            const y = i * AbstractDnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES;
+            const y = (i + 1) * AbstractDnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES;
             let nextPos = DnaRepresentation.getNucleotidePosition(y, ballRadius).applyMatrix4(mat);
             let color: Color = DnaRepresentation.getNucleotideColor(nucleotides[i]);
 

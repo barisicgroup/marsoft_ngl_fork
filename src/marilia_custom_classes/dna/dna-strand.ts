@@ -101,7 +101,7 @@ class DnaStrand extends AbstractDnaStrand {
     }
 
     get endPos(): Vector3 {
-        return this.startPos.clone().add(this.direction.multiplyScalar(this.lengthInNanometers));
+        return this._startPos.clone().add(this.direction.multiplyScalar(this.lengthInNanometers));
     }
 
     get direction(): Vector3 {
@@ -142,7 +142,7 @@ export class DummyDnaStrand extends AbstractDnaStrand {
     }
 
     get endPos(): Vector3 {
-        return this._endPos.clone();
+        return this._startPos.clone().add(this.direction.multiplyScalar(this.lengthInNanometers));
     }
 
     set endPos(endPos: Vector3) {
@@ -150,11 +150,11 @@ export class DummyDnaStrand extends AbstractDnaStrand {
     }
 
     get direction(): Vector3 {
-        return this.endPos.clone().sub(this.startPos).normalize();
+        return this._endPos.clone().sub(this._startPos).normalize();
     }
 
     get numOfNucleotides(): number {
-        let distance: number = this.startPos.distanceTo(this.endPos);
+        let distance: number = this._startPos.distanceTo(this._endPos);
         let numOfNucleotides: number = Math.floor(distance / DummyDnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES);
         return numOfNucleotides;
     }
