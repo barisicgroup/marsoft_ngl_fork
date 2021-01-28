@@ -151,6 +151,7 @@ class Aminoacid {
                     break;
                 default:
                     t = undefined;
+                    break;
             }
         }
         this._type = t;
