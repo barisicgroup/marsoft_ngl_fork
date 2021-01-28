@@ -107,9 +107,9 @@ class DnaRepresentation extends Representation {
         return this.getNucleotideTypeColor(nucleotide?.type);
     }
 
-    private static getNucleotidePosition(yPos: number, offsetAngleInRad: number = 0): Vector3 {
-        const xPos: number = Math.sin(yPos * 2 * Math.PI / AbstractDnaStrand.HELIX_PITCH) * AbstractDnaStrand.HELIX_RADIUS;
-        const zPos: number = Math.cos(yPos * 2 * Math.PI / AbstractDnaStrand.HELIX_PITCH) * AbstractDnaStrand.HELIX_RADIUS;
+    private static getNucleotidePosition(yPos: number, nucleotideRadius: number, offsetAngleInRad: number = 0): Vector3 {
+        const xPos: number = Math.sin(yPos * 2 * Math.PI / AbstractDnaStrand.HELIX_PITCH) * AbstractDnaStrand.HELIX_RADIUS - nucleotideRadius;
+        const zPos: number = Math.cos(yPos * 2 * Math.PI / AbstractDnaStrand.HELIX_PITCH) * AbstractDnaStrand.HELIX_RADIUS - nucleotideRadius;
         return new Vector3(xPos, yPos, zPos);
     }
 
@@ -143,8 +143,7 @@ class DnaRepresentation extends Representation {
 
         let position1Array = new Float32Array(n * 3);
         let position2Array = new Float32Array(n * 3);
-        let color1Array = new Float32Array(n * 3);
-        let color2Array = new Float32Array(n * 3);
+        let colorArray = new Float32Array(n * 3);
         let radiusArray = new Float32Array(n);
         let pickerArray = new Uint32Array(n);
 
@@ -152,10 +151,15 @@ class DnaRepresentation extends Representation {
         for (let i = 0, j = 0; i < n; ++i, j += 3) {
             const color = DnaRepresentation.getNucleotideColor(nucleotides[i]);
 
-            BufferCreator.insertVector3InFloat32Array(position1Array, curPos, j);
-            BufferCreator.insertVector3InFloat32Array(position2Array, nextPos, j);
-            BufferCreator.insertColorInFloat32Array(color1Array, color, j);
-            BufferCreator.insertColorInFloat32Array(color2Array, color, j);
+            position1Array[j  ] = curPos.x;
+            position1Array[j+1] = curPos.y;
+            position1Array[j+2] = curPos.z;
+            position2Array[j  ] = nextPos.x;
+            position2Array[j+1] = nextPos.y;
+            position2Array[j+2] = nextPos.z;
+            colorArray[j  ] = color.r;
+            colorArray[j+1] = color.g;
+            colorArray[j+2] = color.b;
             radiusArray[i] = AbstractDnaStrand.HELIX_RADIUS;
             pickerArray[i] = i;
 
@@ -166,7 +170,7 @@ class DnaRepresentation extends Representation {
         let picker: NucleotidePicker = new NucleotidePicker(pickerArray, this.dna);
 
         buffers[0] = BufferCreator.createCylinderStripBufferFromArrays(position1Array, position2Array,
-            color1Array, color2Array, radiusArray, picker);
+            colorArray, colorArray, radiusArray, picker);
 
         return buffers;
     }
@@ -186,14 +190,14 @@ class DnaRepresentation extends Representation {
         let mat = rot.clone().premultiply(new Matrix4().makeTranslation(start.x, start.y, start.z));
         // Name 'mat' is a bit too generic... TODO rename it to something more meaningful
 
-        /*let cylinders = {
+        let cylinders = {
             position1: new Float32Array((n - 1) * 3),
             position2: new Float32Array((n - 1) * 3),
             color1: new Float32Array((n - 1) * 3),
             color2: new Float32Array((n - 1) * 3),
-            radius: new Float32Array((n - 1)),
-            //picker: new Uint32Array(n),
-        }*/
+            radius: new Float32Array(n - 1),
+            //picker: new Uint32Array(n - 1),
+        }
 
         let spheres = {
             position: new Float32Array(n * 3),
@@ -202,29 +206,46 @@ class DnaRepresentation extends Representation {
             picking: new Uint32Array(n),
         }
 
-        let y: number = 0;
-        const yInc: number = AbstractDnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES;
         const nucleotides = this.dna.nucleotides;
+        const colorWhite = new Color(1, 1, 1);
+        const ballRadius = AbstractDnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES / 3 * 2;
+        const stickRadius = ballRadius / 3;
+        let curPos: Vector3 = DnaRepresentation.getNucleotidePosition(0, ballRadius).applyMatrix4(mat);
         for (let i = 0, j = 0; i < n; ++i, j += 3) {
-            let position: Vector3 = DnaRepresentation.getNucleotidePosition(y);
-            position.applyMatrix4(mat);
+            const y = i * AbstractDnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES;
+            let nextPos = DnaRepresentation.getNucleotidePosition(y, ballRadius).applyMatrix4(mat);
             let color: Color = DnaRepresentation.getNucleotideColor(nucleotides[i]);
 
-            BufferCreator.insertVector3InFloat32Array(spheres.position, position, j);
-            BufferCreator.insertColorInFloat32Array(spheres.color, color, j);
-            spheres.radius[i] = AbstractDnaStrand.HEIGHT_DISTANCE_BETWEEN_NUCLEOTIDES / 2;
+            spheres.position[j  ] = curPos.x;
+            spheres.position[j+1] = curPos.y;
+            spheres.position[j+2] = curPos.z;
+            spheres.color[j  ] = color.r;
+            spheres.color[j+1] = color.g;
+            spheres.color[j+2] = color.b;
+            spheres.radius[i] = ballRadius;
             spheres.picking[i] = i;
 
-            y+= yInc;
+            //cylinders.position1 is the same as spheres.position
+            cylinders.position2[j  ] = nextPos.x;
+            cylinders.position2[j+1] = nextPos.y;
+            cylinders.position2[j+2] = nextPos.z;
+            cylinders.color1[j  ] = colorWhite.r;
+            cylinders.color1[j+1] = colorWhite.g;
+            cylinders.color1[j+2] = colorWhite.b;
+            // cylinders.color2 is the same as cylinders.color1
+            cylinders.radius[i] = stickRadius;
+
+            curPos = nextPos;
         }
+        cylinders.position1 = spheres.position;
+        cylinders.color2 = cylinders.color1;
 
-        let picker: NucleotidePicker = new NucleotidePicker(spheres.picking, this.dna);
+        let ballPicker: NucleotidePicker = new NucleotidePicker(spheres.picking, this.dna);
 
-        //buffers[0] = BufferCreator.createCylinderStripBufferFromArrays(position1Array, position2Array,
-        //    color1Array, color2Array, radiusArray, picker);
-
+        buffers[0] = BufferCreator.createCylinderStripBufferFromArrays(
+            cylinders.position1, cylinders.position2, cylinders.color1, cylinders.color2, cylinders.radius);
         buffers[1] = BufferCreator.createSphereBufferFromArrays(
-            spheres.position, spheres.color, spheres.radius, picker);
+            spheres.position, spheres.color, spheres.radius, ballPicker);
 
         return buffers;
     }

@@ -1,4 +1,4 @@
-import {Color, Vector3} from "three";
+import {Vector3} from "three";
 import Buffer, { BufferParameters, BufferDefaultParameters } from "../../buffer/buffer";
 import { CylinderBufferParameters, CylinderBufferDefaultParameters } from "../../buffer/cylinder-buffer";
 import CylinderGeometryBuffer from '../../buffer/cylindergeometry-buffer';
@@ -17,18 +17,6 @@ import SphereImpostorBuffer from "../../buffer/sphereimpostor-buffer";
 * allowing to create given geometries in a more accessible way.
 */
 class BufferCreator {
-    public static insertVector3InFloat32Array(array: Float32Array, vector: Vector3, position: number) {
-        array[position] = vector.x;
-        array[position+1] = vector.y;
-        array[position+2] = vector.z;
-    }
-
-    public static insertColorInFloat32Array(array: Float32Array, color: Color, position: number) {
-        array[position] = color.r;
-        array[position+1] = color.g;
-        array[position+2] = color.b;
-    }
-
     public static readonly defaultTubeMeshBufferParams: Partial<TubeMeshBufferParameters> = Object.assign(
         BufferDefaultParameters, {
         radialSegments: 8,
@@ -307,7 +295,7 @@ class BufferCreator {
 
     public static createCylinderStripBufferFromArrays(position1: Float32Array, position2: Float32Array,
                                                        color: Float32Array, color2: Float32Array, radius: Float32Array,
-                                                       picking: Picker | undefined,
+                                                       picking?: Picker,
                                                        openEnded: boolean = false, disableImpostor: boolean = false,
                                                        params: Partial<CylinderBufferParameters> = this.defaultCylinderBufferParams): Buffer {
         const SelectedBufferClass = disableImpostor ? CylinderGeometryBuffer : CylinderImpostorBuffer;
