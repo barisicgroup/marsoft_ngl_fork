@@ -102,9 +102,26 @@ class DnaRepresentation extends Representation {
         return this.getNucleotideTypeColor(nucleotide?.type);
     }
 
-    private static getNucleotidePosition(yPos: number, nucleotideRadius: number, offsetAngleInRad: number = 0): Vector3 {
-        const xPos: number = Math.sin(yPos * 2 * Math.PI / AbstractDnaStrand.HELIX_PITCH) * AbstractDnaStrand.HELIX_RADIUS - nucleotideRadius;
-        const zPos: number = Math.cos(yPos * 2 * Math.PI / AbstractDnaStrand.HELIX_PITCH) * AbstractDnaStrand.HELIX_RADIUS - nucleotideRadius;
+    /**
+     * Calculates the position of a nucleotide of a DNA strand that starts at the position (0, 0, 0) and is pointing
+     * upwards, i.e. in the direction (0, 1, 0).
+     *
+     * To get the position of a nucleotide of a DNA strand that is NOT pointing upwards, use this function and then
+     * rotate the returned vector in the direction you desire.
+     * Same goes for the position (translate the returned vector).
+     *
+     * @param yPos The 'y' position of the nucleotide
+     * @param nucleotideRadius
+     * @param offsetAngleInRad
+     * @param helixPitch
+     * @param helixRadius
+     */
+    private static getNucleotidePosition(yPos: number, nucleotideRadius: number, offsetAngleInRad: number = 0,
+                                         helixPitch: number = AbstractDnaStrand.HELIX_PITCH,
+                                         helixRadius: number = AbstractDnaStrand.HELIX_RADIUS): Vector3 {
+
+        const xPos: number = Math.sin(yPos * 2 * Math.PI / helixPitch) * helixRadius - nucleotideRadius;
+        const zPos: number = Math.cos(yPos * 2 * Math.PI / helixPitch) * helixRadius - nucleotideRadius;
         return new Vector3(xPos, yPos, zPos);
     }
 
@@ -220,15 +237,17 @@ class DnaRepresentation extends Representation {
             spheres.radius[i] = ballRadius;
             spheres.picking[i] = i;
 
-            //cylinders.position1 is the same as spheres.position
-            cylinders.position2[j  ] = nextPos.x;
-            cylinders.position2[j+1] = nextPos.y;
-            cylinders.position2[j+2] = nextPos.z;
-            cylinders.color1[j  ] = colorWhite.r;
-            cylinders.color1[j+1] = colorWhite.g;
-            cylinders.color1[j+2] = colorWhite.b;
-            // cylinders.color2 is the same as cylinders.color1
-            cylinders.radius[i] = stickRadius;
+            if (i < (n - 1)) {
+                //cylinders.position1 is the same as spheres.position
+                cylinders.position2[j  ] = nextPos.x;
+                cylinders.position2[j+1] = nextPos.y;
+                cylinders.position2[j+2] = nextPos.z;
+                cylinders.color1[j  ] = colorWhite.r;
+                cylinders.color1[j+1] = colorWhite.g;
+                cylinders.color1[j+2] = colorWhite.b;
+                // cylinders.color2 is the same as cylinders.color1
+                cylinders.radius[i] = stickRadius;
+            }
 
             curPos = nextPos;
         }
