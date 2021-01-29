@@ -472,6 +472,8 @@ class Stage {
     const onLoadFn = (object: Structure|Surface|Volume) => {
       this.log(`loaded '${name}'`)
 
+      // TODO make Protein from structure
+
       const component = this.addComponentFromObject(object, p)
       if (p.defaultRepresentation) {
         this.defaultFileRepresentation(component as Component)
