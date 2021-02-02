@@ -1114,23 +1114,23 @@ class Structure implements Structure {
 *
 */
 
-  removeAtom(atom: AtomProxy): void {
+  public removeAtomAtIndex(atomIdx: number, finalizeData: boolean = true) {
     // Replace the data of the atom to be deleted with the data of last 
     // atom in the store and decrease the length of the store 
-    this.atomStore.copyWithin(atom.index, this.atomStore.count - 1, 1);
-    this.atomStore.resize(this.atomStore.count - 1);
+    const lastIdx = this.atomStore.count - 1;
+    this.atomStore.copyWithin(atomIdx, lastIdx, 1);
+    this.atomStore.resize(lastIdx);
 
     // Remove all bonds in which the removed atom takes part
     // and update the bond indices of the swapped atom
     const bs = this.bondStore;
 
-    const bondRemFlags = new BitArray(bs.atomIndex1.length);
+    const bondRemFlags = new BitArray(bs.count);
 
-    for (let i = 0; i < bs.atomIndex1.length; ++i) {
-      if (bs.atomIndex1[i] === atom.index ||
-        bs.atomIndex2[i] === atom.index) {
+    for (let i = 0; i < bs.count; ++i) {
+      if (bs.atomIndex1[i] === atomIdx ||
+        bs.atomIndex2[i] === atomIdx) {
         bondRemFlags.set(i);
-        --this.bondCount;
       }
     }
 
@@ -1140,33 +1140,62 @@ class Structure implements Structure {
       return !bondRemFlags.isSet(idx);
     };
 
-    bs.atomIndex1 = bs.atomIndex1.filter(filterFunc);
-    bs.atomIndex2 = bs.atomIndex2.filter(filterFunc);
-    bs.bondOrder = bs.bondOrder.filter(filterFunc);
+    const ai1 = bs.atomIndex1.filter(filterFunc);
+    const ai2 = bs.atomIndex2.filter(filterFunc);
+    const bo = bs.bondOrder.filter(filterFunc);
 
-    const lastIdx = this.atomStore.count - 1;
+    bs.resize(ai1.length);
+
+    bs.atomIndex1 = ai1;
+    bs.atomIndex2 = ai2;
+    bs.bondOrder = bo;
+
     for (let i = 0; i < bs.atomIndex1.length; ++i) {
       if (bs.atomIndex1[i] === lastIdx) {
-        bs.atomIndex1[i] = atom.index;
+        bs.atomIndex1[i] = atomIdx;
       }
 
       if (bs.atomIndex2[i] === lastIdx) {
-        bs.atomIndex2[i] = atom.index;
+        bs.atomIndex2[i] = atomIdx;
       }
     }
 
     // atomMap is not modified because more atoms can 
     // theoretically reuse the stored data
 
-    // Reset existing temporary data structures and let the 
-    // codebase recompute them again
-    this.atomSetCache = {}
-    this.atomSetDict = {}
+    if (finalizeData) {
+      // Reset existing temporary data structures and let the 
+      // codebase recompute them again
+      this.atomSetCache = {}
+      this.atomSetDict = {}
 
-    this.finalizeAtoms();
-    this.finalizeBonds();
+      this.finalizeAtoms();
+      this.finalizeBonds();
 
-    this.signals.refreshed.dispatch();
+      // TODO Residues and Chains (=> respective stores) should be probably also
+      // modified? E.g. in case this was the last atom of given residue
+
+      this.signals.refreshed.dispatch();
+    }
+  }
+
+  public removeAtom(atom: AtomProxy): void {
+    this.removeAtomAtIndex(atom.index);
+  }
+
+  public removeResidueIncludingAtom(atom: AtomProxy): void {
+    let indicesToRemove: number[] = [];
+    const resIdx = atom.residueIndex;
+
+    for (let i = 0; i < this.atomStore.length; ++i) {
+      if (this.atomStore.residueIndex[i] === resIdx) {
+        indicesToRemove.push(i);
+      }
+    }
+
+    for (let i = indicesToRemove.length - 1; i >= 0; --i) {
+      this.removeAtomAtIndex(i, i === 0);
+    }
   }
 }
 
