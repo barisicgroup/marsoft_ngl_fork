@@ -1346,14 +1346,14 @@ NGL.SidebarWidget = function (stage) {
 
   let strCreateBond1 = "Create bond from atom";
   let strCreateBond2 = "Create bond between atoms";
-  let strRemove = "Remove atom";
+  let strRemoveAtom = "Remove atom";
+  let strRemoveRes = "Remove residue";
 
   let textModification = new UI.Text("Modification menu");
   let buttonCreateBond1 = new UI.Button(strCreateBond1).setClass(unselected);
   let buttonCreateBond2 = new UI.Button(strCreateBond2).setClass(unselected);
-  let buttonRemove = new UI.Button(strRemove).setClass(unselected);
-
-
+  let buttonRemoveAtom = new UI.Button(strRemoveAtom).setClass(unselected);
+  let buttonRemoveRes = new UI.Button(strRemoveRes).setClass(unselected);
 
   let clickFun = (button, newState) => {
     let select = button.dom.className === unselected;
@@ -1361,7 +1361,8 @@ NGL.SidebarWidget = function (stage) {
     buttonCreateDnaStrand.setClass(unselected);
     buttonCreateBond1.setClass(unselected);
     buttonCreateBond2.setClass(unselected);
-    buttonRemove.setClass(unselected);
+    buttonRemoveAtom.setClass(unselected);
+    buttonRemoveRes.setClass(unselected);
 
     if (select) {
       button.setClass(selected);
@@ -1376,7 +1377,8 @@ NGL.SidebarWidget = function (stage) {
   buttonCreateDnaStrand.onClick(() => clickFun(buttonCreateDnaStrand, NGL.MariliaActionsState.CREATE_DNA_STRAND));
   buttonCreateBond1.onClick(() => clickFun(buttonCreateBond1, NGL.MariliaActionsState.BOND_FROM_ATOM));
   buttonCreateBond2.onClick(() => clickFun(buttonCreateBond2, NGL.MariliaActionsState.BOND_BETWEEN_ATOMS));
-  buttonRemove.onClick(() => clickFun(buttonRemove, NGL.MariliaActionsState.REMOVE_ATOM));
+  buttonRemoveAtom.onClick(() => clickFun(buttonRemoveAtom, NGL.MariliaActionsState.REMOVE_ATOM));
+  buttonRemoveRes.onClick(() => clickFun(buttonRemoveRes, NGL.MariliaActionsState.REMOVE_RESIDUE));
 
   panelMariliaCreation.add(
       textCreation,
@@ -1387,7 +1389,8 @@ NGL.SidebarWidget = function (stage) {
       textModification,
       buttonCreateBond1,
       buttonCreateBond2,
-      buttonRemove
+      buttonRemoveAtom,
+      buttonRemoveRes
   );
 
   panelMarilia.add(

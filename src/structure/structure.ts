@@ -1121,6 +1121,12 @@ class Structure implements Structure {
     this.atomStore.copyWithin(atomIdx, lastIdx, 1);
     this.atomStore.resize(lastIdx);
 
+    // !!!
+    // TODO The "swapping" seems to be a bad approach
+    // since it seems that is is expected that the atoms of one residue
+    // are stored consecutively
+    // !!!
+
     // Remove all bonds in which the removed atom takes part
     // and update the bond indices of the swapped atom
     const bs = this.bondStore;
@@ -1134,7 +1140,7 @@ class Structure implements Structure {
       }
     }
 
-    // There seems to be now "normal" way to remove a single element from
+    // There seems to be no "normal" way to remove a single element from
     // Uint32Array so I use a combination of bit array and filter function
     const filterFunc = (element: any, idx: number, array: any) => {
       return !bondRemFlags.isSet(idx);
@@ -1175,6 +1181,8 @@ class Structure implements Structure {
       // TODO Residues and Chains (=> respective stores) should be probably also
       // modified? E.g. in case this was the last atom of given residue
 
+      --this.residueStore.atomCount[this.atomStore.residueIndex[atomIdx]];
+
       this.signals.refreshed.dispatch();
     }
   }
@@ -1184,18 +1192,18 @@ class Structure implements Structure {
   }
 
   public removeResidueIncludingAtom(atom: AtomProxy): void {
-    let indicesToRemove: number[] = [];
-    const resIdx = atom.residueIndex;
+    const thisResidue = atom.residue;
+    let residueAtoms: number[] = [];
 
-    for (let i = 0; i < this.atomStore.length; ++i) {
-      if (this.atomStore.residueIndex[i] === resIdx) {
-        indicesToRemove.push(i);
-      }
-    }
-
-    for (let i = indicesToRemove.length - 1; i >= 0; --i) {
-      this.removeAtomAtIndex(i, i === 0);
-    }
+    thisResidue.eachAtom((resAtom: AtomProxy) => {
+      residueAtoms.push(resAtom.index);
+    });
+    
+    residueAtoms
+      .sort()
+      .reverse()
+      .forEach(atomIdx =>
+        this.removeAtomAtIndex(atomIdx, true));
   }
 }
 

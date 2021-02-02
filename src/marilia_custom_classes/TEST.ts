@@ -22,7 +22,8 @@ export enum TestModificationMode {
     NONE,
     BOND_FROM_ATOM,
     BOND_BETWEEN_ATOMS,
-    REMOVE_ATOM
+    REMOVE_ATOM,
+    REMOVE_RESIDUE
 }
 
 export class TestModification {
@@ -51,6 +52,9 @@ export class TestModification {
     public setModeToRemoveAtom() {
         this.mode = TestModificationMode.REMOVE_ATOM;
     }
+    public setModeToRemoveResidue() {
+        this.mode = TestModificationMode.REMOVE_RESIDUE;
+    }
 
     public hover(stage: Stage, pickingProxy: PickingProxy) {
         if (pickingProxy) {
@@ -70,6 +74,9 @@ export class TestModification {
                 this.removeAtom(stage, pickingProxy);
                 //this.clickPick_left_remove(stage, pickingProxy);
                 break;
+            case TestModificationMode.REMOVE_RESIDUE:
+                this.removeResidue(stage, pickingProxy);
+                break;
             default:
                 // Do nothing (TODO: for now...)
                 break;
@@ -82,15 +89,23 @@ export class TestModification {
     *
     */
 
-    public removeAtom(stage: Stage, pickingProxy: PickingProxy) {
+    private removeCommon(pickingProxy : PickingProxy, callback: (comp: StructureComponent, atom: AtomProxy) => void) {
         if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent)) return;
 
         const component: StructureComponent = pickingProxy.component;
 
         if (pickingProxy.atom) {
-            component.structure.removeAtom(pickingProxy.atom);
+            callback(component, pickingProxy.atom);
             component.rebuildRepresentations();
         }
+    }
+
+    public removeAtom(stage: Stage, pickingProxy: PickingProxy) {
+        this.removeCommon(pickingProxy, (comp, atom) => comp.structure.removeAtom(atom));
+    }
+
+    public removeResidue(stage: Stage, pickingProxy: PickingProxy) {
+        this.removeCommon(pickingProxy, (comp, atom) => comp.structure.removeResidueIncludingAtom(atom));
     }
 
     /*
