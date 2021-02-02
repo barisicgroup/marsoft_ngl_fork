@@ -14,6 +14,7 @@ import Representation from "../representation/representation";
 import AtomProxy from "../proxy/atom-proxy";
 import StructureView from "../structure/structure-view";
 import BitArray from "../utils/bitarray";
+
 //import {AtomDataFields, BondDataFields} from "../structure/structure-data";
 //import StructureBuilder from "../structure/structure-builder";
 
@@ -21,7 +22,7 @@ export enum TestModificationMode {
     NONE,
     BOND_FROM_ATOM,
     BOND_BETWEEN_ATOMS,
-    REMOVE
+    REMOVE_ATOM
 }
 
 export class TestModification {
@@ -47,8 +48,8 @@ export class TestModification {
     public setModeToBondBetweenAtoms() {
         this.mode = TestModificationMode.BOND_BETWEEN_ATOMS;
     }
-    public setModeToRemove() {
-        this.mode = TestModificationMode.REMOVE;
+    public setModeToRemoveAtom() {
+        this.mode = TestModificationMode.REMOVE_ATOM;
     }
 
     public hover(stage: Stage, pickingProxy: PickingProxy) {
@@ -65,14 +66,38 @@ export class TestModification {
             case TestModificationMode.BOND_BETWEEN_ATOMS:
                 this.clickPick_left_bondBetweenAtoms(stage, pickingProxy);
                 break;
-            case TestModificationMode.REMOVE:
-                this.clickPick_left_remove(stage, pickingProxy);
+            case TestModificationMode.REMOVE_ATOM:
+                this.removeAtom(stage, pickingProxy);
+                //this.clickPick_left_remove(stage, pickingProxy);
                 break;
             default:
                 // Do nothing (TODO: for now...)
                 break;
         }
     }
+
+    /*
+    *
+    * NEW MODIFICATION CODES: START
+    *
+    */
+
+    public removeAtom(stage: Stage, pickingProxy: PickingProxy) {
+        if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent)) return;
+
+        const component: StructureComponent = pickingProxy.component;
+
+        if (pickingProxy.atom) {
+            component.structure.removeAtom(pickingProxy.atom);
+            component.rebuildRepresentations();
+        }
+    }
+
+    /*
+    *
+    * NEW MODIFICATION CODES: END
+    *
+    */
 
     public clickPick_left_remove(stage: Stage, pickingProxy: PickingProxy) {
         if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent)) return;
@@ -85,7 +110,7 @@ export class TestModification {
         }
 
         // Hide from all representations not good. TODO detect which representation the user picked
-        component.reprList.forEach( (value: RepresentationElement) => {
+        component.reprList.forEach((value: RepresentationElement) => {
 
             //let structure: Structure = value.repr.structure.structure;
             let structureView: StructureView = value.repr.structure;
@@ -114,7 +139,7 @@ export class TestModification {
             if (this.atomPicked && this.lastPickedAtomComponent === pickingProxy.component) {
                 let component: StructureComponent = pickingProxy.component;
                 TestModification.addBondBetweenAtoms(stage, component, this.lastPickedAtom.index, pickingProxy.atom.index);
-                component.reprList.forEach( (value: RepresentationElement) => {
+                component.reprList.forEach((value: RepresentationElement) => {
                     //let reprName: string = value.parameters.name;
                     let repr: Representation = value.repr;
                     repr.build();
@@ -238,7 +263,7 @@ export class TestModification {
         component.structure.finalizeAtoms();
         component.structure.finalizeBonds();
 
-        component.reprList.forEach(function(value) {
+        component.reprList.forEach(function (value) {
             let repr: Representation = value.repr;
             let structureView: StructureView = repr.structure;
             console.assert(component.structure === structureView.structure);

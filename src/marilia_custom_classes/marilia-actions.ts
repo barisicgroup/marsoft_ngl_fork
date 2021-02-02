@@ -14,7 +14,7 @@ export enum MariliaActionsState {
     // Manipulation states
     BOND_FROM_ATOM,
     BOND_BETWEEN_ATOMS,
-    REMOVE
+    REMOVE_ATOM
 }
 
 class MariliaActions {
@@ -44,8 +44,8 @@ class MariliaActions {
             case MariliaActionsState.BOND_BETWEEN_ATOMS:
                 this.testModification.setModeToBondBetweenAtoms();
                 break;
-            case MariliaActionsState.REMOVE:
-                this.testModification.setModeToRemove();
+            case MariliaActionsState.REMOVE_ATOM:
+                this.testModification.setModeToRemoveAtom();
                 break;
             default:
                 return;

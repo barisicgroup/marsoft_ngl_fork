@@ -1346,7 +1346,7 @@ NGL.SidebarWidget = function (stage) {
 
   let strCreateBond1 = "Create bond from atom";
   let strCreateBond2 = "Create bond between atoms";
-  let strRemove = "Remove atom or bond";
+  let strRemove = "Remove atom";
 
   let textModification = new UI.Text("Modification menu");
   let buttonCreateBond1 = new UI.Button(strCreateBond1).setClass(unselected);
@@ -1376,7 +1376,7 @@ NGL.SidebarWidget = function (stage) {
   buttonCreateDnaStrand.onClick(() => clickFun(buttonCreateDnaStrand, NGL.MariliaActionsState.CREATE_DNA_STRAND));
   buttonCreateBond1.onClick(() => clickFun(buttonCreateBond1, NGL.MariliaActionsState.BOND_FROM_ATOM));
   buttonCreateBond2.onClick(() => clickFun(buttonCreateBond2, NGL.MariliaActionsState.BOND_BETWEEN_ATOMS));
-  buttonRemove.onClick(() => clickFun(buttonRemove, NGL.MariliaActionsState.REMOVE));
+  buttonRemove.onClick(() => clickFun(buttonRemove, NGL.MariliaActionsState.REMOVE_ATOM));
 
   panelMariliaCreation.add(
       textCreation,

@@ -13,3 +13,6 @@ package-lock.json
 
 # WebStorm
 .idea
+
+# VS Code
+.vscode
