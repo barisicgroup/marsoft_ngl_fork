@@ -1348,12 +1348,14 @@ NGL.SidebarWidget = function (stage) {
   let strCreateBond2 = "Create bond between atoms";
   let strRemoveAtom = "Remove atom";
   let strRemoveRes = "Remove residue";
+  let strAddAminoAcids = "Add amino acids";
 
   let textModification = new UI.Text("Modification menu");
   let buttonCreateBond1 = new UI.Button(strCreateBond1).setClass(unselected);
   let buttonCreateBond2 = new UI.Button(strCreateBond2).setClass(unselected);
   let buttonRemoveAtom = new UI.Button(strRemoveAtom).setClass(unselected);
   let buttonRemoveRes = new UI.Button(strRemoveRes).setClass(unselected);
+  let buttonAddAminoAcids = new UI.Button(strAddAminoAcids).setClass(unselected);
 
   let clickFun = (button, newState) => {
     let select = button.dom.className === unselected;
@@ -1363,6 +1365,7 @@ NGL.SidebarWidget = function (stage) {
     buttonCreateBond2.setClass(unselected);
     buttonRemoveAtom.setClass(unselected);
     buttonRemoveRes.setClass(unselected);
+    buttonAddAminoAcids.setClass(unselected);
 
     if (select) {
       button.setClass(selected);
@@ -1379,6 +1382,7 @@ NGL.SidebarWidget = function (stage) {
   buttonCreateBond2.onClick(() => clickFun(buttonCreateBond2, NGL.MariliaActionsState.BOND_BETWEEN_ATOMS));
   buttonRemoveAtom.onClick(() => clickFun(buttonRemoveAtom, NGL.MariliaActionsState.REMOVE_ATOM));
   buttonRemoveRes.onClick(() => clickFun(buttonRemoveRes, NGL.MariliaActionsState.REMOVE_RESIDUE));
+  buttonAddAminoAcids.onClick(() => clickFun(buttonAddAminoAcids, NGL.MariliaActionsState.ADD_AMINO_ACIDS));
 
   panelMariliaCreation.add(
       textCreation,
@@ -1390,7 +1394,8 @@ NGL.SidebarWidget = function (stage) {
       buttonCreateBond1,
       buttonCreateBond2,
       buttonRemoveAtom,
-      buttonRemoveRes
+      buttonRemoveRes,
+      buttonAddAminoAcids
   );
 
   panelMarilia.add(

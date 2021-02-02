@@ -15,7 +15,8 @@ export enum MariliaActionsState {
     BOND_FROM_ATOM,
     BOND_BETWEEN_ATOMS,
     REMOVE_ATOM,
-    REMOVE_RESIDUE
+    REMOVE_RESIDUE,
+    ADD_AMINO_ACIDS
 }
 
 class MariliaActions {
@@ -50,6 +51,10 @@ class MariliaActions {
                 break;
             case MariliaActionsState.REMOVE_RESIDUE:
                 this.testModification.setModeToRemoveResidue();
+                break;
+            case MariliaActionsState.ADD_AMINO_ACIDS:
+                this.testModification.setModeToAddAminoAcids();
+                break;
             default:
                 return;
         }

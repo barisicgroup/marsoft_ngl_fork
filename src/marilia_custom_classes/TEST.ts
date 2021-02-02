@@ -14,6 +14,9 @@ import Representation from "../representation/representation";
 import AtomProxy from "../proxy/atom-proxy";
 import StructureView from "../structure/structure-view";
 import BitArray from "../utils/bitarray";
+import MariliaDataProvider from "./MariliaDataProvider";
+import { concatStructures } from "../structure/structure-utils";
+import { Vector3 } from "three";
 
 //import {AtomDataFields, BondDataFields} from "../structure/structure-data";
 //import StructureBuilder from "../structure/structure-builder";
@@ -23,7 +26,8 @@ export enum TestModificationMode {
     BOND_FROM_ATOM,
     BOND_BETWEEN_ATOMS,
     REMOVE_ATOM,
-    REMOVE_RESIDUE
+    REMOVE_RESIDUE,
+    ADD_AMINO_ACIDS
 }
 
 export class TestModification {
@@ -55,6 +59,9 @@ export class TestModification {
     public setModeToRemoveResidue() {
         this.mode = TestModificationMode.REMOVE_RESIDUE;
     }
+    public setModeToAddAminoAcids() {
+        this.mode = TestModificationMode.ADD_AMINO_ACIDS;
+    }
 
     public hover(stage: Stage, pickingProxy: PickingProxy) {
         if (pickingProxy) {
@@ -77,6 +84,9 @@ export class TestModification {
             case TestModificationMode.REMOVE_RESIDUE:
                 this.removeResidue(stage, pickingProxy);
                 break;
+            case TestModificationMode.ADD_AMINO_ACIDS:
+                this.addAminoAcids(stage, pickingProxy);
+                break;
             default:
                 // Do nothing (TODO: for now...)
                 break;
@@ -89,7 +99,7 @@ export class TestModification {
     *
     */
 
-    private removeCommon(pickingProxy : PickingProxy, callback: (comp: StructureComponent, atom: AtomProxy) => void) {
+    private removeCommon(pickingProxy: PickingProxy, callback: (comp: StructureComponent, atom: AtomProxy) => void) {
         if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent)) return;
 
         const component: StructureComponent = pickingProxy.component;
@@ -106,6 +116,59 @@ export class TestModification {
 
     public removeResidue(stage: Stage, pickingProxy: PickingProxy) {
         this.removeCommon(pickingProxy, (comp, atom) => comp.structure.removeResidueIncludingAtom(atom));
+    }
+
+    public addAminoAcids(stage: Stage, pickingProxy: PickingProxy) {
+        if (!pickingProxy || !(pickingProxy.component instanceof StructureComponent) || !pickingProxy.atom) {
+            return;
+        }
+
+        const nrToAdd = 3;
+        let structureToAppendTo = pickingProxy.atom.structure;
+        let initPosition = pickingProxy.atom.positionToVector3();
+        let positionStep = new Vector3(0, 0, 10);
+
+        // Beware of promises. Async behavior. Needs to be done differently.
+        for (let i = 0; i < nrToAdd; ++i) {
+            let currIdx = i;
+            stage.loadFile(MariliaDataProvider.getAminoAcidStructureFilePath("arg"))
+                .then(function (comp: StructureComponent) {
+                    for (let a = 0; a < comp.structure.atomStore.count; ++a) {
+                        comp.structure.atomStore.x[a] =
+                            (comp.structure.atomStore.x[a] - comp.structure.center.x) + initPosition.x;
+                        comp.structure.atomStore.y[a] =
+                            (comp.structure.atomStore.y[a] - comp.structure.center.y) + initPosition.y;
+                        comp.structure.atomStore.z[a] =
+                            (comp.structure.atomStore.z[a] - comp.structure.center.z) + initPosition.z;
+                    }
+
+                    structureToAppendTo = concatStructures("concated", structureToAppendTo, comp.structure);
+                    stage.removeComponent(comp);
+                    initPosition.add(positionStep);
+
+                    if (currIdx === nrToAdd - 1) {
+                        stage.removeComponent(pickingProxy.component);
+                        const newComp : StructureComponent = (stage.addComponentFromObject(structureToAppendTo) as StructureComponent);
+
+                        newComp.addRepresentation("ball+stick");
+                    }
+                });
+
+
+        }
+
+        // TODO FIX and USE appendStructures
+        //
+
+        /*stage.loadFile(MariliaDataProvider.getAminoAcidStructureFilePath("arg"))
+            .then(function (comp: StructureComponent) {
+                appendStructures(pickingProxy.atom.structure, comp.structure);
+                stage.removeComponent(comp);
+                (pickingProxy.component as StructureComponent).rebuildRepresentations();
+                //stage.addComponentFromObject(concatStructures("concated", pickingProxy.atom.structure, comp.structure));
+                //stage.removeComponent(comp);
+                //stage.removeComponent(pickingProxy.component);
+            });*/
     }
 
     /*
