@@ -15,7 +15,7 @@ import AtomProxy from "../proxy/atom-proxy";
 import StructureView from "../structure/structure-view";
 import BitArray from "../utils/bitarray";
 import MariliaDataProvider from "./MariliaDataProvider";
-import { concatStructures } from "../structure/structure-utils";
+import { concatStructures, translateAtoms } from "../structure/structure-utils";
 import { Vector3 } from "three";
 
 //import {AtomDataFields, BondDataFields} from "../structure/structure-data";
@@ -133,14 +133,7 @@ export class TestModification {
             let currIdx = i;
             stage.loadFile(MariliaDataProvider.getAminoAcidStructureFilePath("arg"))
                 .then(function (comp: StructureComponent) {
-                    for (let a = 0; a < comp.structure.atomStore.count; ++a) {
-                        comp.structure.atomStore.x[a] =
-                            (comp.structure.atomStore.x[a] - comp.structure.center.x) + initPosition.x;
-                        comp.structure.atomStore.y[a] =
-                            (comp.structure.atomStore.y[a] - comp.structure.center.y) + initPosition.y;
-                        comp.structure.atomStore.z[a] =
-                            (comp.structure.atomStore.z[a] - comp.structure.center.z) + initPosition.z;
-                    }
+                    translateAtoms(comp.structure, initPosition);
 
                     structureToAppendTo = concatStructures("concated", structureToAppendTo, comp.structure);
                     stage.removeComponent(comp);
@@ -148,7 +141,7 @@ export class TestModification {
 
                     if (currIdx === nrToAdd - 1) {
                         stage.removeComponent(pickingProxy.component);
-                        const newComp : StructureComponent = (stage.addComponentFromObject(structureToAppendTo) as StructureComponent);
+                        const newComp: StructureComponent = (stage.addComponentFromObject(structureToAppendTo) as StructureComponent);
 
                         newComp.addRepresentation("ball+stick");
                     }

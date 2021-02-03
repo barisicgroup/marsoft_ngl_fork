@@ -1067,6 +1067,19 @@ export function concatStructures(name: string, ...structures: Structure[]) {
 *
 */
 
+export function translateAtoms(structure: Structure, newCenterPosition: Vector3) {
+  const as = structure.atomStore;
+  const currCenter = structure.center;
+
+  for (let i = 0; i < as.count; ++i) {
+    as.x[i] = (as.x[i] - currCenter.x) + newCenterPosition.x;
+    as.y[i] = (as.y[i] - currCenter.y) + newCenterPosition.y;
+    as.z[i] = (as.z[i] - currCenter.z) + newCenterPosition.z;
+  }
+  
+  structure._hasCoords = undefined;  // Bit of encapsulation breaker but can be survived rn
+}
+
 // TODO FIX WORKING BADLY
 export function appendStructures(parentStructure: Structure, ...structuresToAppend: Structure[]) {
   //const sb = new StructureBuilder(parentStructure);
